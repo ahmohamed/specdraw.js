@@ -1,0 +1,30 @@
+svg {
+  font: 10px sans-serif;
+}
+
+.crosshair circle {
+  fill: none;
+  stroke: steelblue;
+}
+
+.line {
+  stroke: steelblue;
+  fill:none;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.scale-brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+
+.disable div{
+  background : blue !important; 
+}
