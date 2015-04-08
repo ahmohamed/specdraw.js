@@ -15,7 +15,8 @@ spec.menu = function(){
 		function toggle() {
 		  if(!menu_on){
 				button.text("✖").on("click",null)
-    
+			  nav.style("overflow-y","visible")
+				
 				d3.select(".all-panels")
 					.transition().duration(500)
 					.attrTween("transform",function(){
@@ -26,10 +27,13 @@ spec.menu = function(){
 				 	}
 				}).each("end", function(){
 	        button.on("click", toggle);
+					div_menu.style("overflow", "visible");
 	        menu_on = true;
 	      });    
 		  }else{
 		    button.text("☰").on("click",null);    
+				nav.style("overflow-y","hidden");
+				
 		    d3.select(".all-panels")
 					.transition().duration(500)
 					.attrTween("transform",function(){
@@ -64,6 +68,7 @@ spec.menu = function(){
 			.attr("height", height)
 			.style('pointer-events', 'all')
 			.append("xhtml:div")
+			.attr("class", "div-menu")
 			.style({
         "width": width+"px",
 				"height": height*2+"px",
@@ -76,71 +81,142 @@ spec.menu = function(){
 			
 
 		var button = div_menu.append("xhtml:a")
-			.style({
-				"width": height+"px",
-        "text-align": "center",
-				"background": "#3B3B3B",
-				"float": "left",
-				"color": "white",
-        "text-decoration":"none"
-			})			
+			.style("width", height+"px")			
 			.attr("class", "open-menu")
 		  .attr("href", "#")
 			.text("☰")
 			.on("click", toggle);
  
 
-		var links =  ["This", "little", "piggy", "went", "to", "market"];
-
-		var nav = div_menu.append("xhtml:nav")
-			.attr("class", "main-nav")
-			.style({
-        "background": "#3B3B3B",
-        "overflow-y": "hidden"
-			})
-    	.call(css_trans("translateX("+ (-width) + "px)"));
-
-
-		nav.selectAll("a")
-			.data(links)
-			.enter()
-			.append("a")
-		  	.text(function(d){return d;})
-					
-		nav.append("a")
-	  	.text("Crosshair")
-			.on("click", events.crosshairToggle);
-		
-		nav.append("a")
-	  	.text("Peakpick")
-			.on("click", events.peakpickToggle);
-
-		nav.append("a")
-	  	.text("Peakdel")
-			.on("click", events.peakdelToggle);
-		
-		nav.append("a")
-	  	.text("integrate")
-			.on("click", events.integrateToggle);
+		var menu = 
+			[
+			  {
+			    name:"Peaks",
+			    fun:function(){},
+			    children:[
+			      {
+							name:"Pick peaks",fun:function(){},
+							children:[
+								{name:"Manual peak picking",fun:events.peakpickToggle},
+							  {
+									name:"Automatic using threshold",
+									fun: function () {
+										d3.select(".main-focus").node().getThreshold(
+												function (t) { pro.pp("threshold", t); }
+										);									
+							  	}
+								},
+							  {
+									name:"Peak segments using threshold",
+									fun: function () {
+										d3.select(".main-focus").node().getThreshold(
+												function (t) { pro.pp("threshold", t, true); }
+										);
+							  	}
+								},
+							  {
+									name:"Automatic using CWT",
+									fun: function () {
+										pro.pp("cwt");
+							  	}
+								},								
+							]
+						},
+			  		{name:"View/manage peak table",fun:null},
+						{name:"Delete peaks",fun:events.peakdelToggle},
+    			]
+			  },
+				{
+					name:"Baseline",
+					fun:function(){},
+					children:[
+						{name:"Constant baseline correction",fun:function(){pro.bl("cbf")} },
+						{name:"Median baseline correction",fun:function(){pro.bl("med")} },
+					],
+				},
+				{
+					name:"View",
+					fun:function(){},
+					children:[
+						{
+							name:"Change region",fun:modals.xRegion,
+							children:[
+								{name:"Set X region",fun:modals.xRegion},
+								{name:"Set Y region",fun:modals.yRegion},
+								{name:"Full spectrum",fun:dispatcher.regionfull,
+									children:[{name:"Set X region",fun:modals.xRegion},]
+								},
+							]
+						},
+					],
+				},
+			  {
+					name:"Integration",
+					fun:events.integrateToggle,
+				},
+			  {name:"crosshair",fun:events.crosshairToggle},
+			  {name:"Selected",fun:function(){},
+					children:[
+						{name:"Scale",fun:modals.scaleLine},
+					]
+				},
+				{
+					name:"Export",
+					fun:function(){},
+					children:[
+						{name:"As PNG",fun:function(){
+							setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
+						}},
+						{name:"As SVG",fun:function(){
+							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
+						}},
+						{name:"CSV",fun: function(){}},
+						{name:"Peak table",fun:function(){}},
+						{name:"JCAMP-DX",fun:function(){}},
+					],
+				},
+			];
 			
-		nav.selectAll("a")
-			.attr("href","#")
-	    .style({"color": "white",
-	      "padding":"0 10px",
-	      "display": "inline-block"
-	    })
-	  	.on("mouseenter",function(){
-	  		d3.select(this).style("color", "red")
-	    	d3.select(this).style("background", "black")
-			})
-	 		.on("mouseleave",function(){
-	  		d3.select(this).style("color", "white")
-	      d3.select(this).style("background", "none")
+			var nav = div_menu.append("ul")
+				.attr("class","nav")
+				.style("overflow-y","hidden")
+				.call(css_trans("translateX("+ (-width) + "px)"));
+
+			var first = nav.selectAll("li").data(menu);
+				
+			first.enter()
+				.append("li")
+					.append("a")
+					.text(function(d){return d.name+ (d.children?" ▼":"");})
+					.attr("href", "#")
+					.on("click", function(d){toggle(); d.fun();});
+
+			arr2el(first, function (_sel) {
+				var ret = _sel.append("div").append("ul").attr("class", "nav-column")
+					.selectAll("li").data(function(d){return d.children});
+				
+				ret.enter()
+				  .append("li")
+						.append("a")
+						.text(function(d){return d.name;})
+						.attr("href", "#")
+						.on("click", function(d){toggle(); d.fun();})
+						.append("a")
+						.text(function(d){return (d.children?" ▶":"")});
+				
+				return ret;
 			});
-		
+			
 		return svg_elem;									
 	}
 	
+	function arr2el(sel, fun){
+		var second = fun(sel.filter(function(d){return d.children;}));
+		
+		console.log(second.filter(function(d){return d.children;}).size());
+			if(second.filter(function(d){return d.children;}).size() > 0)
+				arr2el(second, fun);
+	}
   _main.xScale = function(_){
     if (!arguments.length) return x;
     x = _;
@@ -154,4 +230,4 @@ spec.menu = function(){
   }
 	
 	return _main;
-}
+};
