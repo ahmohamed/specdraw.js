@@ -2,14 +2,55 @@ svg {
   font: 10px sans-serif;
 }
 
+.clr0{stroke:#1f77b4;}
+.clr10{stroke:#aec7e8}
+.clr1{stroke:#ff7f0e}
+.clr11{stroke:#ffbb78}
+.clr2{stroke:#2ca02c}
+.clr12{stroke:#98df8a}
+.clr3{stroke:#d62728}
+.clr13{stroke:#ff9896}
+.clr4{stroke:#9467bd}
+.clr14{stroke:#c5b0d5}
+.clr5{stroke:#8c564b}
+.clr15{stroke:#c49c94}
+.clr6{stroke:#e377c2}
+.clr15{stroke:#f7b6d2}
+.clr7{stroke:#7f7f7f}
+.clr17{stroke:#c7c7c7}
+.clr8{stroke:#bcbd22}
+.clr18{stroke:#dbdb8d}
+.clr9{stroke:#17becf}
+.clr19{stroke:#9edae5}
+
 .crosshair circle {
   fill: none;
-  stroke: steelblue;
+}
+.line {
+  stroke-width: 1;
+  fill:none;i
+  shape-rendering: optimizeSpeed;
 }
 
-.line {
-  stroke: steelblue;
+.highlighted .line{
+  stroke: green;
+}
+.selected .line{
+  stroke: red;
+  stroke-width: 1.5;
+}
+.integration .line {
+  stroke: green;
+}
+.segment {
+  stroke: green;
+  stroke-width: 3;
   fill:none;
+  shape-rendering: optimizeSpeed;
+}
+
+.integration .line.highlight {
+  stroke:red;
 }
 
 .axis path,
@@ -19,12 +60,226 @@ svg {
   shape-rendering: crispEdges;
 }
 
-.scale-brush .extent {
-  stroke: #fff;
-  fill-opacity: .125;
+.extent {
+  stroke: #000;
+  fill: #69f;
+  fill-opacity: .3;
   shape-rendering: crispEdges;
 }
 
-.disable div{
-  background : blue !important; 
+.peakpick-brush{display:none}
+
+.peakdel-brush .extent {
+  fill: #f69;
+}
+.integrate-brush .extent {
+  fill: #6f9;
+}
+.scale-brush .brush-axis .domain{
+  stroke:#ccc;
+  stroke-width:8px;
+  stroke-linecap:round;
+}
+
+
+/*:focus {
+  outline: 1;
+  outline-color: black;
+}*/
+
+.all-panels text { font-size: 10px; }
+
+.logger > div{
+  position:relative
+}
+.logger > div > a{
+  display:block;
+  font-size:14px;
+  white-space:nowrap;
+}
+/****************** Context menu CSS values ***********************/
+.d3-context-menu {
+	position: absolute;
+	display: none;
+	background-color: #f2f2f2;
+	border-radius: 4px;
+
+	font: 14px FontAwesome;
+	min-width: 150px;
+	border: 1px solid #d4d4d4;
+	z-index:1200;
+}
+
+.d3-context-menu ul {
+	list-style-type: none;
+	margin: 4px 0px;
+	padding: 0px;
+	cursor: default;
+}
+
+.d3-context-menu ul li {
+	padding: 4px 16px;
+}
+
+.d3-context-menu ul li:hover {
+	background-color: #4677f8;
+	color: #fefefe;
+}
+
+/****************** Modals CSS values ***********************/
+
+.nanoModalContent input:invalid{
+  background: red;
+}
+
+input:required:invalid, input:focus:invalid {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAeVJREFUeNqkU01oE1EQ/mazSTdRmqSxLVSJVKU9RYoHD8WfHr16kh5EFA8eSy6hXrwUPBSKZ6E9V1CU4tGf0DZWDEQrGkhprRDbCvlpavan3ezu+LLSUnADLZnHwHvzmJlvvpkhZkY7IqFNaTuAfPhhP/8Uo87SGSaDsP27hgYM/lUpy6lHdqsAtM+BPfvqKp3ufYKwcgmWCug6oKmrrG3PoaqngWjdd/922hOBs5C/jJA6x7AiUt8VYVUAVQXXShfIqCYRMZO8/N1N+B8H1sOUwivpSUSVCJ2MAjtVwBAIdv+AQkHQqbOgc+fBvorjyQENDcch16/BtkQdAlC4E6jrYHGgGU18Io3gmhzJuwub6/fQJYNi/YBpCifhbDaAPXFvCBVxXbvfbNGFeN8DkjogWAd8DljV3KRutcEAeHMN/HXZ4p9bhncJHCyhNx52R0Kv/XNuQvYBnM+CP7xddXL5KaJw0TMAF8qjnMvegeK/SLHubhpKDKIrJDlvXoMX3y9xcSMZyBQ+tpyk5hzsa2Ns7LGdfWdbL6fZvHn92d7dgROH/730YBLtiZmEdGPkFnhX4kxmjVe2xgPfCtrRd6GHRtEh9zsL8xVe+pwSzj+OtwvletZZ/wLeKD71L+ZeHHWZ/gowABkp7AwwnEjFAAAAAElFTkSuQmCC);
+    background-position: right top;
+    background-repeat: no-repeat;
+    -moz-box-shadow: none;
+  }
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+/****************** Menu CSS values ***********************/
+/* Reset */
+.div-menu a,
+.div-menu .nav,
+.div-menu .nav a,
+.div-menu .nav ul,
+.div-menu .nav li,
+.div-menu .nav div,
+.div-menu .nav form,
+.div-menu .nav input {
+	margin: 0;
+	padding: 0;
+	border: none;
+	outline: none;
+}
+
+.div-menu a, .div-menu .nav a { text-decoration: none; }
+
+.div-menu .nav li { list-style: none; }
+
+/* Menu Container */
+.div-menu > .nav {
+	display: inline-block;
+	position: relative;
+	cursor: default;
+	z-index: 500;
+}
+/* Menu open button */
+.div-menu .open-menu {
+  text-align: center;
+  background: steelblue;
+  float: left;
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #fcfcfc;
+	text-shadow: 0 0 1px rgba(0,0,0,.35);
+}
+
+/* Menu List */
+.div-menu .nav > li {
+	display: block;
+	float: left;
+}
+
+/* Menu Links */
+.div-menu .nav > li > a {
+	position: relative;
+	display: block;
+	z-index: 510;f
+	padding: 0 10px;
+	
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: #fcfcfc;
+	text-shadow: 0 0 1px rgba(0,0,0,.35);
+
+	background: steelblue;
+
+	-webkit-transition: all .3s ease;
+	-moz-transition: all .3s ease;
+	-o-transition: all .3s ease;
+	-ms-transition: all .3s ease;
+	transition: all .3s ease;
+}
+
+.div-menu .nav > li:hover > a, .div-menu .nav > li:active > a { background: #98AFC7;
+}
+
+.div-menu .nav > li:first-child > a{
+	border-radius: 5px 0 0 5px;
+}
+.div-menu .nav > li:last-child > a {
+  border-radius: 0 5px 5px 0;
+}
+
+/* Menu Dropdown */
+.div-menu .nav > li > div, .nav-column > li > div {
+	position: absolute;top: 100%;
+	display: block;
+
+	opacity: 0;
+	visibility: hidden;
+	overflow: hidden;
+  white-space: nowrap;
+  
+	background: #98AFC7;
+	border-radius: 0 0 3px 3px;
+  border: 2px solid black;
+	-webkit-transition: all .3s ease .15s;
+	-moz-transition: all .3s ease .15s;
+	-o-transition: all .3s ease .15s;
+	-ms-transition: all .3s ease .15s;
+	transition: all .3s ease .15s;
+}
+
+.div-menu .nav > li:hover > div, .nav-column > li:hover > div,
+.div-menu .nav > li:active > div, .nav-column > li:active > div{
+	opacity: 1;
+	visibility: visible;
+	overflow: visible;
+}
+
+/* Menu Dropdown second level*/
+.div-menu .nav-column > li{
+  position:relative;
+}
+
+.div-menu .nav-column > li > div {
+  top:0%;left: 100%;
+  border: 2px solid black;
+}
+
+/* Menu Content Styles */
+.div-menu .nav .nav-column {
+	float: left;
+}
+.div-menu .nav .nav-column li a {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 13px;
+  padding: 0 2px 0 10px;
+	color: black;
+}
+
+.div-menu .nav .nav-column li a:hover, .div-menu .nav .nav-column li a:active { 
+  background: #889FB7;
+}
+.div-menu .nav-column li > a{
+  display: flex; /* Magic begins */
+  justify-content: space-between; /* Flush to the edges */
+  overflow-x: auto; /* Add scrollbar if necessary */
+}
+.div-menu .nav-column li a{
+  flex-shrink: 0; /* Don't shrink them */
+  white-space: nowrap; /* Don't wrap lines inside them */
+}
+.all-panels .peaks patha{
+  display:none;
 }
