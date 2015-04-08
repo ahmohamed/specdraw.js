@@ -11,16 +11,17 @@ spec.d1.scaleBrush = function(){
     
     var _brush = d3.svg.brush()
       .x(brushscale)
+			.on("brushstart",function(){d3.event.sourceEvent.stopPropagation();})
 			.on("brushend", function () {//test x or y domain?
 				var extent = _brush.empty()? brushscale.domain() : _brush.extent().reverse();
 				extent = extent.sort(brushscale.domain()[0] > brushscale.domain()[1]?
 					d3.descending : d3.ascending );
 				
-				svg.on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
+				d3.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
 			})
 		
 		svg_elem = svg.append("g")
-			.attr("class", "scale-brush")
+			.attr("class", (x? "x":"y") + " scale-brush")
 			.attr("transform", x? "translate(0," + -20 + ")"
 				: "translate(-20," + 0 + ")rotate("+90+")"
 			);
@@ -63,11 +64,11 @@ spec.d1.scaleBrush = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = +d3.select(".all-panels").attr("dispatch-index");
+		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
 		dispatcher.on("rangechange.scalebrush."+dispatch_idx, svg_elem.on("_rangechange"));
 		dispatcher.on("regionchange.scalebrush."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.scalebrush."+dispatch_idx, svg_elem.on("_redraw"));		
-		d3.select(".all-panels").attr("dispatch-index", dispatch_idx + 1);
+
 		
 		
 		return svg_elem;									
@@ -108,4 +109,4 @@ spec.d1.scaleBrush = function(){
   }
 	
 	return _main;
-}
+};
