@@ -2,6 +2,15 @@ spec.d1.pp = function(){
 	var svg_elem, x, y, dispatcher;
 	
 	function _main(svg) {
+		var menu = [
+			{
+				title: '\uf1f8 Delete peak',
+				action: function(elm, d, i) {
+					dispatcher.peakdel({xdomain:[d[0], d[0]]});
+				}
+			}
+		];
+		
 		var width = svg.attr("width"),
 				height = svg.attr("height");
 		
@@ -11,6 +20,17 @@ spec.d1.pp = function(){
 			.attr("class", "peaks")
 		
 		svg_elem
+			.on("_click", function(e){
+				if(!events.crosshair)
+					d3.selectAll(".crosshair").each(function(){
+						d3.select(this).on("_mousemove")(e);
+					});
+				
+				var clicked_peaks = d3.selectAll(".crosshair").data()
+					.sort(function(a,b){return d3.descending(a.y, b.y)});
+				
+				dispatcher.peakpick(clicked_peaks[0]);				
+			})
 			.on("_regionchange", function (e) {
 				if(e.xdomain){
 					var domain = (x.domain()).sort(d3.descending)
@@ -33,7 +53,9 @@ spec.d1.pp = function(){
 							if(d3.event.keyCode===68){
 								dispatcher.peakdel({xdomain:[d[0], d[0]]});
 							}
-						});
+						})
+						.on("contextmenu", d3.contextMenu(menu));
+						
 				
 				
 				peak_text.exit().remove();
@@ -70,7 +92,9 @@ spec.d1.pp = function(){
 						current_x = this_x;
 						labels_x.push(this_x);
 						return "translate(" + this_x + ",0)rotate(90)"; 
-				 	});
+				 	})
+					.append("title")
+						.text("dbl Click to edit");
 	
 				svg_elem.selectAll("path")
 					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
@@ -100,15 +124,28 @@ spec.d1.pp = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = +d3.select(".all-panels").attr("dispatch-index");
+		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
 		dispatcher.on("regionchange.peaks."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.peaks."+dispatch_idx, svg_elem.on("_redraw"));		
+		dispatcher.on("peakpickEnable.peaks."+dispatch_idx, function (_) {
+				dispatcher.on("click.peaks."+dispatch_idx, 
+					_? svg_elem.on("_click"): null);
+		});
+		
 		dispatcher.on("peakpick.peaks."+dispatch_idx, svg_elem.on("_peakpick"));
 		dispatcher.on("peakdel.peaks."+dispatch_idx, svg_elem.on("_peakdel"));
-		d3.select(".all-panels").attr("dispatch-index", dispatch_idx + 1);
 		
 		svg_elem.node().peaks = function(){return _peaks;};
-		svg_elem.node().addpeaks = function(_){_peaks.push([_.x,_.y]);_peaks_vis.push([_.x,_.y]);};
+		svg_elem.node().addpeaks = function(_){
+			if(!_.x){
+				for (var i = _.length - 1; i >= 0; i--) {
+					this.addpeaks( _[i] );
+				}
+			}else{
+				if(_peaks.indexOf([_.x, _.y]) == -1) //TODO:check if peak already exists.
+					_peaks.push([_.x,_.y]);
+			}
+		};
 		return svg_elem;						
 	}
 	
@@ -137,4 +174,4 @@ spec.d1.pp = function(){
   }
 	
 	return _main;
-}
+};
