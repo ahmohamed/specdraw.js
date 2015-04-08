@@ -2,7 +2,8 @@ var events = {
 	crosshair:true,
 	peakpick:false,
 	peakdel:false,
-	integrate:false,	
+	integrate:false,
+	zoom:["x", "y", false]
 }
 
 events.crosshairToggle = function () {
@@ -11,35 +12,41 @@ events.crosshairToggle = function () {
 }
 
 events.peakpickToggle = function () {
-	if(events.peakdel === true)
-		events.peakdelToggle();
-	if(events.integrate === true)
-		events.integrateToggle();
+	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
+	if(events.peakdel !== false)	events.peakdelToggle();
+	if(events.integrate !== false)	events.integrateToggle();
 	
+	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
 	dispatcher.peakpickEnable(events.peakpick);
 }
 
 events.peakdelToggle = function () {
-	if(events.peakpick === true)
-		events.peakpickToggle();
-	if(events.integrate === true)
-		events.integrateToggle();	
+	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
+	if(events.peakpick !== false)	events.peakpickToggle();
+	if(events.integrate !== false)	events.integrateToggle();	
 	
 	events.peakdel = !events.peakdel;
-	dispatcher.peakdelEnable(events.peakdel);
-	console.log(events.peakdel)
-	
+	dispatcher.peakdelEnable(events.peakdel);	
 }
 
 events.integrateToggle = function () {
-	if(events.peakpick === true)
-		events.peakpickToggle();
-	if(events.peakdel === true)
-		events.peakdelToggle();
+	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
+	if(events.peakpick !== false)	events.peakpickToggle();
+	if(events.peakdel !== false) events.peakdelToggle();
 
 	events.integrate = !events.integrate;
 	dispatcher.integrateEnable(events.integrate);	
+}
+
+events.zoomToggle = function () {
+	if(events.peakpick !== false)	events.peakpickToggle();
+	if(events.peakdel !== false)	events.peakdelToggle();
+	if(events.integrate !== false)	events.integrateToggle();	
+	
+	events.zoom.rotate();
+	console.log(events.zoom)
+	//dispatcher.integrateEnable(events.integrate);	
 }
 
 var cursor = {
@@ -52,18 +59,20 @@ var cursor = {
 }
 // Event dispatcher to group all listeners in one place.
 var dispatcher = d3.dispatch(
-	"rangechange", "regionchange","redraw",  	//redrawing events
-	"mouseenter", "mouseleave", "mousemove", 	//mouse events
+	"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+	"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
 	"keyboard",																//Keyboard
 	"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-	"integrateEnable", "integrate",						//Integration events
+	"integrateEnable", "integrate", "integ_refactor",						//Integration events
 	"crosshairEnable",
-	"blindregion"
+	"blindregion",
+	"log"
 );
 
-var registerKeyboard = function(svg){
-	svg.on("keydown", function() {
-      svg.append("text")
+var registerKeyboard = function(){
+
+	d3.select("body").on("keydown", function() {
+      /*svg.append("text")
           .attr("x","5")
           .attr("y","150")
           .style("font-size","50px")
@@ -72,6 +81,8 @@ var registerKeyboard = function(svg){
           .style("font-size","5px")
           .style("fill-opacity",".1")
 	        .remove();
+			*/
+			dispatcher.log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
 				events.peakpickToggle();
@@ -81,9 +92,27 @@ var registerKeyboard = function(svg){
 				events.integrateToggle();
 			}else if (d3.event.keyCode===67) { // c
 				events.crosshairToggle();
+			}else if (d3.event.keyCode===70) { // f
+				dispatcher.regionfull();
+			}else if (d3.event.keyCode===90) { // f
+				events.zoomToggle();
 			}
 			
+			
 			dispatcher.keyboard(d3.event);
-	  })
-	  .on("focus", function(){});
+	  });
 }
+
+/* opens a dialogue to edit svg text
+ * to be used for integration.
+function editText(evt){
+	// fetch the DOM element where the click event occurred
+	var textElement = evt.target;
+	// fetch current text contents and place them in a prompt dialog
+	var editedText = prompt("Edit textual contents:", textElement.firstChild.data);
+	// only replace text if user didn't press cancel
+	if(editedText != null){
+		textElement.firstChild.data = editedText;
+	}
+}*/
+
