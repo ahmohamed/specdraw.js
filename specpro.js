@@ -1,6 +1,6 @@
 (function(){ "use strict";
 var pro = {};
-var ajax = function (url, callback) {
+var ajax = function (url, callback, err) {
 	var http_request = new XMLHttpRequest();
 	http_request.open("GET", url, true);
 	http_request.onreadystatechange = function () {
@@ -9,6 +9,8 @@ var ajax = function (url, callback) {
 	  if (http_request.readyState === done && http_request.status === ok){
 			if(typeof(callback) === 'function')
 				callback(http_request.responseText);
+		}else	if (http_request.readyState === done){
+			err(http_request.responseText)
 		}
 	};
 	http_request.send();	
@@ -18,9 +20,15 @@ var ajaxJSONGet = function(url, callback){
 	ajax(url, function (response) {
 		prog.stop();
 	  callback(JSON.parse(response));
+	},
+	function (err) {
+		prog.stop();
+		console.log(err)
 	});
-	prog();
+	
+	//prog();
 };
+
 var ajaxProgress = function () {
 	var interval, stopped=false;
 	function check () {
@@ -50,10 +58,9 @@ var ajaxProgress = function () {
 }
 
 var get_png_data = function(y, callback){
-	var img = new Image();
+	var img = document.createElement("img");
 	
 	img.onload = function(){
-	    console.log(img.width, img.height);
 	    var canvas = document.createElement("canvas");
 	    canvas.width = img.width;
 	    canvas.height = img.height;
@@ -71,7 +78,7 @@ var get_png_data = function(y, callback){
 		callback(img_data)
 	}
 	
-	img.src = "data:image/ png;base64," + y;	
+	img.src = "data:image/png;base64," + y;	
 };
 
 var process_xy = function(pre_data, render_fun){
@@ -165,25 +172,35 @@ pro.pp = function (alg, threshold, seg) {
 			if(seg) d3.select(".spec-line").node().addSegmentByIndex(json['segs']);
 		});
 }
-pro.bl = function (alg, params) {
-	var param_str = '';
-	for(key in params){
-		params_str += '&bl_'+key+'='+params[key];
+pro.bl = function (callback, params) {
+	var params_str = '';
+	for(var key in params){
+		if(params_str.length>0) params_str +='&';
+			
+		params_str += 'bl_'+key+'='+params[key];
 	}
 	
-	proc_spec('bl?bl_a='+alg + param_str+"&bl_prev=1", 
+	proc_spec('bl?'+params_str, 
 		function (json) {
 			var yscale = d3.scale.linear().range(json['y_domain']).domain([0, 255]);
-			//var focus_xscale = d3.select(".main-focus").node().range.x;
 			
 			get_png_data(json['data'],function (img_data) {
-				//var xscale = d3.scale.linear().range(focus_xscale).domain([0, img_data.length]);
-				var data = img_data.map(function(d,i){ return yscale(d); });
+				var data = [];
 				
-				d3.select(".main-focus").node().addSpecLine(data, false);
-			});
-			
-			
+				if(json['bits'] == 16){
+					var len =  img_data.length/2;
+					yscale.domain([0,Math.pow(2,16)-1]);
+					
+					for (var i = 0; i < len; i++) {						
+						data[i] = yscale( (img_data[ i + len ] << 8) + img_data[i]);
+						//if(i<100)console.log(data[i], (img_data[ i + len ] << 8) + img_data[i])
+					}
+				}else{					
+					data = img_data.map(function(d,i){ return yscale(d); });
+				}
+				//console.log(img_data, data)
+				callback(data);
+			});			
 		});
 }
 window.pro = pro;
