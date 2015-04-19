@@ -42,7 +42,12 @@ spec.d1.line = function () {
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					data_slice = sliceDataIdx(data, x.domain(), range.x);
+					var new_slice = sliceDataIdx(data, x.domain(), range.x);
+					if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
+						return;
+					
+					data_slice = new_slice;
+					
 					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);	
 					path_elem.datum(dataResample);
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
@@ -112,6 +117,15 @@ spec.d1.line = function () {
 				this.addSegment([data[seg[0]].x, data[seg[1]].x]);
 			}
 		};
+		svg_elem.node().remove = function () {
+			dispatcher.on("regionchange.line."+dispatch_idx, null);
+			dispatcher.on("redraw.line."+dispatch_idx, null);
+			dispatcher.on("integrate.line."+dispatch_idx, null);
+			data = null;
+			if(hasCrosshair)
+				_crosshair.node().remove();
+			svg_elem.remove();
+		};
 		
 		return svg_elem;									
 	}
@@ -131,7 +145,6 @@ spec.d1.line = function () {
 		range.x = [data[0].x, data[data.length-1].x];
 		range.y = d3.extent(data.map(function(d) { return d.y; }));
 		
-		console.log(data, range)
     return _main;
   };
 	
