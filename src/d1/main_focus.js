@@ -43,22 +43,28 @@ spec.d1.main_focus = function () {
 			if(arguments.length < 2)
 				crosshair = true;
 			
-			focus.call(
-				spec.d1.line()
-					.datum(spec_data)
-					.xScale(x)
-					.yScale(y)
-					.crosshair(crosshair)
-					.dispatcher(dispatcher)
-			);
+			var elem  =spec.d1.line()
+				.datum(spec_data)
+				.xScale(x)
+				.yScale(y)
+				.crosshair(crosshair)
+				.dispatcher(dispatcher)
+				(focus);
+			
 			var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
 					x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
 					y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
 					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
 			
-			focus.on("_rangechange")({x:[x0,x1], y:[y0,y1]});
-			focus.node().nSpecs++;
+			var xdomain = x.domain(), ydomain = y.domain();
 			
+			focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
+			
+			if(focus.node().nSpecs > 0)
+				focus.on("_regionchange")({xdomain:xdomain});
+			
+			focus.node().nSpecs++;
+			return elem;
 		}
 		focus.node().getThreshold = function (callback) {
 			focus.call(
@@ -106,7 +112,9 @@ spec.d1.main_focus = function () {
 					range.y = e.y;
 			
 				dispatcher.rangechange(e);
-				focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
+				
+				if(!e.norender)
+					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
 			})
 			.on("mouseenter", dispatcher.mouseenter)
 			.on("mouseleave", dispatcher.mouseleave)
@@ -154,7 +162,7 @@ spec.d1.main_focus = function () {
 
 		//spectral lines
 		focus.node().addSpecLine(data);
-
+		
 		//peak picker	
 		focus.call(
 			spec.d1.pp()
