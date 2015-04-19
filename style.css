@@ -28,7 +28,7 @@ svg {
 }
 .line {
   stroke-width: 1;
-  fill:none;i
+  fill:none;
   shape-rendering: optimizeSpeed;
 }
 
@@ -143,6 +143,20 @@ input::-webkit-inner-spin-button {
     /* display: none; <- Crashes Chrome on hover */
     -webkit-appearance: none;
     margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+
+.nanoModalContent .title{
+	background: #428bca;
+	padding: 5px 0px 5px;
+	text-align: center;
+	margin-bottom: 10px;
+	margin-top: -15px;
+	margin-left: -20px;
+	margin-right: -20px;
+	-webkit-border-radius: 10px 10px 0px 0px;
+	-moz-border-radius: 10px 10px 0px 0px;
+	border-radius: 10px 10px 0px 0px;
+	cursor:move;
 }
 
 /****************** Menu CSS values ***********************/
