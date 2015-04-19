@@ -1,17 +1,7 @@
 spec.menu = function(){
 	var svg_elem, x, y, menu_on=false;
 	
-	function _main(svg) {
-		function css_trans(transform){
-		  return function(svg){
-		    svg.style({
-		      "transform": transform,
-		      "-webkit-transform":transform,
-		      "-moz-transform":transform,
-		      "-o-transform":transform
-		    });
-		  }
-		}
+	function _main(svg) {		
 		function toggle() {
 		  if(!menu_on){
 				button.text("✖").on("click",null)
@@ -92,10 +82,9 @@ spec.menu = function(){
 			[
 			  {
 			    name:"Peaks",
-			    fun:function(){},
 			    children:[
 			      {
-							name:"Pick peaks",fun:function(){},
+							name:"Pick peaks",
 							children:[
 								{name:"Manual peak picking",fun:events.peakpickToggle},
 							  {
@@ -128,24 +117,25 @@ spec.menu = function(){
 			  },
 				{
 					name:"Baseline",
-					fun:function(){},
 					children:[
-						{name:"Constant baseline correction",fun:function(){pro.bl("cbf")} },
-						{name:"Median baseline correction",fun:function(){pro.bl("med")} },
+						{name:"Constant baseline correction",fun:function(){pro.bl(prev_bl, {a:"cbf"})} },
+						{name:"Median baseline correction",fun:function(){pro.bl(prev_bl, {a:"med"})} },
+						{name:"Advanced options",fun:modals.bl},
 					],
 				},
 				{
 					name:"View",
-					fun:function(){},
 					children:[
 						{
-							name:"Change region",fun:modals.xRegion,
+							name:"Change region",
 							children:[
 								{name:"Set X region",fun:modals.xRegion},
 								{name:"Set Y region",fun:modals.yRegion},
 								{name:"Full spectrum",fun:dispatcher.regionfull,
 									children:[{name:"Set X region",fun:modals.xRegion},]
 								},
+								{name:"Reverse Spectrum",fun:null},
+								{name:"Invert Phases",fun:null},
 							]
 						},
 					],
@@ -162,7 +152,6 @@ spec.menu = function(){
 				},
 				{
 					name:"Export",
-					fun:function(){},
 					children:[
 						{name:"As PNG",fun:function(){
 							setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
@@ -189,7 +178,7 @@ spec.menu = function(){
 					.append("a")
 					.text(function(d){return d.name+ (d.children?" ▼":"");})
 					.attr("href", "#")
-					.on("click", function(d){toggle(); d.fun();});
+					.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
 
 			arr2el(first, function (_sel) {
 				var ret = _sel.append("div").append("ul").attr("class", "nav-column")
@@ -200,7 +189,7 @@ spec.menu = function(){
 						.append("a")
 						.text(function(d){return d.name;})
 						.attr("href", "#")
-						.on("click", function(d){toggle(); d.fun();})
+						.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
 						.append("a")
 						.text(function(d){return (d.children?" ▶":"")});
 				
@@ -212,10 +201,9 @@ spec.menu = function(){
 	
 	function arr2el(sel, fun){
 		var second = fun(sel.filter(function(d){return d.children;}));
-		
-		console.log(second.filter(function(d){return d.children;}).size());
-			if(second.filter(function(d){return d.children;}).size() > 0)
-				arr2el(second, fun);
+	
+		if(second.filter(function(d){return d.children;}).size() > 0)
+			arr2el(second, fun);
 	}
   _main.xScale = function(_){
     if (!arguments.length) return x;
