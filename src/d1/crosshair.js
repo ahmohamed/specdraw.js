@@ -89,7 +89,16 @@ spec.d1.crosshair = function(){
 			if (!arguments.length) return svg_elem.attr("i_pos");
 			svg_elem.attr("i_pos", i);
 			svg_elem.datum(data[i]);
-		}
+		};
+		svg_elem.node().remove = function () {
+			dispatcher.on("regionchange.line."+dispatch_idx, null);
+			dispatcher.on("mouseenter.line."+dispatch_idx, null);
+			dispatcher.on("mouseleave.line."+dispatch_idx, null);
+			dispatcher.on("mousemove.line."+dispatch_idx, null);	
+			dispatcher.on("crosshairEnable.line."+dispatch_idx, null);
+			data = null;
+			svg_elem.remove();			
+		};
 		
 		// Register event listeners
 		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
