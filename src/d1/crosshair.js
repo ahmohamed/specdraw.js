@@ -60,7 +60,8 @@ spec.d1.crosshair = function(){
 				svg_elem.select("text").text(d3.round(data[i].x,3));				
 			});
 		
-				
+		
+		svg_elem.node().setData = function(_){data = _;}		
 		svg_elem.node().dataSlice = function (_) {
 			if (!arguments.length) return i_scale.domain();
 			i_scale.domain(_);

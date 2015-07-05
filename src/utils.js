@@ -128,7 +128,8 @@ var cumsum = function (a) {
 };
 
 var disable = function (svg) {
-	svg_width = svg.attr("width");    svg_height = svg.attr("height");
+	var svg_width = svg.attr("width"),
+			svg_height = svg.attr("height");
 	
 	// overlay rectangle to prevent mouse events.
 	svg.append("svg:foreignObject")

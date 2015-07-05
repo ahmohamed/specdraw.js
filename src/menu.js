@@ -77,26 +77,30 @@ spec.menu = function(){
 			.text("☰")
 			.on("click", toggle);
  
-
+		var nav = div_menu.append("ul")
+			.attr("class","nav")
+			.style("overflow-y","hidden")
+			.call(css_trans("translateX("+ (-width) + "px)"));
+		
 		var menu = 
 			[
 			  {
-			    name:"Peaks",
+			    label:"Peaks",
 			    children:[
 			      {
-							name:"Pick peaks",
+							label:"Pick peaks",
 							children:[
-								{name:"Manual peak picking",fun:events.peakpickToggle},
+								{label:"Manual peak picking",fun:events.peakpickToggle},
 							  {
-									name:"Automatic using threshold",
+									label:"Automatic using threshold",
 									fun: function () {
 										d3.select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t); }
-										);									
+										);
 							  	}
 								},
 							  {
-									name:"Peak segments using threshold",
+									label:"Peak segments using threshold",
 									fun: function () {
 										d3.select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t, true); }
@@ -104,98 +108,88 @@ spec.menu = function(){
 							  	}
 								},
 							  {
-									name:"Automatic using CWT",
+									label:"Automatic using CWT",
 									fun: function () {
 										pro.pp("cwt");
 							  	}
 								},								
 							]
 						},
-			  		{name:"View/manage peak table",fun:null},
-						{name:"Delete peaks",fun:events.peakdelToggle},
+			  		{label:"View/manage peak table",fun:null},
+						{label:"Delete peaks",fun:events.peakdelToggle},
     			]
 			  },
 				{
-					name:"Baseline",
-					children:[
-						{name:"Constant baseline correction",fun:function(){pro.bl(prev_bl, {a:"cbf"})} },
-						{name:"Median baseline correction",fun:function(){pro.bl(prev_bl, {a:"med"})} },
-						{name:"Advanced options",fun:modals.bl},
-					],
-				},
-				{
-					name:"View",
+					label:"View",
 					children:[
 						{
-							name:"Change region",
+							label:"Change region",
 							children:[
-								{name:"Set X region",fun:modals.xRegion},
-								{name:"Set Y region",fun:modals.yRegion},
-								{name:"Full spectrum",fun:dispatcher.regionfull,
-									children:[{name:"Set X region",fun:modals.xRegion},]
+								{label:"Set X region",fun:modals.xRegion},
+								{label:"Set Y region",fun:modals.yRegion},
+								{label:"Full spectrum",fun:dispatcher.regionfull,
+									children:[{label:"Error",fun:function(){modals.error('error message')}},]
 								},
-								{name:"Reverse Spectrum",fun:null},
-								{name:"Invert Phases",fun:null},
+								{label:"Reverse Spectrum",fun:null},
+								{label:"Invert Phases",fun:null},
 							]
 						},
 					],
 				},
 			  {
-					name:"Integration",
+					label:"Integration",
 					fun:events.integrateToggle,
 				},
-			  {name:"crosshair",fun:events.crosshairToggle},
-			  {name:"Selected",fun:function(){},
+			  {label:"crosshair",fun:events.crosshairToggle},
+			  {label:"Selected",fun:function(){},
 					children:[
-						{name:"Scale",fun:modals.scaleLine},
+						{label:"Scale",fun:modals.scaleLine},
 					]
 				},
 				{
-					name:"Export",
+					label:"Export",
 					children:[
-						{name:"As PNG",fun:function(){
+						{label:"As PNG",fun:function(){
 							setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
 						}},
-						{name:"As SVG",fun:function(){
+						{label:"As SVG",fun:function(){
 							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
 						}},
-						{name:"CSV",fun: function(){}},
-						{name:"Peak table",fun:function(){}},
-						{name:"JCAMP-DX",fun:function(){}},
+						{label:"CSV",fun: function(){}},
+						{label:"Peak table",fun:function(){}},
+						{label:"JCAMP-DX",fun:function(){}},
 					],
 				},
 			];
-			
-			var nav = div_menu.append("ul")
-				.attr("class","nav")
-				.style("overflow-y","hidden")
-				.call(css_trans("translateX("+ (-width) + "px)"));
-
-			var first = nav.selectAll("li").data(menu);
+			pro.read_menu(menu, function () {
+				var first = nav.selectAll("li").data(menu);
 				
-			first.enter()
-				.append("li")
-					.append("a")
-					.text(function(d){return d.name+ (d.children?" ▼":"");})
-					.attr("href", "#")
-					.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-
-			arr2el(first, function (_sel) {
-				var ret = _sel.append("div").append("ul").attr("class", "nav-column")
-					.selectAll("li").data(function(d){return d.children});
-				
-				ret.enter()
-				  .append("li")
+				first.enter()
+					.append("li")
 						.append("a")
-						.text(function(d){return d.name;})
+						.text(function(d){return d.label+ (d.children?" ▼":"");})
 						.attr("href", "#")
 						.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-						.append("a")
-						.text(function(d){return (d.children?" ▶":"")});
+
+				arr2el(first, function (_sel) {
+					var ret = _sel.append("div").append("ul").attr("class", "nav-column")
+						.selectAll("li").data(function(d){return d.children});
 				
-				return ret;
+					ret.enter()
+					  .append("li")
+							.append("a")
+							.text(function(d){return d.label;})
+							.attr("href", "#")
+							.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
+							.append("a")
+							.text(function(d){return (d.children?" ▶":"")});
+				
+					return ret;
+				});
+					
 			});
 			
+		
 		return svg_elem;									
 	}
 	

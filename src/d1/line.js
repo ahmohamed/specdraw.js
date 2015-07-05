@@ -1,5 +1,5 @@
 spec.d1.line = function () {
-	var data, x, y, dispatcher, range={}, svg_elem, hasCrosshair = true;
+	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
 	
 	function _main(svg) {
 		var _crosshair, dataResample, data_slice, segments = [], scale_factor = 1;
@@ -43,8 +43,8 @@ spec.d1.line = function () {
 			.on("_regionchange", function(e){
 				if(e.xdomain){
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
-					if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
-						return;
+					//if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
+					//	return;
 					
 					data_slice = new_slice;
 					
@@ -86,8 +86,25 @@ spec.d1.line = function () {
 		dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
 		
 		svg_elem.node().specData = function () { return data;	};
+		svg_elem.node().setData = function (_) {
+			if(!_[0].x){ //if data is array, not xy format
+				data = _.map(function(d,i){ return {x:data[i].x, y:d}; });
+			}else{
+				data = _;
+			}
+			range.y = d3.extent(data.map(function(d) { return d.y; }));
+			if(_crosshair) _crosshair.node().setData(data);
+			
+			svg_elem.on("_regionchange")({xdomain:x.domain()});
+			svg_elem.on("_redraw")({x:true});
+		};
 		svg_elem.node().dataSlice = function () { return data_slice;	};
 		svg_elem.node().specRange = function () { return range;	};
+		svg_elem.node().s_id = function (_) { 
+			if (!arguments.length)
+				return s_id; 
+			s_id = _;
+		};
 		svg_elem.node().setScaleFactor = function (_) {
 			if (!arguments.length) return scale_factor;
 			scale_factor = _;
@@ -139,7 +156,7 @@ spec.d1.line = function () {
 			
 			data = _.map(function(d,i){ return {x:xscale(i), y:d}; });
 		}else{
-    data = _;
+    	data = _;
 		}
 		
 		range.x = [data[0].x, data[data.length-1].x];
@@ -158,6 +175,11 @@ spec.d1.line = function () {
     hasCrosshair = _;
     return _main;
   };
+  _main.s_id = function(_){
+    if (!arguments.length) return s_id;
+    s_id = _;
+    return _main;
+  };	
   _main.xScale = function(_){
     if (!arguments.length) return x;
     x = _;

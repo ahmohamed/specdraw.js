@@ -4,12 +4,21 @@ spec.d1.mainBrush = function(){
 	function _main(svg) {
 		function makeBrushEvent() {
 			if (_brush.empty()){
-				_brush.extent([0,0]);
+				if(x && y) _brush.extent([[0,0],[0,0]]);
+				else{ _brush.extent([0,0]); }
+				
 				svg_elem.call(_brush);
 				return null;
     	}
-	
-			var e = {xdomain:_brush.extent().reverse()}
+			var e = {}
+			if(x && y){
+				e.xdomain = [_brush.extent()[1][0], _brush.extent()[0][0]];
+				e.ydomain = [_brush.extent()[1][1], _brush.extent()[0][1]];				
+			}else{
+				e.xdomain = x? _brush.extent().reverse():null;
+				e.ydomain = y? _brush.extent():null;
+			}		
+			
 			_brush.clear();				
 			svg_elem.call(_brush);
 			return e;
@@ -39,6 +48,7 @@ spec.d1.mainBrush = function(){
 		
 	  var _brush = d3.svg.brush()
 			.x(x)
+			.y(y)
 	    .on("brushend", changeRegion);
 		
 		svg_elem = svg.append("g")

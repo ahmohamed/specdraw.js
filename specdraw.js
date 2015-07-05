@@ -1,6 +1,6 @@
 (function () { "use strict";
-  var spec = {version: "0.5.1"}; // semver
-	var setCookie = function(cname, cvalue, exdays) {
+  var spec = {version: "0.5.2"}; // semver
+	var pro = {};var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
   var expires = "expires="+d.toUTCString();
@@ -130,7 +130,8 @@ var cumsum = function (a) {
 };
 
 var disable = function (svg) {
-	svg_width = svg.attr("width");    svg_height = svg.attr("height");
+	var svg_width = svg.attr("width"),
+			svg_height = svg.attr("height");
 	
 	// overlay rectangle to prevent mouse events.
 	svg.append("svg:foreignObject")
@@ -354,6 +355,26 @@ var makeMethodParams = function(params){
   };
 };
 
+var parseNum = function (val, min, max, step) {
+	var input = this.append("input").attr("type", "number");
+
+  if(!(typeof val === "undefined")){
+		if(val.constructor === Array){
+			input.attr({
+				value: val[0],
+				min:val[1],
+				max:val[2],
+				step:val[3]
+			});
+				
+		}else{
+			input.attr("value", val);
+		}	  
+  }	
+	
+	return input;
+}
+
 var parseParams = function(label, type, val, fields, fields_label){
   if(label)
     this.text(label);
@@ -361,10 +382,7 @@ var parseParams = function(label, type, val, fields, fields_label){
 	var input;
 
   if(type === 0){
-		input = this.append("input").attr("type", "number");
-  
-	  if(!(typeof val === "undefined"))
-  	  input.attr("value", val);
+		input = parseNum.apply(this, [val]);		
   }
 	else if(type === 1){
 		input = this.append("input").attr("type", "checkbox");
@@ -391,18 +409,25 @@ var parseParams = function(label, type, val, fields, fields_label){
 				.text(function(d){return fields[d][0];})			
 			
 			input.on("input", function(){
+				
 				d3.select(this.parentNode).select(".method_params").select("fieldset").remove();
-			  d3.select(this.parentNode).select(".method_params")
-			    .append("fieldset")
-			  	.call(makeMethodParams(fields[this.value][1]))
-				  .append("legend").text( fields_label? fields_label : "Parameters");
+				// Add a fieldset only if the method has args.
+			  if( Object.keys(fields[this.value][1]).length >0 ){
+					d3.select(this.parentNode).select(".method_params")
+				    .append("fieldset")
+				  	.call(makeMethodParams(fields[this.value][1]))
+					  .append("legend").text( fields_label? fields_label : "Parameters");
+			  }
 			});
+
+			var fieldset = this.append("div")
+				.classed("method_params", true);
 			
-			this.append("div")
-				.classed("method_params", true)
-				.append("fieldset")	
-				.call(makeMethodParams(fields[input.node().value][1]))
-				.append("legend").text(fields_label? fields_label : "Parameters");
+			if( Object.keys(fields[input.node().value][1]).length >0 ){
+				fieldset.append("fieldset")	
+					.call(makeMethodParams(fields[input.node().value][1]))
+					.append("legend").text(fields_label? fields_label : "Parameters");					
+			}
 		}
   }
   else if(type === 5){		
@@ -474,7 +499,48 @@ methods.ps =
 	],
 	"prev_auto":["Auto Preview", 1, true],
 	"prev_btn":["Preview Corrected", 5, null]
-};var modals = {
+};spec.elem = {};
+
+spec.elem.dropdown = function (parent, label, options) {
+	var selector = parent.append('div')
+		.text(label)
+		.classed('checkbox-dropdown', true)
+		.append('ul')
+		.classed('checkbox-dropdown-list', true)
+		//.attr('multiple', true);
+	
+
+	var option_labels = selector.selectAll("li")
+		.data(options)
+		.enter()
+		.append("li")
+		.append("label")
+		
+	option_labels.append('input')
+		.attr('type', 'checkbox');
+	
+	option_labels.html(function(d){
+		return d3.select(this).html()+ d
+	})
+
+	parent.select('.checkbox-dropdown')
+		.on('click', function (e) {
+			d3.select(this).toggleClass('is-active');
+		});
+	
+	selector.on('click', function (e) {
+		d3.event.stopPropagation();
+	});
+	
+	selector.node().getSelected = function () {
+		return selector.selectAll('label')[0].map(function (e) {
+			if(e.children[0].checked)
+				return typeof(e.value) !== 'undefined' ? e.value : d3.select(e).text();
+		});
+	}
+	return selector;	
+};
+var modals = {
 	crosshair:true,
 	peakpick:false,
 	peakdel:false,
@@ -483,7 +549,8 @@ methods.ps =
 
 modals.proto = function (title, content, ok_fun, cancel_fun) {	
 	var nano = nanoModal(
-		'<div><div class="title">' + (title?title:"Dialogue") +  '</div>' + content + '</div>',
+		//'<div><div class="title">' + (title?title:"Dialogue") +  '</div>' + content + '</div>',
+		content,
 		{
 		overlayClose: false,
 		buttons: [
@@ -500,6 +567,9 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		]}
 	);
 	
+	d3.select(nano.modal.el).insert("div", ":first-child")
+		.classed('title', true)
+		.text( title? title : "Dialogue" )
 	d3.select(nano.modal.el).on("keydown", function() {
 		if (d3.event.keyCode===13) { // Enter
 			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
@@ -522,6 +592,15 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 	});
 	return nano;
 }
+
+modals.error = function (title, message) {
+	var nano = modals.proto('Error:' + title, message);
+	d3.select(nano.modal.el)
+		.classed('errorModal', true)
+		.select('.cancelBtn').text('Dismiss');
+	nano.show();
+}
+
 modals.range = function (text, _range, callback, _curr_val){
 	var range;
 	if(_range[0]>_range[1])
@@ -629,43 +708,72 @@ modals.scaleLine = function () {
 	)();
 };
 
-modals.bl = function () {
-  var form_data = {};
-	function oninput(){
-		pro.bl(prev_bl, form_data);
-		form_data = {}
-	}
-	var nano = modals.proto("Baseline correction","",
-		function (modal) {
-			modal.hide();
-		}		
-	);
+var add_selector = function (el, ok_fun) {
+	var specs = d3.select(".main-focus").selectAll(".spec-line")
+	var specs_labels =	specs[0].map(function (e) {
+			return e.label;
+		});
 	
-	var el = d3.select(nano.modal.el).select(".nanoModalContent");
-	el.call(makeMethodParams(methods.ps));
-	console.log(el)
+	spec.elem.dropdown(el, 'Select Spectrum', specs_labels)
+		.classed('spec-selector', true)
+		.selectAll('label').each(function (d,i) {
+			this.value = specs[0][i].s_id();
+			console.log('value',this.value)
+		})
+		.selectAll('input')
+			.attr('checked', true);
+	
+};
+
+var add_preview = function (el, ok_fun) {
+	var form_data = {}
+	var args = {
+		"prev_auto":["Auto Preview", 1, true],
+		"prev_btn":["Preview", 5, null],
+	};
+	el.call(makeMethodParams(args));
 	
 	var timer = null;
 	el.on("input", function(){
 	  d3.event.stopPropagation();
 		if(timer)
 			clearTimeout(timer);		
-
-	  el.selectAll(".param")[0].forEach(function(e){
-			//TODO: change to e.children[0].type ==="checkbox"
-	    form_data[e.id] =  e.childNodes[1].value ==="on"? e.childNodes[1].checked :e.childNodes[1].value;
-	  });
-
-		if(form_data["prev_auto"])		
-			timer = setTimeout(oninput, 300);
-		else if(d3.event.target.type === 'button'){
-			oninput();
+		
+		// prev_auto and prev_btn are labels. To check the input, look at children[0]
+		if(d3.event.target === el.select('#prev_btn').node().children[0]){
+			ok_fun();
+		}else	if(el.select('#prev_auto').node().children[0].checked){
+			timer = setTimeout(ok_fun, 300);
 		}
 	});
-	
-	nano.show();
 };
-spec.menu = function(){
+
+
+modals.method_args = function (fun ,args, title, specSelector, preview) {
+  var form_data = {}, el;
+	var ok_fun = function (modal) {
+	  el.selectAll(".param")[0].forEach(function(e){
+			//TODO: change to e.children[0].type ==="checkbox"
+	    form_data[e.id] =  e.children[0].type ==="checkbox"? e.children[0].checked :e.children[0].value;
+	  });
+		
+		if(modal) modal.hide();
+		
+		var s_ids = el.select('.spec-selector').node().getSelected()
+		pro.plugin_funcs(fun, form_data, s_ids);
+		form_data = {};
+	};
+	
+	var nano = modals.proto(title, "",	ok_fun);
+	
+	el = d3.select(nano.modal.el).select(".nanoModalContent");
+	
+	el.call(add_selector, ok_fun);
+	el.call(makeMethodParams(args));
+	el.call(add_preview, ok_fun);
+	return nano.show;
+};
+spec.method_args = modals.method_args;spec.menu = function(){
 	var svg_elem, x, y, menu_on=false;
 	
 	function _main(svg) {		
@@ -744,26 +852,30 @@ spec.menu = function(){
 			.text("☰")
 			.on("click", toggle);
  
-
+		var nav = div_menu.append("ul")
+			.attr("class","nav")
+			.style("overflow-y","hidden")
+			.call(css_trans("translateX("+ (-width) + "px)"));
+		
 		var menu = 
 			[
 			  {
-			    name:"Peaks",
+			    label:"Peaks",
 			    children:[
 			      {
-							name:"Pick peaks",
+							label:"Pick peaks",
 							children:[
-								{name:"Manual peak picking",fun:events.peakpickToggle},
+								{label:"Manual peak picking",fun:events.peakpickToggle},
 							  {
-									name:"Automatic using threshold",
+									label:"Automatic using threshold",
 									fun: function () {
 										d3.select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t); }
-										);									
+										);
 							  	}
 								},
 							  {
-									name:"Peak segments using threshold",
+									label:"Peak segments using threshold",
 									fun: function () {
 										d3.select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t, true); }
@@ -771,98 +883,88 @@ spec.menu = function(){
 							  	}
 								},
 							  {
-									name:"Automatic using CWT",
+									label:"Automatic using CWT",
 									fun: function () {
 										pro.pp("cwt");
 							  	}
 								},								
 							]
 						},
-			  		{name:"View/manage peak table",fun:null},
-						{name:"Delete peaks",fun:events.peakdelToggle},
+			  		{label:"View/manage peak table",fun:null},
+						{label:"Delete peaks",fun:events.peakdelToggle},
     			]
 			  },
 				{
-					name:"Baseline",
-					children:[
-						{name:"Constant baseline correction",fun:function(){pro.bl(prev_bl, {a:"cbf"})} },
-						{name:"Median baseline correction",fun:function(){pro.bl(prev_bl, {a:"med"})} },
-						{name:"Advanced options",fun:modals.bl},
-					],
-				},
-				{
-					name:"View",
+					label:"View",
 					children:[
 						{
-							name:"Change region",
+							label:"Change region",
 							children:[
-								{name:"Set X region",fun:modals.xRegion},
-								{name:"Set Y region",fun:modals.yRegion},
-								{name:"Full spectrum",fun:dispatcher.regionfull,
-									children:[{name:"Set X region",fun:modals.xRegion},]
+								{label:"Set X region",fun:modals.xRegion},
+								{label:"Set Y region",fun:modals.yRegion},
+								{label:"Full spectrum",fun:dispatcher.regionfull,
+									children:[{label:"Error",fun:function(){modals.error('error message')}},]
 								},
-								{name:"Reverse Spectrum",fun:null},
-								{name:"Invert Phases",fun:null},
+								{label:"Reverse Spectrum",fun:null},
+								{label:"Invert Phases",fun:null},
 							]
 						},
 					],
 				},
 			  {
-					name:"Integration",
+					label:"Integration",
 					fun:events.integrateToggle,
 				},
-			  {name:"crosshair",fun:events.crosshairToggle},
-			  {name:"Selected",fun:function(){},
+			  {label:"crosshair",fun:events.crosshairToggle},
+			  {label:"Selected",fun:function(){},
 					children:[
-						{name:"Scale",fun:modals.scaleLine},
+						{label:"Scale",fun:modals.scaleLine},
 					]
 				},
 				{
-					name:"Export",
+					label:"Export",
 					children:[
-						{name:"As PNG",fun:function(){
+						{label:"As PNG",fun:function(){
 							setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
 						}},
-						{name:"As SVG",fun:function(){
+						{label:"As SVG",fun:function(){
 							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
 						}},
-						{name:"CSV",fun: function(){}},
-						{name:"Peak table",fun:function(){}},
-						{name:"JCAMP-DX",fun:function(){}},
+						{label:"CSV",fun: function(){}},
+						{label:"Peak table",fun:function(){}},
+						{label:"JCAMP-DX",fun:function(){}},
 					],
 				},
 			];
-			
-			var nav = div_menu.append("ul")
-				.attr("class","nav")
-				.style("overflow-y","hidden")
-				.call(css_trans("translateX("+ (-width) + "px)"));
-
-			var first = nav.selectAll("li").data(menu);
+			pro.read_menu(menu, function () {
+				var first = nav.selectAll("li").data(menu);
 				
-			first.enter()
-				.append("li")
-					.append("a")
-					.text(function(d){return d.name+ (d.children?" ▼":"");})
-					.attr("href", "#")
-					.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-
-			arr2el(first, function (_sel) {
-				var ret = _sel.append("div").append("ul").attr("class", "nav-column")
-					.selectAll("li").data(function(d){return d.children});
-				
-				ret.enter()
-				  .append("li")
+				first.enter()
+					.append("li")
 						.append("a")
-						.text(function(d){return d.name;})
+						.text(function(d){return d.label+ (d.children?" ▼":"");})
 						.attr("href", "#")
 						.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-						.append("a")
-						.text(function(d){return (d.children?" ▶":"")});
+
+				arr2el(first, function (_sel) {
+					var ret = _sel.append("div").append("ul").attr("class", "nav-column")
+						.selectAll("li").data(function(d){return d.children});
 				
-				return ret;
+					ret.enter()
+					  .append("li")
+							.append("a")
+							.text(function(d){return d.label;})
+							.attr("href", "#")
+							.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
+							.append("a")
+							.text(function(d){return (d.children?" ▶":"")});
+				
+					return ret;
+				});
+					
 			});
 			
+		
 		return svg_elem;									
 	}
 	
@@ -991,7 +1093,8 @@ spec.d1.threshold = function () {
 				svg_elem.select("text").text(d3.round(data[i].x,3));				
 			});
 		
-				
+		
+		svg_elem.node().setData = function(_){data = _;}		
 		svg_elem.node().dataSlice = function (_) {
 			if (!arguments.length) return i_scale.domain();
 			i_scale.domain(_);
@@ -1208,7 +1311,7 @@ spec.d1.integrate = function(){
 	return _main;
 };
 spec.d1.line = function () {
-	var data, x, y, dispatcher, range={}, svg_elem, hasCrosshair = true;
+	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
 	
 	function _main(svg) {
 		var _crosshair, dataResample, data_slice, segments = [], scale_factor = 1;
@@ -1252,8 +1355,8 @@ spec.d1.line = function () {
 			.on("_regionchange", function(e){
 				if(e.xdomain){
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
-					if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
-						return;
+					//if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
+					//	return;
 					
 					data_slice = new_slice;
 					
@@ -1295,8 +1398,25 @@ spec.d1.line = function () {
 		dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
 		
 		svg_elem.node().specData = function () { return data;	};
+		svg_elem.node().setData = function (_) {
+			if(!_[0].x){ //if data is array, not xy format
+				data = _.map(function(d,i){ return {x:data[i].x, y:d}; });
+			}else{
+				data = _;
+			}
+			range.y = d3.extent(data.map(function(d) { return d.y; }));
+			if(_crosshair) _crosshair.node().setData(data);
+			
+			svg_elem.on("_regionchange")({xdomain:x.domain()});
+			svg_elem.on("_redraw")({x:true});
+		};
 		svg_elem.node().dataSlice = function () { return data_slice;	};
 		svg_elem.node().specRange = function () { return range;	};
+		svg_elem.node().s_id = function (_) { 
+			if (!arguments.length)
+				return s_id; 
+			s_id = _;
+		};
 		svg_elem.node().setScaleFactor = function (_) {
 			if (!arguments.length) return scale_factor;
 			scale_factor = _;
@@ -1348,7 +1468,7 @@ spec.d1.line = function () {
 			
 			data = _.map(function(d,i){ return {x:xscale(i), y:d}; });
 		}else{
-    data = _;
+    	data = _;
 		}
 		
 		range.x = [data[0].x, data[data.length-1].x];
@@ -1367,6 +1487,11 @@ spec.d1.line = function () {
     hasCrosshair = _;
     return _main;
   };
+  _main.s_id = function(_){
+    if (!arguments.length) return s_id;
+    s_id = _;
+    return _main;
+  };	
   _main.xScale = function(_){
     if (!arguments.length) return x;
     x = _;
@@ -1387,12 +1512,21 @@ spec.d1.mainBrush = function(){
 	function _main(svg) {
 		function makeBrushEvent() {
 			if (_brush.empty()){
-				_brush.extent([0,0]);
+				if(x && y) _brush.extent([[0,0],[0,0]]);
+				else{ _brush.extent([0,0]); }
+				
 				svg_elem.call(_brush);
 				return null;
     	}
-	
-			var e = {xdomain:_brush.extent().reverse()}
+			var e = {}
+			if(x && y){
+				e.xdomain = [_brush.extent()[1][0], _brush.extent()[0][0]];
+				e.ydomain = [_brush.extent()[1][1], _brush.extent()[0][1]];				
+			}else{
+				e.xdomain = x? _brush.extent().reverse():null;
+				e.ydomain = y? _brush.extent():null;
+			}		
+			
 			_brush.clear();				
 			svg_elem.call(_brush);
 			return e;
@@ -1422,6 +1556,7 @@ spec.d1.mainBrush = function(){
 		
 	  var _brush = d3.svg.brush()
 			.x(x)
+			.y(y)
 	    .on("brushend", changeRegion);
 		
 		svg_elem = svg.append("g")
@@ -1808,7 +1943,7 @@ spec.d1.main_focus = function () {
 		
 		
 		/****** Attach functions on svg node ********/
-		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther evernts.
+		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther events.
 		focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
 		focus.node().xScale = x;
 		focus.node().yScale = y;
@@ -1818,23 +1953,46 @@ spec.d1.main_focus = function () {
 			focus.select(".peaks").on("_regionchange")({xdomain:true});
 			focus.select(".peaks").on("_redraw")({x:true});			
 		};
-		focus.node().addSpecLine = function(spec_data, crosshair){
-			if(arguments.length < 2)
+		focus.node().addSpecLine = function(spec_data, crosshair, overwrite){
+			if(!crosshair)
 				crosshair = true;
 			
-			var elem  =spec.d1.line()
-				.datum(spec_data)
-				.xScale(x)
-				.yScale(y)
-				.crosshair(crosshair)
-				.dispatcher(dispatcher)
-				(focus);
+		  
+			var s_id = null;
+			var spec_label = 'spec'+focus.node().nSpecs;
+			if(!(spec_data.constructor === Array)){
+				if(typeof spec_data["s_id"] != 'undefined') s_id = spec_data["s_id"];
+				if(typeof spec_data["label"] != 'undefined') label = spec_data["label"];
+				spec_data = spec_data["data"]
+			}
+			
+			var elem;
+			//if(overwrite) console.log("overwrite size:", overwrite.size());
+			
+			if(!overwrite || overwrite.size() == 0){
+				elem = spec.d1.line()
+					.datum(spec_data)
+					.xScale(x)
+					.yScale(y)
+					.s_id(s_id)
+					.crosshair(crosshair)
+					.dispatcher(dispatcher)
+					(focus);
+				
+				elem.node().label = spec_label;
+			}else{
+				console.log("overwriting spec");
+				elem = overwrite;
+				elem.node().setData(spec_data);
+				if(s_id) elem.node().s_id(s_id);
+			}
+
 			
 			var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
-					x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
-					y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
-			
+				x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
+				y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
+				y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
+	
 			var xdomain = x.domain(), ydomain = y.domain();
 			
 			focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
@@ -1845,6 +2003,8 @@ spec.d1.main_focus = function () {
 			focus.node().nSpecs++;
 			return elem;
 		}
+		focus.node().addSpec = focus.node().addSpecLine;
+		focus.node().nd = 1;
 		focus.node().getThreshold = function (callback) {
 			focus.call(
 				spec.d1.threshold()
@@ -1940,11 +2100,11 @@ spec.d1.main_focus = function () {
 		);
 
 		//spectral lines
-		for (var i = 0; i < 3; i++) {
+		/*for (var i = 0; i < 3; i++) {
 			pro.bl(function (data) {
 				focus.node().addSpecLine(data).node().remove();
 			}, {a:"cbf", prev:0});
-		}
+		}*/
 		focus.node().addSpecLine(data);
 		
 		//peak picker	
@@ -2024,25 +2184,102 @@ spec.d1.main_focus = function () {
 		var width = svg_width - margin.left - margin.right,
         height = svg_height - margin.top - margin.bottom;
 	  
-		applyCSS2();
+		//applyCSS2();
 		
     var x = d3.scale.linear().range([0, width]),
-    y = d3.scale.linear().range([height, 0]);
+    	y = d3.scale.linear().range([height, 0]);
   
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("right")
           .tickFormat(d3.format("s"));
-  
-    svg.append("defs").append("clipPath")
-        .attr("id", "clip")
-      .append("rect")
-        .attr("width", width)
-        .attr("height", height);
-  
+  	
+		var two_d = (data["nd"] && data["nd"]==2);
+		
 		var all_panels = svg.append("g")
 			.attr("class", "all-panels")
 			.append("g")
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+    var defs = all_panels.append("defs");
+		
+		defs.append("clipPath")
+        .attr("id", "clip")
+      .append("rect")
+        .attr("width", width)
+        .attr("height", height);
+		
+		
+		
+		/** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
+				where 127 represent the zero. We want to recolor them as follows:
+			 	* positive values colored with a red-orange hue.
+				* negative values colored with a blue-cyan hue.
+				* Zeros colored as white.
+			* To do so, first copy Red component to Green and Blue.
+			* Red component will take zeros upto 255/2 (127) i.e negative values. values >127 colored using red/green gradient.
+			* constrast this for the blue component.
+		*/
+			
+		if(two_d){
+			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
+			svg_filter.append("feColorMatrix")
+				.attr("type","matrix")
+				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
+			
+			var fe_component_transfer = svg_filter.append("feComponentTransfer")
+											.attr("color-interpolation-filters","sRGB");
+			
+			fe_component_transfer.append("feFuncR")
+									.attr("type","linear")
+									.attr("slope","-1")
+									.attr("intercept","0.5");
+									
+			fe_component_transfer.append("feFuncB")
+									.attr("type","linear")
+									.attr("slope","1")
+									.attr("intercept","-0.5");
+			
+			var fe_component_transfer = svg_filter.append("feComponentTransfer")
+											.attr("color-interpolation-filters","sRGB");
+	
+			fe_component_transfer.append("feFuncR")
+									.attr("id","rfunc")
+									.attr("type","linear")
+									.attr("slope","1");
+							
+			fe_component_transfer.append("feFuncB")
+									.attr("id","bfunc")
+									.attr("type","linear")
+									.attr("slope","1");
+													
+			svg_filter.append("feColorMatrix")
+				.attr("type","matrix")
+				.attr("values","-10 0 0 0 1 -10 0 -10 0 1 0 0 -10 0 1 0 0 0 1 0");
+			
+			
+			/*svg_filter.append("feColorMatrix")
+						.attr("type","matrix")
+						.attr("values","1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
+			var fe_component_transfer = svg_filter.append("feComponentTransfer")
+											.attr("color-interpolation-filters","sRGB");
+			fe_component_transfer.append("feFuncR")
+									.attr("id","rtable")
+									.attr("type","table")
+									.attr("tableValues","0 0 1 1 2");
+			fe_component_transfer.append("feFuncG")
+									.attr("id","gtable")
+									.attr("type","table")
+									.attr("tableValues","0 0.5 1 0.5 0");
+			fe_component_transfer.append("feFuncB")
+									.attr("id","btable")
+									.attr("type","table")
+									.attr("tableValues","2 1 1 0 0");			*/
+		}
+		/**********************************/		
+				
+				
+				
+				
 		
 		svg.call(spec.menu());
 		
@@ -2101,14 +2338,17 @@ spec.d1.main_focus = function () {
 		});
 		
 		
+		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
 		//Main focus
-		all_panels.call(spec.d1.main_focus()
-			.datum(data)
-			.xScale(x)
-			.yScale(y)
-			.width(width)
-			.height(height)
-			.dispatcher(dispatcher));
+		all_panels.call(
+			main_focus()
+				.datum(data)
+				.xScale(x)
+				.yScale(y)
+				.width(width)
+				.height(height)
+				.dispatcher(dispatcher)
+		);
 		
 		//Scale brushes
 		all_panels.call(
@@ -2122,10 +2362,6 @@ spec.d1.main_focus = function () {
 				.yScale(y)
 				.dispatcher(dispatcher)
 		);
-	
-		//console.log(getComputedStyle(d3.select(".spec-line").select(".line").node()));
-		
-		
 		
 		/* testing peak picker */
 		/*dispatcher.peakpick(data[1000]);
@@ -2139,6 +2375,7 @@ spec.d1.main_focus = function () {
 		dispatcher.peakpick(data[1000]);*/
 		//console.log(d3.selectAll(".spec-line"))
 		
+		//console.log(getComputedStyle(d3.select(".spec-line").select(".line").node()));
   }
  
   d1main.datum = function(x){
@@ -2161,7 +2398,683 @@ spec.d1.main_focus = function () {
   return d1main;
 
 };
-  window.spec = spec;
+spec.d2 = {};
+spec.d2.main_focus = function () {
+	var focus, width, height, x, y, dispatcher, data, range = {};
+	var zoomer = d3.behavior.zoom()
+		.on("zoom", function (){
+			/*var factor = 0.3/Math.log(30);
+			var val = Math.log(zoomer.scale())*factor;		
+			d3.select("#rfunc").attr("slope",0.5+val);
+			d3.select("#bfunc").attr("intercept",-0.5+val);*/
+			d3.select("#rfunc").attr("slope", zoomer.scale());
+			d3.select("#bfunc").attr("slope", zoomer.scale());
+		}).scaleExtent([0.1,100]);	
+	
+	function _main(all_panels) {
+		focus = all_panels.append("g")
+		    .attr("class", "main-focus")
+		    .attr("pointer-events", "all")
+				.attr("width", width)
+				.attr("height", height)
+				.call(zoomer)
+				.on("dblclick.zoom", null)
+				.on("mousedown.zoom", null);
+		
+		
+		/****** Attach functions on svg node ********/
+		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther evernts.
+		focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
+		focus.node().xScale = x;
+		focus.node().yScale = y;
+		focus.node().range = range;
+		focus.node().addPeaks = function (idx) { //TODO:move peaks to line
+			focus.select(".peaks").node().addpeaks(data.subset(idx));			
+			focus.select(".peaks").on("_regionchange")({xdomain:true});
+			focus.select(".peaks").on("_redraw")({x:true});			
+		};
+		focus.node().addSpec = function(spec_data, crosshair, overwrite){
+			if(arguments.length < 2)
+				crosshair = true;
+			
+			var elem;
+			if(overwrite) console.log("overwrite size:", overwrite.size());
+			
+			if(!overwrite || overwrite.size() == 0){
+				elem = spec.d2.spec2d()
+					.datum(spec_data["data"])
+					.xScale(x)
+					.yScale(y)
+					.s_id(spec_data["s_id"])
+					.range({x:spec_data["x_domain"], y:spec_data["y_domain"]})
+					.crosshair(crosshair)
+					.dispatcher(dispatcher)
+					(focus);
+			}else{
+				console.log("overwriting spec");
+				elem = overwrite;
+				elem.node().setData(spec_data['data']);
+				if(spec_data['s_id']) elem.node().s_id(spec_data['s_id']);
+			}
+			
+			var xdomain = x.domain(), ydomain = y.domain();
+			
+			console.log("domains: ",spec_data["x_domain"], spec_data["y_domain"])
+			focus.on("_rangechange")({x:spec_data["x_domain"], y:spec_data["y_domain"], norender: focus.node().nSpecs > 0});
+			
+			if(focus.node().nSpecs > 0)
+				focus.on("_regionchange")({xdomain:xdomain, ydomain:ydomain});
+			
+			focus.node().nSpecs++;
+			return elem;
+		};
+		focus.node().addSpecLine = focus.node().addSpec;
+		focus.node().nd = 2;
+		focus.node().getThreshold = function (callback) {
+			focus.call(
+				spec.d1.threshold()
+					.xScale(x).yScale(y)
+					.dispatcher(dispatcher)
+					.callback(callback)
+			);	
+		};
+		//focus.node().getThreshold(null);
+		
+		/*********** Handling Events **************/
+		focus
+			.on("_redraw", function(e){			
+				dispatcher.redraw(e);
+			})
+			.on("_regionchange", function(e){
+				// If the change is in X
+				if(e.xdomain){
+					x.domain(e.xdomain);	
+				}				
+				//dispatcher.regionchange({xdomain:e.xdomain});
+							
+				if(e.ydomain){
+					y.domain(e.ydomain);					
+				}
+				
+				dispatcher.regionchange({xdomain:e.xdomain, ydomain:y.domain()});
+				focus.on("_redraw")({x:e.xdomain, y:true});
+			})
+			.on("_rangechange", function(e){
+				if(e.x)
+					range.x = e.x;
+				if(e.y)
+					range.y = e.y;
+			
+				dispatcher.rangechange(e);
+				
+				if(!e.norender)
+					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
+			})
+			.on("mouseenter", dispatcher.mouseenter)
+			.on("mouseleave", dispatcher.mouseleave)
+			.on("mousemove", function(e){
+				var new_e = d3.event;
+				new_e.xcoor = d3.mouse(this)[0];
+				new_e.ycoor = d3.mouse(this)[1];
+			
+				dispatcher.mousemove(new_e);
+			})
+			.on("mousedown", function (e) {	// Why?! because no brush when cursor on path?
+			  var new_click_event = new Event('mousedown');
+			  new_click_event.pageX = d3.event.pageX;
+			  new_click_event.clientX = d3.event.clientX;
+			  new_click_event.pageY = d3.event.pageY;
+			  new_click_event.clientY = d3.event.clientY;
+			  focus.select(".main-brush").node()
+					.dispatchEvent(new_click_event);
+			})
+			.on("click", function(e){
+				var new_e = d3.event;
+				new_e.xcoor = d3.mouse(this)[0];
+				new_e.ycoor = d3.mouse(this)[1];
+		
+				dispatcher.click(new_e)
+			})
+			.on("dblclick", dispatcher.regionfull);
+
+		dispatcher.on("regionfull",function () {
+			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
+		});
+			
+		// overlay rectangle for mouse events to be dispatched.
+		/*focus.append("rect")
+			.attr("width", width)
+			.attr("height", height)
+			.style("fill", "none");
+		*/
+		
+		focus.node().addSpec(data);
+		//brushes
+		focus.call(
+			spec.d1.mainBrush()
+				.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+		);
+    
+		
+		
+		//peak picker	
+		/*focus.call(
+			spec.d1.pp()
+				.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+		);*/
+	}
+	
+  _main.datum = function(_){
+    if (!arguments.length) return data;
+    data = _;
+    return _main;
+  };
+  _main.dispatcher = function(_) {
+  	if (!arguments.length) return dispatcher;
+  	dispatcher = _;
+  	return _main;
+  };
+  _main.xScale = function(_){
+    if (!arguments.length) return x;
+    x = _;
+    return _main;
+  };
+  _main.yScale = function(_){
+    if (!arguments.length) return y;
+    y = _;
+    return _main;
+  };
+  _main.width = function(_){
+    if (!arguments.length) return width;
+    width = _;
+    return _main;
+  };
+  _main.height = function(_){
+    if (!arguments.length) return height;
+    height = _;
+    return _main;
+  };
+	return _main;	
+};spec.d2.spec2d = function () {
+	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
+	
+	function _main(svg) {
+		var _crosshair, segments = [], scale_factor = 1;
+		
+		var width = svg.attr("width"),
+				height = svg.attr("height");
+		
+		svg_elem = svg.append("g")
+			.attr("class", "spec-img")
+
+		var img_elem = svg_elem.append("g")
+			.attr("clip-path","url(#clip)")
+			.attr("filter", "url(#2dColorFilter)")
+			.append("svg:image")
+			  .attr('width', width)
+			  .attr('height', height)
+			  .attr('xlink:href', "data:image/ png;base64," + data)
+			  .attr("preserveAspectRatio", "none");
+				
+
+			
+		range
+		svg_elem.node().range = range;
+		
+		/*** TODO: 2D dataset vis *****
+		
+		var line_idx = d3.select(".main-focus").node().nSpecs;
+		var path_elem = svg_elem.append("path")
+      .datum(data)
+			.attr("class", "line clr"+ line_idx)
+		
+		******************************/
+		
+		/*if(hasCrosshair)
+			_crosshair = (spec.d1.crosshair() 
+				.datum(data)
+				.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+			)(svg_elem);
+		*/
+		// TODO: 2D integration
+		
+		svg_elem
+			.on("_redraw", function(e){				
+				console.log("scale & range: ",x, range.x)
+				var orignial_xscale = x.copy().domain(range.x),
+					orignial_yscale = y.copy().domain(range.y);
+			
+				//zooming on 2d picture by first translating, then scaling.
+				var translate_coor = [-Math.min(orignial_xscale(x.domain()[1]), orignial_xscale(x.domain()[0])),
+					 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+		
+				var	scale_coor = [ Math.abs((range.x[0]-range.x[1])/(x.domain()[0]-x.domain()[1])),
+								   Math.abs((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]))];
+
+				img_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+			})
+			.on("_regionchange", function(e){				
+			})
+			.on("_integrate", function(e){
+			})
+			.on("_segment", function (e) {
+			});
+		
+		// Register event listeners
+		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
+		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
+		//dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
+		
+		svg_elem.node().specData = function () { return data;	};
+		svg_elem.node().setData = function (_) {
+			data = _;
+			img_elem.attr('xlink:href', "data:image/ png;base64," + data)
+			svg_elem.on("_redraw")();
+		};
+		svg_elem.node().specRange = function () { return range;	};
+		svg_elem.node().s_id = function () { return s_id;	};
+		svg_elem.node().setScaleFactor = function (_) {
+			if (!arguments.length) return scale_factor;
+			scale_factor = _;
+			svg_elem.on("_redraw")({y:true});
+		};
+		
+		svg_elem.node().remove = function () {
+			dispatcher.on("regionchange.line."+dispatch_idx, null);
+			dispatcher.on("redraw.line."+dispatch_idx, null);
+			//dispatcher.on("integrate.line."+dispatch_idx, null);
+			data = null;
+			/*if(hasCrosshair)
+				_crosshair.node().remove();*/
+			svg_elem.remove();
+		};
+		
+		return svg_elem;									
+	}
+	
+  _main.datum = function(_){
+    if (!arguments.length) return data;		
+		data = _;
+		return _main;
+  };
+  _main.range = function(_){
+    if (!arguments.length) return range;		
+		range = _;
+		return _main;
+  };
+  _main.dispatcher = function(_){
+    if (!arguments.length) return dispatcher;
+    dispatcher = _;
+    return _main;
+  };
+  _main.crosshair = function(_){
+    if (!arguments.length) return hasCrosshair;
+    hasCrosshair = _;
+    return _main;
+  };
+  _main.s_id = function(_){
+    if (!arguments.length) return s_id;
+    s_id = _;
+    return _main;
+  };
+  _main.xScale = function(_){
+    if (!arguments.length) return x;
+    x = _;
+    return _main;
+  };
+
+  _main.yScale = function(_){
+    if (!arguments.length) return y;
+    y = _;
+    return _main;
+  };
+	
+	return _main;
+};
+var ajax = function (url, callback, err) {
+	var http_request = new XMLHttpRequest();
+	http_request.open("GET", url, true);
+	http_request.onreadystatechange = function () {
+	  var done = 4;
+	  var ok = 200;
+	  if (http_request.readyState === done && http_request.status === ok){
+			if(typeof(callback) === 'function')
+				callback(http_request.responseText);
+		}else	if (http_request.readyState === done){
+			err(http_request.responseText)
+		}
+	};
+	http_request.send();	
+};
+var ajaxJSONGet = function(url, callback, show_progress){
+	var prog = ajaxProgress();
+	ajax(url, function (response) {
+		prog.stop();
+		var json = JSON.parse(response);
+		if(typeof json['error'] === 'undefined'){
+		  callback(json);
+		}else{
+			modals.error(json['error']['name'], json['error']['message']);
+		}
+
+	},
+	function (err) {
+		prog.stop();
+		modals.error('Network Error', err);
+	});
+	
+	if(show_progress)
+		prog();
+};
+
+var ajaxProgress = function () {
+	var interval, stopped=false;
+	function check () {
+		ajax('/nmr/test', function (response) {
+			if(!stopped){
+				d3.select(".progress").text(response);
+				setTimeout(check, 100);
+			}else{
+				ajax('/nmr/test?complete=1')
+			}
+		});
+	}
+	
+	var run = function() {
+		check();
+	}
+	
+	run.stop = function() {
+		clearInterval(interval);
+		stopped = true;
+	  d3.select(".progress").text("Completed")
+			/*.transition()
+	    .duration(2500)
+	    .style("opacity", 1e-6)*/
+	}
+	return run;
+}
+var get_png_data = function(y, callback){
+	var img = document.createElement("img");
+	
+	img.onload = function(){
+	    var canvas = document.createElement("canvas");
+	    canvas.width = img.width;
+	    canvas.height = img.height;
+
+	    // Copy the image contents to the canvas
+	    var ctx = canvas.getContext("2d");
+
+	    ctx.drawImage(img, 0, 0);    
+	    var buffer = ctx.getImageData(0,0,img.width,img.height).data;
+		
+	    var img_data = Array.prototype.filter.call(buffer, function(element, index){
+	        return(index%4==0);
+	    });
+		
+		callback(img_data)
+	}
+	
+	img.src = "data:image/png;base64," + y;	
+};
+
+var process_xy = function(pre_data, render_fun){
+	var data = pre_data.x.map(function(d,i){ return {x:d, y:pre_data.y[i]}; });	
+	render_fun(data);
+};
+
+var process_png = function(pre_data, render_fun){
+	if (pre_data['nd'] == 1){
+		get_png_data(pre_data['y'], function(img_data){
+			// Scaling X and Y
+			var xscale = d3.scale.linear().range(pre_data['x_domain']).domain([0, img_data.length]);
+			var yscale = d3.scale.linear().range(pre_data['y_domain']).domain([0, 255]);
+		
+			// Mapping data and rendering
+			var data = img_data.map(function(d,i){ return {x:xscale(i), y:yscale(d)}; });
+			render_fun(data);	
+		});
+	}
+	
+	if (pre_data['nd'] == 2){
+		// Mapping data and rendering
+		render_fun(pre_data);
+	}
+};
+
+
+var process_b64 = function(pre_data, render_fun){
+	var img_data = atob(pre_data['y'])
+	console.log(img_data);
+	// Scaling X and Y
+	var xscale = d3.scale.linear().range(pre_data['x_domain']).domain([0, img_data.length]);
+	var yscale = d3.scale.linear().range(pre_data['y_domain']).domain([0, 255]);
+
+	// Mapping data and rendering
+	var data = img_data.map(function(d,i){ return {x:xscale(i), y:yscale(d)}; });
+	render_fun(data);	
+};
+
+
+var processPNG = function (json, callback) {
+	if (!json['nd'] || json['nd'] == 1){
+		var img = document.createElement("img");
+	
+		img.onload = function(){
+	    var canvas = document.createElement("canvas");
+	    canvas.width = img.width;
+	    canvas.height = img.height;
+
+	    // Copy the image contents to the canvas
+	    var ctx = canvas.getContext("2d");
+
+	    ctx.drawImage(img, 0, 0);    
+	    var buffer = ctx.getImageData(0,0,img.width,img.height).data;
+	
+	    var img_data = [];
+			var _16bit = (json['format'] == "png16")
+			var len = _16bit? buffer.length/2: buffer.length;
+			
+			var yscale = d3.scale.linear().range(json['y_domain']).domain([0, 255]);
+			if(_16bit) yscale.domain([0,Math.pow(2,16)-1]);
+			
+			for (var i = 0; i < len; i+=4) {
+				if(!_16bit){
+					img_data.push(yscale(buffer[i]))
+				}else{
+					img_data.push( yscale( (buffer[ i + len ] << 8) + buffer[i]) );
+				}
+			}
+			
+			if(json['x_domain']){
+				var xscale = d3.scale.linear().range(json['x_domain']).domain([0, img_data.length]);
+				img_data = img_data.map(function(d,i){ return {x:xscale(i), y:d}; });
+			}
+			
+			console.log("img_data",img_data);
+			var ret;
+			if(typeof json["s_id"] != 'undefined')
+				ret = {data:img_data, s_id:json['s_id']}
+			else{ ret = {data:img_data} }
+			
+			callback(ret)
+		}
+		var png_data = json['data']? json['data']: json['y'];
+		img.src = "data:image/png;base64," + png_data;
+	}else if (json['nd'] == 2){
+		// Mapping data and rendering
+		callback(json);
+	}else{
+		console.log("Unsupported data dimension: "+ json['nd'])
+	}
+};
+
+/* * get the sepctrum from the web service in one these formats:
+	* Plain JSON X-Y ['xy']
+	* JSON X(range), Y (base64) ['base64'] --> if scaled down to 8 or 16 bits: require "y_domain"
+	* JSON X(range), Y(png) ['png']--> require "y_domain"
+
+  ** JSON object will contain the following parameters:
+	* format: xy, base64, png
+	* nd: number of dimensions (1 or 2)
+	* x or x_domain: the chemical shift (x) value for each point, or chemical shift range (x_doamin)
+	* y: singal intensities along the sepctrum.
+	* y_domain: if 'y' was reduced to 8 or 16 bit, y_domain scales it back to original values.
+*/
+
+pro.get_spec = function(url, render_fun){
+	ajaxJSONGet(url, function(pre_data){
+		switch (pre_data['format']){
+			case 'xy':
+				process_xy(pre_data, render_fun);
+				break;
+			case 'base64'://add base64 processing
+				process_b64(pre_data, render_fun)
+				break;
+			case 'png':
+				process_png(pre_data, render_fun);
+				break;
+		}
+	});	
+};
+
+pro.get_spectrum = function (url, render_fun) {
+	ajaxJSONGet(url, function (response) {
+		if (response.constructor === Array) {
+			for (var i = response.length - 1; i >= 0; i--) {
+				processPNG(response[i], render_fun);	
+			}
+		}else{
+			processPNG(response, render_fun);	
+		}
+	});
+};
+var find_menu_item = function (menu, item) {
+	for (var i = menu.length - 1; i >= 0; i--) {
+		if(menu[i].label == item){
+			return menu[i];
+		}
+	}
+	menu.push({label:item})
+	//console.log(menu, item)
+	return menu[menu.length-1];
+};
+
+var append_menu_item = function(menu, item){
+	if ("fun" in item) {
+		if("args" in item && item["args"]){
+			menu["fun"] = spec.method_args(item["fun"] ,item["args"], item["title"])
+		}else{
+			menu["fun"] = function () {pro.plugin_funcs (item["fun"])	};			
+		}
+		return;
+	}
+	
+	if(!menu.children)
+		menu.children = [];
+			
+	for (var k in item) {
+		var sub_menu = find_menu_item(menu.children, k);
+		append_menu_item(sub_menu, item[k]);
+	}
+};
+
+pro.read_menu = function (menu, callback) {
+	ajaxJSONGet('/nmr/test', function (response) {
+		for (var k in response) {
+			var sub_menu = find_menu_item(menu, k);
+			append_menu_item(sub_menu, response[k]);
+		}
+		callback(menu);
+	});
+};
+//pro.read_menu();
+pro.output = {};
+pro.output.overwriteSpec = function (new_data, s_id) {
+	if(typeof s_id === 'undefined' && 
+		typeof new_data['s_id'] !== 'undefined'){
+		s_id = new_data['s_id'];
+	}
+	
+	var _main_focus = d3.select(".main-focus");
+	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
+	var overwrite_spec = _main_focus.selectAll(classname)
+	.filter(function(e){ return this.s_id()==s_id; });
+	
+	_main_focus.node().addSpecLine(new_data, true, overwrite_spec);
+};
+pro.output.preview = function (new_data) {
+	if(d3.select(".preview-spec").size() > 0){
+		d3.select(".preview-spec").node().setData(new_data);
+	}else{
+		d3.select(".main-focus").node()
+			.addSpecLine(new_data, false)
+			.classed("preview-spec", true);		
+	}
+};
+pro.output.newSpec = function (new_data) {
+	d3.select(".main-focus").node().addSpecLine(new_data);
+};
+pro.output.newSlide = function (new_data) {
+	
+};
+pro.pp = function (alg, threshold, seg) {
+	var a;
+	
+	if(!alg || alg=="threshold")
+		a = 't';
+	else if(alg=="connected")
+		a = 'c'
+	else if(alg=="cwt")
+		a = 'cwt'
+	
+	if(!threshold)
+		threshold = 0;
+	proc_spec('pp?pp_a='+a
+		+ '&pp_t='+threshold
+		+ '&pp_s='+(seg? 1 : 0), 
+		function (json) {
+			d3.select(".main-focus").node().addPeaks(json['peaks']);
+			if(seg) d3.select(".spec-line").node().addSegmentByIndex(json['segs']);
+		});
+}
+
+
+var get_selected_spec = function () {
+	var _main_focus = d3.select(".main-focus");
+	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
+	
+	var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
+	if(s_id.length == 0)
+		s_id = _main_focus.selectAll(classname)[0].map(function(d){return d.s_id();});
+	
+	return s_id;
+};
+
+pro.plugin_funcs = function (fun, params, s_id) {
+	if(!s_id) s_id = get_selected_spec();
+	
+	var params_str = "sid="+s_id+"&" + fun+'_=null';
+	for(var key in params){
+		if(params_str.length>0) params_str +='&';			
+		params_str += fun+'_'+key+'='+params[key];
+	}
+	
+	var url = '/nmr/plugins?'+params_str;
+	ajaxJSONGet(url, function (response) {
+		var output_fun = response["output"]? pro.output[ response["output"] ]: pro.output.overwriteSpec;
+		
+		processPNG(response, output_fun);
+	});
+};  window.spec = spec;
+	window.pro = pro;
 	console.log("specdraw:"+ spec.version);
 })();
 /*

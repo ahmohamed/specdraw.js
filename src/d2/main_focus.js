@@ -1,21 +1,14 @@
-spec.d1.main_focus = function () {
+spec.d2.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
-
 	var zoomer = d3.behavior.zoom()
-		.on("zoom", function () {
-			/* * When a y brush is applied, the scaled region should go both up and down.*/
-			var new_range = range.y[1]/zoomer.scale() - range.y[0];
-			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2
-		
-			var new_region = [];
-			if(y.domain()[0] == range.y[0]) new_region[0] = range.y[0];
-			else{new_region[0] = Math.max(y.domain()[0]-addition, range.y[0]);}
-			new_region[1] = new_region[0] + new_range;
-		
-			focus.on("_regionchange")(
-				{zoom:true,	ydomain:new_region}
-			);
-		});
+		.on("zoom", function (){
+			/*var factor = 0.3/Math.log(30);
+			var val = Math.log(zoomer.scale())*factor;		
+			d3.select("#rfunc").attr("slope",0.5+val);
+			d3.select("#bfunc").attr("intercept",-0.5+val);*/
+			d3.select("#rfunc").attr("slope", zoomer.scale());
+			d3.select("#bfunc").attr("slope", zoomer.scale());
+		}).scaleExtent([0.1,100]);	
 	
 	function _main(all_panels) {
 		focus = all_panels.append("g")
@@ -29,7 +22,7 @@ spec.d1.main_focus = function () {
 		
 		
 		/****** Attach functions on svg node ********/
-		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther events.
+		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther evernts.
 		focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
 		focus.node().xScale = x;
 		focus.node().yScale = y;
@@ -39,58 +32,43 @@ spec.d1.main_focus = function () {
 			focus.select(".peaks").on("_regionchange")({xdomain:true});
 			focus.select(".peaks").on("_redraw")({x:true});			
 		};
-		focus.node().addSpecLine = function(spec_data, crosshair, overwrite){
-			if(!crosshair)
+		focus.node().addSpec = function(spec_data, crosshair, overwrite){
+			if(arguments.length < 2)
 				crosshair = true;
 			
-		  
-			var s_id = null;
-			var spec_label = 'spec'+focus.node().nSpecs;
-			if(!(spec_data.constructor === Array)){
-				if(typeof spec_data["s_id"] != 'undefined') s_id = spec_data["s_id"];
-				if(typeof spec_data["label"] != 'undefined') label = spec_data["label"];
-				spec_data = spec_data["data"]
-			}
-			
 			var elem;
-			//if(overwrite) console.log("overwrite size:", overwrite.size());
+			if(overwrite) console.log("overwrite size:", overwrite.size());
 			
 			if(!overwrite || overwrite.size() == 0){
-				elem = spec.d1.line()
-					.datum(spec_data)
+				elem = spec.d2.spec2d()
+					.datum(spec_data["data"])
 					.xScale(x)
 					.yScale(y)
-					.s_id(s_id)
+					.s_id(spec_data["s_id"])
+					.range({x:spec_data["x_domain"], y:spec_data["y_domain"]})
 					.crosshair(crosshair)
 					.dispatcher(dispatcher)
 					(focus);
-				
-				elem.node().label = spec_label;
 			}else{
 				console.log("overwriting spec");
 				elem = overwrite;
-				elem.node().setData(spec_data);
-				if(s_id) elem.node().s_id(s_id);
+				elem.node().setData(spec_data['data']);
+				if(spec_data['s_id']) elem.node().s_id(spec_data['s_id']);
 			}
-
 			
-			var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
-				x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
-				y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-				y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
-	
 			var xdomain = x.domain(), ydomain = y.domain();
 			
-			focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
+			console.log("domains: ",spec_data["x_domain"], spec_data["y_domain"])
+			focus.on("_rangechange")({x:spec_data["x_domain"], y:spec_data["y_domain"], norender: focus.node().nSpecs > 0});
 			
 			if(focus.node().nSpecs > 0)
-				focus.on("_regionchange")({xdomain:xdomain});
+				focus.on("_regionchange")({xdomain:xdomain, ydomain:ydomain});
 			
 			focus.node().nSpecs++;
 			return elem;
-		}
-		focus.node().addSpec = focus.node().addSpecLine;
-		focus.node().nd = 1;
+		};
+		focus.node().addSpecLine = focus.node().addSpec;
+		focus.node().nd = 2;
 		focus.node().getThreshold = function (callback) {
 			focus.call(
 				spec.d1.threshold()
@@ -111,23 +89,13 @@ spec.d1.main_focus = function () {
 				if(e.xdomain){
 					x.domain(e.xdomain);	
 				}				
-				dispatcher.regionchange({xdomain:e.xdomain});
+				//dispatcher.regionchange({xdomain:e.xdomain});
 							
 				if(e.ydomain){
-					y.domain(e.ydomain);
-					if(!e.zoom) //If y domain is changed by brush, adjust zoom scale
-						zoomer.scale((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]));
-				}else{
-					//modify range.y  and reset the zoom scale
-					var y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
-					range.y = [y0,y1];
-					y.domain(range.y);
-					dispatcher.rangechange({y:range.y});
-					zoomer.scale(1);
+					y.domain(e.ydomain);					
 				}
-			
-				dispatcher.regionchange({ydomain:y.domain()});
+				
+				dispatcher.regionchange({xdomain:e.xdomain, ydomain:y.domain()});
 				focus.on("_redraw")({x:e.xdomain, y:true});
 			})
 			.on("_rangechange", function(e){
@@ -169,37 +137,34 @@ spec.d1.main_focus = function () {
 			.on("dblclick", dispatcher.regionfull);
 
 		dispatcher.on("regionfull",function () {
-			focus.on("_regionchange")({xdomain:range.x});		
+			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
 		});
 			
 		// overlay rectangle for mouse events to be dispatched.
-		focus.append("rect")
+		/*focus.append("rect")
 			.attr("width", width)
 			.attr("height", height)
 			.style("fill", "none");
-
+		*/
+		
+		focus.node().addSpec(data);
 		//brushes
 		focus.call(
 			spec.d1.mainBrush()
 				.xScale(x)
+				.yScale(y)
 				.dispatcher(dispatcher)
 		);
-
-		//spectral lines
-		/*for (var i = 0; i < 3; i++) {
-			pro.bl(function (data) {
-				focus.node().addSpecLine(data).node().remove();
-			}, {a:"cbf", prev:0});
-		}*/
-		focus.node().addSpecLine(data);
+    
+		
 		
 		//peak picker	
-		focus.call(
+		/*focus.call(
 			spec.d1.pp()
 				.xScale(x)
 				.yScale(y)
 				.dispatcher(dispatcher)
-		);
+		);*/
 	}
 	
   _main.datum = function(_){

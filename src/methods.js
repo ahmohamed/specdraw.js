@@ -19,6 +19,26 @@ var makeMethodParams = function(params){
   };
 };
 
+var parseNum = function (val, min, max, step) {
+	var input = this.append("input").attr("type", "number");
+
+  if(!(typeof val === "undefined")){
+		if(val.constructor === Array){
+			input.attr({
+				value: val[0],
+				min:val[1],
+				max:val[2],
+				step:val[3]
+			});
+				
+		}else{
+			input.attr("value", val);
+		}	  
+  }	
+	
+	return input;
+}
+
 var parseParams = function(label, type, val, fields, fields_label){
   if(label)
     this.text(label);
@@ -26,10 +46,7 @@ var parseParams = function(label, type, val, fields, fields_label){
 	var input;
 
   if(type === 0){
-		input = this.append("input").attr("type", "number");
-  
-	  if(!(typeof val === "undefined"))
-  	  input.attr("value", val);
+		input = parseNum.apply(this, [val]);		
   }
 	else if(type === 1){
 		input = this.append("input").attr("type", "checkbox");
@@ -56,18 +73,25 @@ var parseParams = function(label, type, val, fields, fields_label){
 				.text(function(d){return fields[d][0];})			
 			
 			input.on("input", function(){
+				
 				d3.select(this.parentNode).select(".method_params").select("fieldset").remove();
-			  d3.select(this.parentNode).select(".method_params")
-			    .append("fieldset")
-			  	.call(makeMethodParams(fields[this.value][1]))
-				  .append("legend").text( fields_label? fields_label : "Parameters");
+				// Add a fieldset only if the method has args.
+			  if( Object.keys(fields[this.value][1]).length >0 ){
+					d3.select(this.parentNode).select(".method_params")
+				    .append("fieldset")
+				  	.call(makeMethodParams(fields[this.value][1]))
+					  .append("legend").text( fields_label? fields_label : "Parameters");
+			  }
 			});
+
+			var fieldset = this.append("div")
+				.classed("method_params", true);
 			
-			this.append("div")
-				.classed("method_params", true)
-				.append("fieldset")	
-				.call(makeMethodParams(fields[input.node().value][1]))
-				.append("legend").text(fields_label? fields_label : "Parameters");
+			if( Object.keys(fields[input.node().value][1]).length >0 ){
+				fieldset.append("fieldset")	
+					.call(makeMethodParams(fields[input.node().value][1]))
+					.append("legend").text(fields_label? fields_label : "Parameters");					
+			}
 		}
   }
   else if(type === 5){		

@@ -145,7 +145,7 @@ input::-webkit-inner-spin-button {
     margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
 }
 
-.nanoModalContent .title{
+.nanoModal .title{
 	background: #428bca;
 	padding: 5px 0px 5px;
 	text-align: center;
@@ -158,6 +158,22 @@ input::-webkit-inner-spin-button {
 	border-radius: 10px 10px 0px 0px;
 	cursor:move;
 }
+
+.nanoModalContent{
+	overflow:auto;
+	max-height: 500px;
+}
+
+.nanoModal.errorModal .title{
+	background: #d9534f;
+}
+.nanoModal.errorModal .cancelBtn{
+	background: #d9534f;
+}
+.nanoModal.errorModal .nanoModalBtnPrimary{
+	display: none;
+}
+
 
 /****************** Menu CSS values ***********************/
 /* Reset */
@@ -182,6 +198,7 @@ input::-webkit-inner-spin-button {
 /* Menu Container */
 .div-menu > .nav {
 	display: inline-block;
+	flex-wrap:nowrap;
 	position: relative;
 	cursor: default;
 	z-index: 500;
@@ -201,6 +218,7 @@ input::-webkit-inner-spin-button {
 .div-menu .nav > li {
 	display: block;
 	float: left;
+	white-space:nowrap;
 }
 
 /* Menu Links */
@@ -288,7 +306,7 @@ input::-webkit-inner-spin-button {
 .div-menu .nav-column li > a{
   display: flex; /* Magic begins */
   justify-content: space-between; /* Flush to the edges */
-  overflow-x: auto; /* Add scrollbar if necessary */
+  overflow-x: visible; /* Add scrollbar if necessary */
 }
 .div-menu .nav-column li a{
   flex-shrink: 0; /* Don't shrink them */
@@ -296,4 +314,84 @@ input::-webkit-inner-spin-button {
 }
 .all-panels .peaks patha{
   display:none;
+}
+
+/************* Specrum selector *************/
+.checkbox-dropdown {
+    width: 200px;
+    border: 1px solid silver;
+    cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
+    padding: 10px;
+    position: relative;
+    /*margin: 0 auto;*/
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Display CSS arrow to the right of the dropdown text */
+.checkbox-dropdown:after {
+    content:'';
+    height: 0;
+    position: absolute;
+    width: 0;
+    border: 6px solid transparent;
+    border-top-color: #000;
+    top: 50%;
+    right: 10px;
+    margin-top: -3px;
+}
+
+/* Reverse the CSS arrow when the dropdown is active */
+.checkbox-dropdown.is-active:after {
+    border-bottom-color: #000;
+    border-top-color: transparent;
+    margin-top: -9px;
+}
+
+.checkbox-dropdown-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: 100%; /* align the dropdown right below the dropdown text */
+    border: inherit;
+    border-top: none;
+    left: -1px; /* align the dropdown to the left */
+    right: -1px; /* align the dropdown to the right */
+    opacity: 0; /* hide the dropdown */
+    -webkit-transition: opacity 0.4s ease-in-out;
+    -moz-transition: opacity 0.4s ease-in-out;
+    -o-transition: opacity 0.4s ease-in-out;
+    -ms-transition: opacity 0.4s ease-in-out;
+    transition: opacity 0.4s ease-in-out;
+    pointer-events: none; /* avoid mouse click events inside the dropdown */
+}
+.is-active .checkbox-dropdown-list {
+    opacity: 1; /* display the dropdown */
+    pointer-events: auto; /* make sure that the user still can select checkboxes */
+}
+
+.checkbox-dropdown-list li label {
+		background-color: white;
+    display: block;
+    border-bottom: 1px solid silver;
+    padding: 10px;
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    -ms-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+}
+
+.checkbox-dropdown-list li label:hover {
+    background-color: #c41230;
+    color: white;
+}
+body:-webkit-full-screen{
+  width: 100%;
+  height: 100%;
 }
