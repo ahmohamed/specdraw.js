@@ -21,7 +21,7 @@ pro.pp = function (alg, threshold, seg) {
 
 
 var get_selected_spec = function () {
-	var _main_focus = d3.select(".main-focus");
+	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
 	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
 	
 	var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
@@ -34,7 +34,7 @@ var get_selected_spec = function () {
 pro.plugin_funcs = function (fun, params, s_id) {
 	if(!s_id) s_id = get_selected_spec();
 	
-	var params_str = "sid="+s_id+"&" + fun+'_=null';
+	var params_str = "sid=["+s_id+"]&" + fun+'_=null';
 	for(var key in params){
 		if(params_str.length>0) params_str +='&';			
 		params_str += fun+'_'+key+'='+params[key];
@@ -44,6 +44,6 @@ pro.plugin_funcs = function (fun, params, s_id) {
 	ajaxJSONGet(url, function (response) {
 		var output_fun = response["output"]? pro.output[ response["output"] ]: pro.output.overwriteSpec;
 		
-		processPNG(response, output_fun);
+		pro.process_spectrum(response, output_fun);
 	});
 };

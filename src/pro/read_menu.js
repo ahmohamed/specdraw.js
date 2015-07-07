@@ -12,7 +12,9 @@ var find_menu_item = function (menu, item) {
 var append_menu_item = function(menu, item){
 	if ("fun" in item) {
 		if("args" in item && item["args"]){
-			menu["fun"] = spec.method_args(item["fun"] ,item["args"], item["title"])
+			menu["fun"] = function(){
+				spec.method_args(item["fun"] ,item["args"], item["title"])();
+			};
 		}else{
 			menu["fun"] = function () {pro.plugin_funcs (item["fun"])	};			
 		}

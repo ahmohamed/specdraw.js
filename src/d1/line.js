@@ -16,7 +16,9 @@ spec.d1.line = function () {
 		
 		svg_elem.node().range = range;
 			
-		var line_idx = d3.select(".main-focus").node().nSpecs;
+		var line_idx = svg.node().nSpecs;
+		svg_elem.node().line_idx = line_idx;
+		
 		var path_elem = svg_elem.append("path")
       .datum(data)
 			.attr("class", "line clr"+ line_idx)
@@ -80,12 +82,13 @@ spec.d1.line = function () {
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
 		dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
 		
 		svg_elem.node().specData = function () { return data;	};
+		//TODO: Update peaks, integrate, segments to match new data.
 		svg_elem.node().setData = function (_) {
 			if(!_[0].x){ //if data is array, not xy format
 				data = _.map(function(d,i){ return {x:data[i].x, y:d}; });
@@ -151,7 +154,7 @@ spec.d1.line = function () {
     if (!arguments.length) return data;
 		if(!_[0].x){ //if data is array, not xy format
 			var xscale = d3.scale.linear()
-				.range(d3.select(".main-focus").node().range.x)
+				.range(svg.node().range.x)
 				.domain([0, _.length]);
 			
 			data = _.map(function(d,i){ return {x:xscale(i), y:d}; });

@@ -124,7 +124,7 @@ spec.d1.pp = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.peaks."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.peaks."+dispatch_idx, svg_elem.on("_redraw"));		
 		dispatcher.on("peakpickEnable.peaks."+dispatch_idx, function (_) {

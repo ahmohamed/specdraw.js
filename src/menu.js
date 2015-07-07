@@ -5,18 +5,20 @@ spec.menu = function(){
 		function toggle() {
 		  if(!menu_on){
 				button.text("✖").on("click",null)
-			  nav.style("overflow-y","visible")
 				
-				d3.select(".all-panels")
+				d3.select(".spec-slide.active")
 					.transition().duration(500)
 					.attrTween("transform",function(){
 				 	return function(t){
-	          nav.call(css_trans("translateX("+ (-width+t*width) + "px)"));
-	          button.call(css_trans("translateY("+ t*height + "px)"));
-				    return "translate(0,"+ t*height+")";
+						nav.style("max-height", (t*height) +"px");
+	          //nav.call(css_trans("translateX("+ (-width+t*width) + "px)"));
+	          //button.call(css_trans("translateY("+ t*height + "px)"));
+				    //return "translate(0,"+ t*height+")";
+						return "translate(0,"+ 0+")";
 				 	}
 				}).each("end", function(){
 	        button.on("click", toggle);
+					nav.style("overflow-y","visible")
 					div_menu.style("overflow", "visible");
 	        menu_on = true;
 	      });    
@@ -24,20 +26,21 @@ spec.menu = function(){
 		    button.text("☰").on("click",null);    
 				nav.style("overflow-y","hidden");
 				
-		    d3.select(".all-panels")
+		    d3.select(".spec-slide.active")
 					.transition().duration(500)
 					.attrTween("transform",function(){
 					 	return function(t){
 		          nav.style("max-height", (height-t*height) +"px");
-		          button.call(css_trans("translateY("+ (height-t*height) + "px)"));
-					    return "translate(0,"+ (height-t*height) +")";
+		          //button.call(css_trans("translateY("+ (height-t*height) + "px)"));
+					    //return "translate(0,"+ (height-t*height) +")";
+							return "translate(0,"+ 0+")";
 					 	}
 					})
 		    .each("end", function(){
 		      	div_menu.style("overflow", "hidden");
 		      	nav
-							.style("max-height","none")
-		          .call(css_trans("translate("+ (-width) + "px,0px)"));
+							//.style("max-height","none")
+		          //.call(css_trans("translate("+ (-width) + "px,0px)"));
 		        button.on("click", toggle);
 		        menu_on = false;
 		    	});
@@ -80,7 +83,8 @@ spec.menu = function(){
 		var nav = div_menu.append("ul")
 			.attr("class","nav")
 			.style("overflow-y","hidden")
-			.call(css_trans("translateX("+ (-width) + "px)"));
+			.style("max-height",'0px')
+			//.call(css_trans("translateX("+ (-width) + "px)"));
 		
 		var menu = 
 			[
@@ -94,7 +98,7 @@ spec.menu = function(){
 							  {
 									label:"Automatic using threshold",
 									fun: function () {
-										d3.select(".main-focus").node().getThreshold(
+										d3.select(".spec-slide.active").select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t); }
 										);
 							  	}
@@ -102,7 +106,7 @@ spec.menu = function(){
 							  {
 									label:"Peak segments using threshold",
 									fun: function () {
-										d3.select(".main-focus").node().getThreshold(
+										d3.select('.spec-slide.active').select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t, true); }
 										);
 							  	}
@@ -127,7 +131,7 @@ spec.menu = function(){
 							children:[
 								{label:"Set X region",fun:modals.xRegion},
 								{label:"Set Y region",fun:modals.yRegion},
-								{label:"Full spectrum",fun:dispatcher.regionfull,
+								{label:"Full spectrum",fun:null,//dispatcher.regionfull,
 									children:[{label:"Error",fun:function(){modals.error('error message')}},]
 								},
 								{label:"Reverse Spectrum",fun:null},

@@ -28,15 +28,14 @@ svg {
 }
 .line {
   stroke-width: 1;
-  fill:none;
+  fill:none !important;
   shape-rendering: optimizeSpeed;
 }
 
 .highlighted .line{
-  stroke: green;
+  stroke-width: 2;
 }
 .selected .line{
-  stroke: red;
   stroke-width: 1.5;
 }
 .integration .line {
@@ -51,6 +50,12 @@ svg {
 
 .integration .line.highlight {
   stroke:red;
+}
+
+.integration-text rect {
+  fill: #fff;
+  stroke: green;
+  opacity: .7;
 }
 
 .axis path,
@@ -87,7 +92,13 @@ svg {
   outline-color: black;
 }*/
 
-.all-panels text { font-size: 10px; }
+.spec-slide{
+	display:none;
+}
+
+.spec-slide.active{
+	display:initial;
+}
 
 .logger > div{
   position:relative
@@ -312,9 +323,7 @@ input::-webkit-inner-spin-button {
   flex-shrink: 0; /* Don't shrink them */
   white-space: nowrap; /* Don't wrap lines inside them */
 }
-.all-panels .peaks patha{
-  display:none;
-}
+
 
 /************* Specrum selector *************/
 .checkbox-dropdown {
@@ -390,6 +399,68 @@ input::-webkit-inner-spin-button {
 .checkbox-dropdown-list li label:hover {
     background-color: #c41230;
     color: white;
+}
+.checkbox-dropdown-list .spec-legend{
+  font-weight: bold;
+  text-decoration: line-through;
+}
+.slideout {
+    position: fixed;
+    top: 40px;
+    left: 0;
+    width: 35px;
+    padding: 12px 0;
+    text-align: center;
+    background: #6DAD53;
+    -webkit-transition-duration: 0.3s;
+    -moz-transition-duration: 0.3s;
+    transition-duration: 0.3s;
+    -o-transition-duration: 0.3s;
+    -webkit-border-radius: 0 5px 5px 0;
+    -moz-border-radius: 0 5px 5px 0;
+    border-radius: 0 5px 5px 0;
+}
+.slideout p{
+    font-weight: bold;
+    color: white;
+    width: 1px;
+    word-break: break-all;
+    display: inline-block;
+    margin-left: 10px;
+}
+.slideout_inner {
+    position: fixed;
+    top: 40px;
+    left: -230px;
+    background: #6DAD53;
+    width: 200px;
+    padding: 15px;
+    height: 130px;
+	  overflow: auto;
+    -webkit-transition-duration: 0.3s;
+    -moz-transition-duration: 0.3s;
+    transition-duration: 0.3s;
+    -o-transition-duration: 0.3s;
+    text-align: center;
+		font-size: 16px;
+    -webkit-border-radius: 0 0 5px 0;
+    -moz-border-radius: 0 0 5px 0;
+    border-radius: 0 0 5px 0;
+}
+.slideout_inner div{
+	  padding: 10px;
+		border: 2px solid #3D9D53;
+		cursor: pointer;
+}
+.slideout_inner div:hover{
+		background-color: #9DDD83;
+	  border: 2px solid #3D9D53;
+}
+.slideout.active {
+    left: 230px;
+}
+.slideout.active .slideout_inner {
+    left: 0;
 }
 body:-webkit-full-screen{
   width: 100%;

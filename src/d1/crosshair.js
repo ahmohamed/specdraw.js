@@ -16,7 +16,7 @@ spec.d1.crosshair = function(){
 		};
 		
 		var i_scale = x.copy();
-		var line_idx = d3.select(".main-focus").node().nSpecs;
+		var line_idx = svg.node().line_idx;
 		
 		svg_elem = svg.append("g")
 			.attr("class", "crosshair")
@@ -102,7 +102,7 @@ spec.d1.crosshair = function(){
 		};
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
 		dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});

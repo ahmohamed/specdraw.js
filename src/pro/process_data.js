@@ -95,7 +95,7 @@ var processPNG = function (json, callback) {
 				img_data = img_data.map(function(d,i){ return {x:xscale(i), y:d}; });
 			}
 			
-			console.log("img_data",img_data);
+			//console.log("img_data",img_data);
 			var ret;
 			if(typeof json["s_id"] != 'undefined')
 				ret = {data:img_data, s_id:json['s_id']}
@@ -142,14 +142,29 @@ pro.get_spec = function(url, render_fun){
 	});	
 };
 
+pro.process_spectrum = function(json, render_fun){
+	if (json.constructor === Array) {
+		for (var i = json.length - 1; i >= 0; i--) {
+			pro.process_spectrum(json[i], render_fun);	
+		}
+		return;
+	}
+	switch (json['format']){
+		case 'xy':
+			process_xy(json, render_fun);
+			break;
+		case 'base64'://add base64 processing
+			process_b64(json, render_fun)
+			break;
+		case 'png':
+		case 'png16':
+			processPNG(json, render_fun);
+			break;
+	}	
+};
+
 pro.get_spectrum = function (url, render_fun) {
 	ajaxJSONGet(url, function (response) {
-		if (response.constructor === Array) {
-			for (var i = response.length - 1; i >= 0; i--) {
-				processPNG(response[i], render_fun);	
-			}
-		}else{
-			processPNG(response, render_fun);	
-		}
+		pro.process_spectrum(response, render_fun);
 	});
 };

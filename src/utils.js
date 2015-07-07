@@ -45,6 +45,9 @@ Array.prototype.rotateTo =function(val){
   }
   return this;
 };
+// TODO: Needs a lot of debugging!!
+// parent.class is undefined if the node doesn't have a class
+// Similarly, parent.id
 d3.selection.prototype.selectP =function(name){
 	var parent = this.node().parentNode;
 	while(parent){       
@@ -199,17 +202,6 @@ $(function() {
 //<a onclick='saveSvgAsPng(document.getElementById("svg"), "svg.png")'>any</a>
 var drawTrace = function (svg, data, xdomain) {
 	
-}
-var prev_bl = function(data){
-	if(d3.select(".baseline").size() > 0){
-		d3.select(".baseline").node().remove();
-		d3.select(".main-focus").node().nSpecs--;
-	}
-		
-	
-	d3.select(".main-focus").node()
-		.addSpecLine(data, false)
-		.classed("baseline", true);
 }
 
 

@@ -122,18 +122,18 @@ modals.input = function (text, value,callback){
 modals.xRegion = function () {
 	modals.range(
 		"Set x region to:\n",
-		d3.select(".main-focus").node().range.x,
-		function (new_range) { d3.select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-		d3.select(".main-focus").node().xScale.domain()
+		d3.select('.spec-slide.active').select(".main-focus").node().range.x,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
 	)();
 };
 
 modals.yRegion = function () {
 	modals.range(
 		"Set y region to:\n",
-		d3.select(".main-focus").node().range.y,
-		function (new_range) { d3.select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-		d3.select(".main-focus").node().yScale.domain()
+		d3.select('.spec-slide.active').select(".main-focus").node().range.y,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
 	)();
 };
 
@@ -167,20 +167,7 @@ modals.scaleLine = function () {
 };
 
 var add_selector = function (el, ok_fun) {
-	var specs = d3.select(".main-focus").selectAll(".spec-line")
-	var specs_labels =	specs[0].map(function (e) {
-			return e.label;
-		});
-	
-	spec.elem.dropdown(el, 'Select Spectrum', specs_labels)
-		.classed('spec-selector', true)
-		.selectAll('label').each(function (d,i) {
-			this.value = specs[0][i].s_id();
-			console.log('value',this.value)
-		})
-		.selectAll('input')
-			.attr('checked', true);
-	
+	spec.elem.spectrumSelector(el)
 };
 
 var add_preview = function (el, ok_fun) {
@@ -211,13 +198,12 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
   var form_data = {}, el;
 	var ok_fun = function (modal) {
 	  el.selectAll(".param")[0].forEach(function(e){
-			//TODO: change to e.children[0].type ==="checkbox"
 	    form_data[e.id] =  e.children[0].type ==="checkbox"? e.children[0].checked :e.children[0].value;
 	  });
 		
 		if(modal) modal.hide();
 		
-		var s_ids = el.select('.spec-selector').node().getSelected()
+		var s_ids = el.select('.spec-selector').node().getSelected();
 		pro.plugin_funcs(fun, form_data, s_ids);
 		form_data = {};
 	};

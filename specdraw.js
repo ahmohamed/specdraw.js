@@ -47,6 +47,9 @@ Array.prototype.rotateTo =function(val){
   }
   return this;
 };
+// TODO: Needs a lot of debugging!!
+// parent.class is undefined if the node doesn't have a class
+// Similarly, parent.id
 d3.selection.prototype.selectP =function(name){
 	var parent = this.node().parentNode;
 	while(parent){       
@@ -202,17 +205,6 @@ $(function() {
 var drawTrace = function (svg, data, xdomain) {
 	
 }
-var prev_bl = function(data){
-	if(d3.select(".baseline").size() > 0){
-		d3.select(".baseline").node().remove();
-		d3.select(".main-focus").node().nSpecs--;
-	}
-		
-	
-	d3.select(".main-focus").node()
-		.addSpecLine(data, false)
-		.classed("baseline", true);
-}
 
 
 var clr_space = ["#5e94e5", "#26aa0e", "#fd5f11", "#fe25fb", "#a6906a", "#f75a93", "#02a783", "#b974f3", "#969904", "#b684a5", "#e07559", "#6a9baa", "#cd8313", "#fd45c6", "#69a24d", "#d46fbf", "#769c7d", "#a584d2", "#d77786", "#af9039", "#fb5d67", "#0f9ed1", "#04aa53", "#e258ed", "#8587f9", "#6ca313", "#8692be", "#0ca4a3", "#9f9091", "#bf8578", "#e4742d", "#c8844a", "#8a9a5c", "#fa6046", "#df6d9f", "#ef5cb3", "#fe37e0", "#d46ad9", "#859d36", "#5aa26f", "#4aa734", "#4b92ff", "#ed6780", "#c07db8", "#bc79d9", "#b88d0d", "#839891", "#26a868", "#0ca2b7", "#5c9f97", "#a388be", "#a0944f", "#ce7f65", "#6097d1", "#878ed2", "#878be5", "#b68c57", "#e66e6d", "#ca7b9f", "#d87b43", "#c869fa", "#8f9777", "#fd587a", "#8f93a4", "#eb5acc", "#c68632", "#b4888b", "#57a183", "#f045f4", "#0e98f9", "#a87eec", "#01aa3c", "#dc7a03", "#a7931a", "#619abe", "#a08cab", "#f7652f", "#fe4ab3", "#289ae5", "#67a335", "#4ca64c", "#ef6d0c", "#9e9638", "#829e15", "#51a710", "#a68f7e", "#c5808b", "#ec6d45", "#ee6a5a", "#f04fda", "#be8764", "#8f9947", "#779e69", "#d67972", "#29a590", "#d075ac", "#fe4fa0", "#d57e2b", "#e25ce0", "#4ca562", "#759f5b", "#c677c5", "#dd68c6", "#259fc4", "#ef60a0", "#e0708c", "#ef638d", "#959663", "#bf7fab", "#ca6ced", "#fe5c54", "#7b9e46", "#c572df", "#47a0aa", "#a67cf9", "#a98b98", "#7f95b1", "#979384", "#829984", "#6c90ec", "#e16aac", "#84969e", "#519db7", "#ce7d7f", "#44a47c", "#b381c5", "#c2881e", "#699f76", "#6b9c9d", "#379bd8", "#b68a71", "#a3925d", "#e154fa", "#cf813b", "#f46274", "#d27e51", "#849a70", "#93992e", "#9f83e5", "#b98b41", "#78a02d", "#f552c0", "#df7379", "#ff5387", "#d77499", "#31a92a", "#fe2fed", "#fe3fd3", "#35a844", "#f04ae7", "#6e93d8", "#e3743d", "#b18f27", "#ad9048", "#43a296", "#35a75a", "#b483b8", "#cf70cc", "#de7566", "#918ec5", "#b37fd2", "#6f96c4", "#928ad8", "#f16667", "#c18757", "#c18198", "#6f9d8a", "#b38c64", "#b28a7e", "#29a775", "#ce7b92", "#929491", "#9c9377", "#b58698", "#718df9", "#cc7f72", "#64a25b", "#7b92cb", "#509acb", "#998db8", "#9b89cb", "#e267b9", "#e67407", "#8f91b1", "#aa88b1", "#e1754b", "#9682f9", "#ee6d25", "#bb8b31", "#ed6d36", "#d663ed", "#ea5ec0", "#d55ffa", "#cb76b9", "#7b8fdf", "#f23dfa", "#f5654d", "#fb6038", "#da7b34", "#aa80df", "#c48642", "#8e9b24", "#ff586e", "#9484f3", "#cb832a", "#75a03e", "#9c85df", "#42a56f", "#e86893", "#0399f2", "#4d98de", "#4695f2", "#fb50ad", "#eb61ac", "#e36f80", "#f756a6", "#9a9725", "#d472b2", "#be8949", "#f75e80", "#ba76e6", "#ee55d3", "#fc6027", "#ca825e", "#f6653f", "#6aa062", "#7e9d55", "#4c9cc4", "#bb71fa", "#54a554", "#1da3aa", "#828af2", "#d57c5f", "#5aa445", "#c2856b", "#9d8ea4", "#c76fe6", "#f8641d", "#41a1a3", "#57a090", "#749b90", "#ab9056", "#aa89a5", "#ba895e", "#9a956a", "#aa8d84", "#af8e5d", "#6e99b1", "#939855", "#c18385", "#969297", "#9b928b", "#8e968a", "#789a97", "#a882d8", "#6fa054", "#13a961", "#99909e", "#e4725f", "#d16dd3", "#4993f9", "#ae8c78", "#819c62", "#db7b22", "#e064cc", "#7898a4", "#97983f", "#a686c5", "#899c01", "#1ba1bd", "#93957d", "#9186ec", "#d27c6c", "#d77e15", "#f76161", "#bd7bcc", "#c575d2", "#5b9ea4", "#7b97aa", "#4397eb", "#aa8e71", "#ad910a", "#44a389", "#bd8392", "#ab9230", "#ec6499", "#1ca689", "#a99240", "#8394b7", "#6e8ef2", "#6a9e83", "#c879b2", "#1596ff", "#e66c86", "#cd78a5", "#e865a6", "#8d9869", "#9c9647", "#e96b7a", "#7197b7", "#b28e4f", "#4c9eb0", "#a29507", "#c0893a", "#d871a6", "#c37abf", "#d18121", "#62a421", "#53a468", "#ea7019", "#dc7852", "#57a52b", "#e07717", "#879b4e", "#d466e6", "#43a81f", "#8a9b3f", "#e67152", "#72a122", "#52a63d", "#f54dcd", "#e360d3", "#fb559a", "#f258b9", "#f642e7", "#e1726c", "#f45ba0", "#e856e0", "#d87b4b", "#fb39e7", "#f63cf4", "#db5afa", "#d95ef3", "#39a83c", "#f847d3", "#e852ed", "#dc6bb9", "#cc74c5", "#fa614d", "#bc8b28", "#fa4cc0", "#df5de6", "#dc7199", "#e87136", "#35a91f", "#e96e60", "#ef6773", "#40a82a", "#f25f93", "#cc68f3", "#b47ae6", "#d76cc6", "#ea4cf4", "#29a853", "#ad78f9", "#da748c", "#e77145", "#eb6d4c", "#e563bf", "#3fa661", "#f941e0", "#5ca43d", "#f349e0", "#ed46fa", "#60a42b", "#ab7bf3", "#59a520", "#20a944", "#d766e0", "#6da13e", "#ba80b8", "#c27fa5", "#ad85b8", "#55a276", "#889a63", "#658ff9", "#7ba015", "#cc8151", "#61a083", "#889977", "#c98265", "#a680e6", "#b08b85", "#28a1b0", "#948ccb", "#928fb8", "#7e9e36", "#419cca", "#f3627a", "#c68272", "#63a16f", "#7e8de5", "#c3837f", "#1b9dd8", "#8990c4", "#8a8dd8", "#b782b2", "#a38e98", "#c68629", "#a984cb", "#9c8bbe", "#50a55b", "#e85ec6", "#6da05b", "#7596be", "#e86e66", "#6897cb", "#fa5d6e", "#df7835", "#32a396", "#bc82a5", "#839c5c", "#d37e43", "#f26660", "#b28c6b", "#d57e34", "#7e91d1", "#9e9371", "#dd7844", "#60a176", "#729f62", "#829d46", "#a09525", "#ba868b", "#da795f", "#c68457", "#61a262", "#ba7ec5", "#a48ab1", "#559bbe", "#c87e92", "#dd64d3", "#b88b49", "#f8615a", "#d57979", "#bd876b", "#8d9b2e", "#cf7f5e", "#f253c6", "#d8767f", "#9e87d2", "#ba8878", "#6f9aa4", "#d173b9", "#32a66f", "#d37c65", "#3da483", "#2fa2a3", "#9488df", "#919770", "#b385ab", "#7c9c70", "#599ac4", "#c8807f", "#97965c", "#f054cd", "#8b93ab", "#71a12c", "#e466b3", "#a89064", "#8d85f9", "#999655", "#6c9f6f", "#7192de", "#73a046", "#599db1", "#6092ec", "#7e9b7d", "#f656ad", "#cb8333", "#d67c58", "#779f54", "#439fb7", "#cc7d85", "#f55e87", "#ad83c5", "#8a9784", "#c57cac", "#e369a6", "#c98442", "#c88611", "#b081cb", "#998fab", "#719e76", "#3ca576", "#9c81f3", "#c67e98", "#d97492", "#a59256", "#a29263", "#e76999", "#51a096", "#6b9d90", "#3c9ade", "#8f9497", "#a39440", "#f9598d", "#4ba290", "#b28991", "#6b95d1", "#a29177", "#de7093", "#c38192", "#809897", "#a59430", "#8895a4", "#779b8a", "#d07a8c", "#ac9127", "#4098e5", "#5499d1", "#5b96de", "#7894c4", "#ea688d", "#a89248", "#cc7b98", "#569f9d", "#a28f8b", "#b3879e", "#a9905d", "#a68c9e", "#b58d39", "#999291", "#b38f0c", "#7295cb", "#d5759f", "#25a49d", "#a38ca4", "#fd50a7", "#7c989d", "#7399aa", "#b68885", "#a88f77", "#85997d", "#ae8b8b", "#819a76", "#6f9c97", "#36a1aa", "#ca7d8c", "#c0875e", "#ac8b91", "#a0917e", "#a58d91", "#879697", "#f951b3", "#8192c4", "#8b9691", "#7b9b83", "#ac8d7e", "#9c9705", "#49a19d", "#95948a", "#919584", "#8495aa", "#65a07d", "#91993f", "#8793b1", "#a08e9e", "#5ba17c", "#7797b1", "#969847", "#659ca4", "#bd7fb2", "#7f998a", "#8b949e", "#8097a4", "#92929e", "#ca8078", "#b98964", "#c38649", "#c78085", "#b58c5d", "#9690a4", "#5d99cb", "#87978a", "#c47e9f", "#8f9863", "#df6ab2", "#8c977d", "#3aa29d", "#8490cb", "#7c9a90", "#b78d28", "#af8998", "#9d945c", "#9a937e", "#8c9a55", "#5f9caa", "#cf7d79", "#9291ab", "#bd8b0f", "#fb5981", "#ad899e", "#b8887e", "#968fb1", "#2c9eca", "#949924", "#5ca08a", "#9d8db1", "#b48a78", "#51a289", "#99972f", "#9e9184", "#a88d8b", "#91985c", "#9c9463", "#b982ab", "#969577", "#749a9d", "#9c9097", "#a78aab", "#6598c4", "#8c8ecb", "#1ca77c", "#be819f", "#d672ac", "#bb8957", "#649bb1", "#3c9ec4", "#a48f84", "#988bc5", "#ae8e64", "#669e8a", "#aa9238", "#d067ed", "#f5626d", "#c28750", "#fe5c4d", "#c66cf3", "#8f8cd2", "#2aa683", "#9a964e", "#889c16", "#44a745", "#4ba383", "#dd784b", "#93966a", "#ed60a6", "#ad87ab", "#ee677a", "#9f89c5", "#b38e48", "#44a65a", "#da7679", "#989737", "#8b87f3", "#39a668", "#f0666d", "#b57cd9", "#f45f8d", "#aa86be", "#b087a5", "#da7b2c", "#d77b51", "#f15f99", "#bd8b1d", "#7a9d62", "#d96eb2", "#e961b3", "#5ba35b", "#ce6ed9", "#fd5c5a", "#cb6edf", "#f66546", "#cc71d2", "#bf70f3", "#6f9f69", "#e762b9", "#57a362", "#b08f30", "#6992e5", "#ac904f", "#df755f", "#21aa1e", "#64a412", "#e17552", "#d28014", "#f4680d", "#30a0b7", "#799f4d", "#71a04d", "#7490e5", "#da68cc", "#848ddf", "#a382df", "#77a036", "#e55bd9", "#9987d8", "#6fa135", "#ce8143", "#f06386", "#229cde", "#bc8685", "#47a568", "#ac82d2", "#f0694c", "#94984e", "#bf838b", "#f9640f", "#f26380", "#b278f3", "#63a345", "#6899b7", "#849d3e", "#799c76", "#d37a7f", "#38a90f", "#ec6a66", "#e07273", "#d97965", "#8e9a4e", "#c18829", "#f86427", "#d375a5", "#ef6a53", "#30a84c", "#c18572", "#5096e5", "#a6924f", "#cd6be6", "#ea6b73", "#65a33d", "#619f90", "#2fa761", "#4999d8", "#f3692f", "#4fa720", "#749e70", "#a49438", "#dc7b16", "#ae9041", "#f16945", "#dc766c", "#489dbd", "#5ea269", "#ef6d1b", "#6495d8", "#ea65a0", "#6391f2", "#cb79ac", "#369fbd", "#a69326", "#4fa645", "#ed6d3e", "#57a44c", "#5891f9", "#48a653", "#8c9b37", "#809d4d", "#d08133", "#e263c6", "#e57424", "#ee6d2e", "#e86b80", "#d67e21", "#b879df", "#d5778c", "#bd7dbf", "#3ca390", "#818fd8", "#2da934", "#9d9640", "#7f9c69", "#da65d9", "#b085b2", "#cd7f6c", "#cc8320", "#549eaa", "#f1693e", "#16a94c", "#619d9d", "#db7858", "#ea7124", "#6e9e7d", "#a37ef3", "#d17a85", "#eb55d9", "#7e94be", "#b9849e", "#8c8bdf", "#b68d31", "#de6ea6", "#819e23", "#b78692", "#ea7009", "#e36c93", "#b78a6b", "#5ba511", "#c08932", "#ac8e6a", "#fb603f", "#b17cdf", "#1baa2a", "#a185d8", "#47a73d", "#f752b9", "#768eec", "#c5845e", "#808cec", "#f96154", "#a287cb", "#9786e5", "#34a57c", "#c8826b", "#739d83", "#c974cc", "#a29447", "#d17c72", "#e6714c", "#859b55", "#c872d9", "#dd737f", "#3da0b0", "#fd601e", "#6ba321", "#f3691c", "#fe5874", "#e07723", "#cd814a", "#ac911b", "#ce76b2", "#b475fa", "#69a32c", "#d37792", "#b780bf", "#9984ec", "#c67ab8", "#fb40da", "#4aa476", "#f343ed", "#e56f73", "#67a169", "#50a37c", "#f36926", "#c78451", "#9f952f", "#6b98be", "#899b46", "#55a534", "#9b9719", "#f46553", "#bd8950", "#c5863a", "#989570", "#cb8158", "#7b8af9", "#c26dfa", "#ea6e53", "#7aa022", "#be76df", "#5897d8", "#8f9b17", "#c37cb2", "#e8713d", "#d769d3", "#e57418", "#20a95a", "#bb8498", "#d76fb9", "#978ad2", "#e17086", "#2d99eb", "#ff5b47", "#f26937", "#c48465", "#c370ed", "#b78d1d", "#01a875", "#8b9970", "#ca843b", "#4fa46f", "#b28f1c", "#e27544", "#d17899", "#df782c", "#909b02", "#8e90be", "#5ea435", "#67a254", "#a79308", "#7d9e3e", "#46a80f", "#74a114", "#40a74c", "#de783c", "#9e7ff9", "#df59f4", "#a181ec", "#f85e7a", "#d17f58", "#c58278", "#a788b8", "#c87ca5", "#bf78d2", "#cf73bf", "#4da72b", "#e17705", "#da6bbf", "#dc7386", "#c7861f", "#db7673", "#e557e6", "#da719f", "#bf8942", "#bd857e", "#b97bd2", "#e5699f", "#27a93c", "#d16ae0", "#879c23", "#11aa33", "#c977bf", "#cf789f", "#e56c8c", "#e9712e", "#5d9bb7", "#8a91b7", "#8989ec", "#1aa86f", "#af7fd9", "#bd73ec", "#c275d9", "#60a34d", "#b67ecc", "#6ba145", "#b08c71", "#f66167", "#929937", "#df67bf", "#ba8b3a", "#9f9456", "#7f9e2d", "#3496f9", "#e47435", "#ad7de6", "#fc4bba", "#a08ab8", "#ed6a60", "#ed6493", "#c173e6", "#a1951a", "#459bd1", "#798cf2", "#958dbe", "#f95d74", "#17a596", "#af7aec", "#fc6030", "#eb6b6d", "#d27e4a", "#e16d99", "#6794de", "#d46ccc", "#3794ff", "#5693f2", "#ea6e59", "#34a489", "#c07ac5", "#4f9fa3", "#b48d41", "#7891d8", "#869d2d", "#eb6886", "#d97b3c", "#3197f2", "#b08e56", "#d170c6", "#959918", "#7593d1", "#a0936a", "#5ea354", "#c378cc", "#d7796c", "#f3665a", "#3da834", "#669d97", "#7a96b7", "#d0812b", "#f76537", "#8f88e5", "#fc5c61", "#c28810", "#7c9d5c", "#869a69", "#d77d01", "#db6eac", "#3ba753", "#329dd1", "#e46f79", "#a49171", "#b677ec", "#bb8771", "#e37266", "#e57259", "#5395ec", "#e666ac", "#d47e3c", "#b083be", "#b78b50", "#e060d9", "#fb46cd", "#fe548d", "#fa5987", "#f833fb", "#d962e6", "#e453f4", "#ed4bed", "#ff44c0", "#d263f3", "#f34ed3", "#ec5db9", "#ef58c0", "#f93aed", "#f25ba6", "#cf64fa", "#ed59c6", "#dd61e0", "#ee50e0", "#dc5eed", "#eb51e7", "#f648da", "#f955a0", "#f15cad", "#fb31f4", "#e55fcc", "#f84dc6", "#e85ad3", "#f65a9a", "#fc5494", "#f457b3", "#e74dfa"];
@@ -224,43 +216,43 @@ var events = {
 	zoom:["x", "y", false]
 }
 
-events.crosshairToggle = function () {
+events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
-	dispatcher.crosshairEnable(events.crosshair);
+	app.dispatcher.crosshairEnable(events.crosshair);
 }
 
-events.peakpickToggle = function () {
+events.peakpickToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
-	if(events.peakdel !== false)	events.peakdelToggle();
-	if(events.integrate !== false)	events.integrateToggle();
+	if(events.peakdel !== false)	events.peakdelToggle(app);
+	if(events.integrate !== false)	events.integrateToggle(app);
 	
 	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
-	dispatcher.peakpickEnable(events.peakpick);
+	app.dispatcher.peakpickEnable(events.peakpick);
 }
 
-events.peakdelToggle = function () {
+events.peakdelToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
-	if(events.peakpick !== false)	events.peakpickToggle();
-	if(events.integrate !== false)	events.integrateToggle();	
+	if(events.peakpick !== false)	events.peakpickToggle(app);
+	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.peakdel = !events.peakdel;
-	dispatcher.peakdelEnable(events.peakdel);	
+	app.dispatcher.peakdelEnable(events.peakdel);	
 }
 
-events.integrateToggle = function () {
+events.integrateToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
-	if(events.peakpick !== false)	events.peakpickToggle();
-	if(events.peakdel !== false) events.peakdelToggle();
+	if(events.peakpick !== false)	events.peakpickToggle(app);
+	if(events.peakdel !== false) events.peakdelToggle(app);
 
 	events.integrate = !events.integrate;
-	dispatcher.integrateEnable(events.integrate);	
+	app.dispatcher.integrateEnable(events.integrate);	
 }
 
-events.zoomToggle = function () {
-	if(events.peakpick !== false)	events.peakpickToggle();
-	if(events.peakdel !== false)	events.peakdelToggle();
-	if(events.integrate !== false)	events.integrateToggle();	
+events.zoomToggle = function (app) {
+	if(events.peakpick !== false)	events.peakpickToggle(app);
+	if(events.peakdel !== false)	events.peakdelToggle(app);
+	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.zoom.rotate();
 	console.log(events.zoom)
@@ -275,19 +267,8 @@ var cursor = {
 	refpick:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAB9klEQVRIS+WVTSilURjHWdBEkY+NnUQmH0UW1AgLCwsLylaKWJhIyYIpJRmRKEKJKImyMBYWPmJhITNCysdGFkiZxgJRZur6/afz6nW7133v7Vo59es599znPP/nfD1vaMg7t9AA42veVxiCVTiFUuiDUXiy4gYqoPmaOw8rMAZRsAUjMBwMAcWYgG2bwB79TpgKlsAggfJgGtTvhS649Vcgkwm5cG9NxEZCMRxCHFRAKjzYfP7vo5OWjFMltNucm+jnwKbZkh3skfH75+8K5B8G+5AG2vtaWIdZ0CF/hmNohv5ABLTaSagCXdG/JvAvbAPosMtgAVqhB1xOt8hKSAepYBLQdfTZPp6AXmi9OeBxn/uDgz9bpFKgl5oE1i1y+RLxR6CIYBsm4AU2HV5erDchpwLymwMFjoYaKAA9sjebU4FEopxBFqj/A1SqG4MloLKg+6/XqrpzBXdmm87fEnGyghgCnMA30M3RHNlqJ6vwJJDCxFj4CbolCtQNGfDbZJuN3TX9Euyyt1W4C3zCUeVXV1Hb8ccEVfbf3YKo9reYsXLsoknolZu7QAT/qnipYnZAoenbs7cCKJk1+GIGrrGqpDN2IU9b1IaDvkpqOsh8OHDL3vqphAagzgwsYVVRfX4PEnAKB2X16CW4fVj+8XADl/Y/ngGM/GMZMjMjNAAAAABJRU5ErkJggg==",
 	
 }
-// Event dispatcher to group all listeners in one place.
-var dispatcher = d3.dispatch(
-	"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
-	"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
-	"keyboard",																//Keyboard
-	"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-	"integrateEnable", "integrate", "integ_refactor",						//Integration events
-	"crosshairEnable",
-	"blindregion",
-	"log"
-);
 
-var registerKeyboard = function(){
+var registerKeyboard = function(app){
 
 	d3.select("body").on("keydown", function() {
       /*svg.append("text")
@@ -300,24 +281,24 @@ var registerKeyboard = function(){
           .style("fill-opacity",".1")
 	        .remove();
 			*/
-			dispatcher.log("keyCode: " + d3.event.keyCode);
+			app.dispatcher.log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
-				events.peakpickToggle();
+				events.peakpickToggle(app);
 			}else if (d3.event.keyCode===68) { // d
-				events.peakdelToggle();
+				events.peakdelToggle(app);
 			}else if (d3.event.keyCode===73) { // i
-				events.integrateToggle();
+				events.integrateToggle(app);
 			}else if (d3.event.keyCode===67) { // c
-				events.crosshairToggle();
+				events.crosshairToggle(app);
 			}else if (d3.event.keyCode===70) { // f
-				dispatcher.regionfull();
+				dispatcher.regionfull(app);
 			}else if (d3.event.keyCode===90) { // f
-				events.zoomToggle();
+				events.zoomToggle(app);
 			}
 			
 			
-			dispatcher.keyboard(d3.event);
+			app.dispatcher.keyboard(d3.event);
 	  });
 }
 
@@ -505,6 +486,9 @@ spec.elem.dropdown = function (parent, label, options) {
 	var selector = parent.append('div')
 		.text(label)
 		.classed('checkbox-dropdown', true)
+		.on('click', function (e) {
+			d3.select(this).toggleClass('is-active');
+		})
 		.append('ul')
 		.classed('checkbox-dropdown-list', true)
 		//.attr('multiple', true);
@@ -520,25 +504,57 @@ spec.elem.dropdown = function (parent, label, options) {
 		.attr('type', 'checkbox');
 	
 	option_labels.html(function(d){
-		return d3.select(this).html()+ d
-	})
-
-	parent.select('.checkbox-dropdown')
-		.on('click', function (e) {
-			d3.select(this).toggleClass('is-active');
-		});
+		return d3.select(this).html() + d
+	});
 	
 	selector.on('click', function (e) {
 		d3.event.stopPropagation();
 	});
 	
 	selector.node().getSelected = function () {
-		return selector.selectAll('label')[0].map(function (e) {
-			if(e.children[0].checked)
+		return selector.selectAll('label')[0]
+			.filter(function (e) {
+				return e.children[0].checked;
+			})
+			.map(function (e) {
 				return typeof(e.value) !== 'undefined' ? e.value : d3.select(e).text();
-		});
-	}
-	return selector;	
+			});
+	};
+	selector.node().appendOption = function (_) {
+		var label = selector.append('li')
+			.append('label')
+		
+		label.append('input')
+		.attr('type', 'checkbox');
+	
+		label.html(label.html() + _);
+		return label;
+	};
+	return selector;
+};
+
+spec.elem.spectrumSelector = function (el) {
+	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
+	if (specs.size() === 0) return;
+	
+	var selector = 	spec.elem.dropdown(el, 'Select Spectrum', [])
+		.classed('spec-selector', true)
+	var legend = '<span class="spec-legend">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</span>';
+	specs.each(function () {
+		var s = this;
+		var o = selector.node().appendOption(s.label + legend)
+			.style('color', getComputedStyle(s.children[0]).stroke)
+			.on('mouseover', function () {
+				d3.select(s).classed('highlighted', true);
+			})
+			.on('mouseout', function () {
+				d3.select(s).classed('highlighted', false);
+			});
+			
+		o.node().value = s.s_id();
+		o.select('input')
+			.attr('checked', d3.select(s).classed('selected'));
+	});
 };
 var modals = {
 	crosshair:true,
@@ -664,18 +680,18 @@ modals.input = function (text, value,callback){
 modals.xRegion = function () {
 	modals.range(
 		"Set x region to:\n",
-		d3.select(".main-focus").node().range.x,
-		function (new_range) { d3.select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-		d3.select(".main-focus").node().xScale.domain()
+		d3.select('.spec-slide.active').select(".main-focus").node().range.x,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
 	)();
 };
 
 modals.yRegion = function () {
 	modals.range(
 		"Set y region to:\n",
-		d3.select(".main-focus").node().range.y,
-		function (new_range) { d3.select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-		d3.select(".main-focus").node().yScale.domain()
+		d3.select('.spec-slide.active').select(".main-focus").node().range.y,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
 	)();
 };
 
@@ -709,20 +725,7 @@ modals.scaleLine = function () {
 };
 
 var add_selector = function (el, ok_fun) {
-	var specs = d3.select(".main-focus").selectAll(".spec-line")
-	var specs_labels =	specs[0].map(function (e) {
-			return e.label;
-		});
-	
-	spec.elem.dropdown(el, 'Select Spectrum', specs_labels)
-		.classed('spec-selector', true)
-		.selectAll('label').each(function (d,i) {
-			this.value = specs[0][i].s_id();
-			console.log('value',this.value)
-		})
-		.selectAll('input')
-			.attr('checked', true);
-	
+	spec.elem.spectrumSelector(el)
 };
 
 var add_preview = function (el, ok_fun) {
@@ -753,13 +756,12 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
   var form_data = {}, el;
 	var ok_fun = function (modal) {
 	  el.selectAll(".param")[0].forEach(function(e){
-			//TODO: change to e.children[0].type ==="checkbox"
 	    form_data[e.id] =  e.children[0].type ==="checkbox"? e.children[0].checked :e.children[0].value;
 	  });
 		
 		if(modal) modal.hide();
 		
-		var s_ids = el.select('.spec-selector').node().getSelected()
+		var s_ids = el.select('.spec-selector').node().getSelected();
 		pro.plugin_funcs(fun, form_data, s_ids);
 		form_data = {};
 	};
@@ -780,18 +782,20 @@ spec.method_args = modals.method_args;spec.menu = function(){
 		function toggle() {
 		  if(!menu_on){
 				button.text("✖").on("click",null)
-			  nav.style("overflow-y","visible")
 				
-				d3.select(".all-panels")
+				d3.select(".spec-slide.active")
 					.transition().duration(500)
 					.attrTween("transform",function(){
 				 	return function(t){
-	          nav.call(css_trans("translateX("+ (-width+t*width) + "px)"));
-	          button.call(css_trans("translateY("+ t*height + "px)"));
-				    return "translate(0,"+ t*height+")";
+						nav.style("max-height", (t*height) +"px");
+	          //nav.call(css_trans("translateX("+ (-width+t*width) + "px)"));
+	          //button.call(css_trans("translateY("+ t*height + "px)"));
+				    //return "translate(0,"+ t*height+")";
+						return "translate(0,"+ 0+")";
 				 	}
 				}).each("end", function(){
 	        button.on("click", toggle);
+					nav.style("overflow-y","visible")
 					div_menu.style("overflow", "visible");
 	        menu_on = true;
 	      });    
@@ -799,20 +803,21 @@ spec.method_args = modals.method_args;spec.menu = function(){
 		    button.text("☰").on("click",null);    
 				nav.style("overflow-y","hidden");
 				
-		    d3.select(".all-panels")
+		    d3.select(".spec-slide.active")
 					.transition().duration(500)
 					.attrTween("transform",function(){
 					 	return function(t){
 		          nav.style("max-height", (height-t*height) +"px");
-		          button.call(css_trans("translateY("+ (height-t*height) + "px)"));
-					    return "translate(0,"+ (height-t*height) +")";
+		          //button.call(css_trans("translateY("+ (height-t*height) + "px)"));
+					    //return "translate(0,"+ (height-t*height) +")";
+							return "translate(0,"+ 0+")";
 					 	}
 					})
 		    .each("end", function(){
 		      	div_menu.style("overflow", "hidden");
 		      	nav
-							.style("max-height","none")
-		          .call(css_trans("translate("+ (-width) + "px,0px)"));
+							//.style("max-height","none")
+		          //.call(css_trans("translate("+ (-width) + "px,0px)"));
 		        button.on("click", toggle);
 		        menu_on = false;
 		    	});
@@ -855,7 +860,8 @@ spec.method_args = modals.method_args;spec.menu = function(){
 		var nav = div_menu.append("ul")
 			.attr("class","nav")
 			.style("overflow-y","hidden")
-			.call(css_trans("translateX("+ (-width) + "px)"));
+			.style("max-height",'0px')
+			//.call(css_trans("translateX("+ (-width) + "px)"));
 		
 		var menu = 
 			[
@@ -869,7 +875,7 @@ spec.method_args = modals.method_args;spec.menu = function(){
 							  {
 									label:"Automatic using threshold",
 									fun: function () {
-										d3.select(".main-focus").node().getThreshold(
+										d3.select(".spec-slide.active").select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t); }
 										);
 							  	}
@@ -877,7 +883,7 @@ spec.method_args = modals.method_args;spec.menu = function(){
 							  {
 									label:"Peak segments using threshold",
 									fun: function () {
-										d3.select(".main-focus").node().getThreshold(
+										d3.select('.spec-slide.active').select(".main-focus").node().getThreshold(
 												function (t) { pro.pp("threshold", t, true); }
 										);
 							  	}
@@ -902,7 +908,7 @@ spec.method_args = modals.method_args;spec.menu = function(){
 							children:[
 								{label:"Set X region",fun:modals.xRegion},
 								{label:"Set Y region",fun:modals.yRegion},
-								{label:"Full spectrum",fun:dispatcher.regionfull,
+								{label:"Full spectrum",fun:null,//dispatcher.regionfull,
 									children:[{label:"Error",fun:function(){modals.error('error message')}},]
 								},
 								{label:"Reverse Spectrum",fun:null},
@@ -1004,7 +1010,7 @@ spec.d1.threshold = function () {
 				dispatcher.on("click.thresh."+dispatch_idx, null);
 			});
 		
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("mousemove.thresh."+dispatch_idx, svg_elem.on("_mousemove"));	
 		dispatcher.on("click.thresh."+dispatch_idx, svg_elem.on("_click"));
 	}
@@ -1049,7 +1055,7 @@ spec.d1.threshold = function () {
 		};
 		
 		var i_scale = x.copy();
-		var line_idx = d3.select(".main-focus").node().nSpecs;
+		var line_idx = svg.node().line_idx;
 		
 		svg_elem = svg.append("g")
 			.attr("class", "crosshair")
@@ -1135,7 +1141,7 @@ spec.d1.threshold = function () {
 		};
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
 		dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});
@@ -1248,7 +1254,7 @@ spec.d1.integrate = function(){
 				});
 				
 				// Register event listeners
-				var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+				var dispatch_idx = ++dispatcher.idx;
 				dispatcher.on("redraw.integ."+dispatch_idx, svg_elem.on("_redraw"));
 				dispatcher.on("integ_refactor."+dispatch_idx, svg_elem.on("_refactor"));
 			};
@@ -1328,7 +1334,9 @@ spec.d1.line = function () {
 		
 		svg_elem.node().range = range;
 			
-		var line_idx = d3.select(".main-focus").node().nSpecs;
+		var line_idx = svg.node().nSpecs;
+		svg_elem.node().line_idx = line_idx;
+		
 		var path_elem = svg_elem.append("path")
       .datum(data)
 			.attr("class", "line clr"+ line_idx)
@@ -1392,12 +1400,13 @@ spec.d1.line = function () {
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
 		dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
 		
 		svg_elem.node().specData = function () { return data;	};
+		//TODO: Update peaks, integrate, segments to match new data.
 		svg_elem.node().setData = function (_) {
 			if(!_[0].x){ //if data is array, not xy format
 				data = _.map(function(d,i){ return {x:data[i].x, y:d}; });
@@ -1463,7 +1472,7 @@ spec.d1.line = function () {
     if (!arguments.length) return data;
 		if(!_[0].x){ //if data is array, not xy format
 			var xscale = d3.scale.linear()
-				.range(d3.select(".main-focus").node().range.x)
+				.range(svg.node().range.x)
 				.domain([0, _.length]);
 			
 			data = _.map(function(d,i){ return {x:xscale(i), y:d}; });
@@ -1570,32 +1579,32 @@ spec.d1.mainBrush = function(){
 			.style('cursor', null)
 			.style('pointer-events', 'all');
 		
-		d3.select(".main-focus").style("cursor", "crosshair");
+		svg.style("cursor", "crosshair");
 		
 		svg_elem.node().peakpickEnable = function (_) {
 			svg_elem.classed("peakpick-brush", _);
-			d3.select(".main-focus")
+			svg
 				.style("cursor", _? 'url('+cursor.peakpick+'), auto' : "crosshair");
 			
 			_brush.on("brushend", _? peakpick : changeRegion);
 		};
 		svg_elem.node().peakdelEnable = function (_) {
 			svg_elem.classed("peakdel-brush", _);
-			d3.select(".main-focus")
+			svg
 					.style("cursor", _? 'url('+cursor.peakdel+'), auto' : "crosshair");
 			
 			_brush.on("brushend", _? peakdel : changeRegion);
 		};
 		svg_elem.node().integrateEnable = function (_) {
 			svg_elem.classed("integrate-brush", _);
-			d3.select(".main-focus")
+			svg
 					.style("cursor", _? 'url('+cursor.addinteg+'), auto' : "crosshair");
 			
 			_brush.on("brushend", _? integrate : changeRegion);
 		};
 	
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;		
+		var dispatch_idx = ++dispatcher.idx;		
 		dispatcher.on("peakpickEnable.brush."+dispatch_idx, svg_elem.node().peakpickEnable);
 		dispatcher.on("peakdelEnable.brush."+dispatch_idx, svg_elem.node().peakdelEnable);
 		dispatcher.on("integrateEnable.brush."+dispatch_idx, svg_elem.node().integrateEnable);
@@ -1642,7 +1651,7 @@ spec.d1.scaleBrush = function(){
 				extent = extent.sort(brushscale.domain()[0] > brushscale.domain()[1]?
 					d3.descending : d3.ascending );
 				
-				d3.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
+				svg.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
 			})
 		
 		svg_elem = svg.append("g")
@@ -1689,7 +1698,7 @@ spec.d1.scaleBrush = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("rangechange.scalebrush."+dispatch_idx, svg_elem.on("_rangechange"));
 		dispatcher.on("regionchange.scalebrush."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.scalebrush."+dispatch_idx, svg_elem.on("_redraw"));		
@@ -1861,7 +1870,7 @@ spec.d1.pp = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.peaks."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.peaks."+dispatch_idx, svg_elem.on("_redraw"));		
 		dispatcher.on("peakpickEnable.peaks."+dispatch_idx, function (_) {
@@ -2147,258 +2156,7 @@ spec.d1.main_focus = function () {
     return _main;
   };
 	return _main;	
-};spec.d1.main = function(){
-  var data, svg_width, svg_height;
-
-  function d1main(svg){
-    /* * Check variable definitions**/
-    if (typeof data === 'undefined'){
-        data = svg.datum();
-        if (typeof data === 'undefined')
-            throw new Error("nmr1d: no data provided.");
-      
-        svg.datum(null);    
-    }
-    if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'){
-        svg_width = +svg.attr("width");    svg_height = +svg.attr("height");
-				
-        if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
-					|| isNaN(svg_width) || isNaN(svg_height))
-            throw new Error("nmr1d: chart width or height not defined.");
-    }
-    if (svg_width < 100 || svg_height < 100){
-        throw new Error("nmr1d: Canvas size too small. Width and height must be at least 100px");
-    }
-		
-		var brush_margin = 20;
-
-    var margin = {
-        top: 10 + brush_margin,
-        right: 40,
-        bottom: 30,
-        left:10 + brush_margin
-    };
-  
-  
-  
-		var width = svg_width - margin.left - margin.right,
-        height = svg_height - margin.top - margin.bottom;
-	  
-		//applyCSS2();
-		
-    var x = d3.scale.linear().range([0, width]),
-    	y = d3.scale.linear().range([height, 0]);
-  
-    var xAxis = d3.svg.axis().scale(x).orient("bottom"),
-        yAxis = d3.svg.axis().scale(y).orient("right")
-          .tickFormat(d3.format("s"));
-  	
-		var two_d = (data["nd"] && data["nd"]==2);
-		
-		var all_panels = svg.append("g")
-			.attr("class", "all-panels")
-			.append("g")
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-		
-    var defs = all_panels.append("defs");
-		
-		defs.append("clipPath")
-        .attr("id", "clip")
-      .append("rect")
-        .attr("width", width)
-        .attr("height", height);
-		
-		
-		
-		/** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
-				where 127 represent the zero. We want to recolor them as follows:
-			 	* positive values colored with a red-orange hue.
-				* negative values colored with a blue-cyan hue.
-				* Zeros colored as white.
-			* To do so, first copy Red component to Green and Blue.
-			* Red component will take zeros upto 255/2 (127) i.e negative values. values >127 colored using red/green gradient.
-			* constrast this for the blue component.
-		*/
-			
-		if(two_d){
-			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
-			svg_filter.append("feColorMatrix")
-				.attr("type","matrix")
-				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
-			
-			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
-			
-			fe_component_transfer.append("feFuncR")
-									.attr("type","linear")
-									.attr("slope","-1")
-									.attr("intercept","0.5");
-									
-			fe_component_transfer.append("feFuncB")
-									.attr("type","linear")
-									.attr("slope","1")
-									.attr("intercept","-0.5");
-			
-			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
-	
-			fe_component_transfer.append("feFuncR")
-									.attr("id","rfunc")
-									.attr("type","linear")
-									.attr("slope","1");
-							
-			fe_component_transfer.append("feFuncB")
-									.attr("id","bfunc")
-									.attr("type","linear")
-									.attr("slope","1");
-													
-			svg_filter.append("feColorMatrix")
-				.attr("type","matrix")
-				.attr("values","-10 0 0 0 1 -10 0 -10 0 1 0 0 -10 0 1 0 0 0 1 0");
-			
-			
-			/*svg_filter.append("feColorMatrix")
-						.attr("type","matrix")
-						.attr("values","1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
-			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
-			fe_component_transfer.append("feFuncR")
-									.attr("id","rtable")
-									.attr("type","table")
-									.attr("tableValues","0 0 1 1 2");
-			fe_component_transfer.append("feFuncG")
-									.attr("id","gtable")
-									.attr("type","table")
-									.attr("tableValues","0 0.5 1 0.5 0");
-			fe_component_transfer.append("feFuncB")
-									.attr("id","btable")
-									.attr("type","table")
-									.attr("tableValues","2 1 1 0 0");			*/
-		}
-		/**********************************/		
-				
-				
-				
-				
-		
-		svg.call(spec.menu());
-		
-		/**** Keyboard events and logger ****/
-		registerKeyboard();
-		var div = all_panels.append("svg:foreignObject")
-				.attr("class", "logger")
-				.attr("pointer-events", "all")
-			.append("xhtml:div")
-				.style({
-					"left":margin.left+"px",
-					"top":margin.top+"px"
-				});
-
-		div.append("a").attr("class", "progress");
-
-		dispatcher.on("log",function log(message) {
-		    div.append("a")
-		      .text(message)
-		    .transition()
-		      .duration(2500)
-		      .style("opacity", 1e-6)
-					.remove();
-		});
-		
-		//axes	and their labels
-		all_panels.append("g")
-			.attr("class", "x axis")
-			.attr("transform", "translate(0," + height + ")");
-
-		all_panels.append("g")
-			.attr("class", "y axis")
-			.attr("transform", "translate(" + width + ",0)");;
-		
-		all_panels.append("text")
-	    .attr("class", "x label")
-	    .attr("text-anchor", "middle")
-	    .attr("x", width/2)
-	    .attr("y", height)
-			.attr("dy", "2.8em")
-	    .text("Chemical shift (ppm)");
-		
-		all_panels.append("text")
-	    .attr("class", "y label")
-	    .attr("text-anchor", "end")
-	    .attr("y", width)
-	    .attr("dy", "-.75em")
-	    .attr("transform", "rotate(-90)")
-	    .text("Intensity");
-		
-		dispatcher.on("redraw.all_panels", function (e) {
-			if(e.x)
-				all_panels.select(".x.axis").call(xAxis);
-			if(e.y)
-				all_panels.select(".y.axis").call(yAxis);
-		});
-		
-		
-		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
-		//Main focus
-		all_panels.call(
-			main_focus()
-				.datum(data)
-				.xScale(x)
-				.yScale(y)
-				.width(width)
-				.height(height)
-				.dispatcher(dispatcher)
-		);
-		
-		//Scale brushes
-		all_panels.call(
-			spec.d1.scaleBrush()
-				.xScale(x)
-				.dispatcher(dispatcher)
-		);
-	
-		all_panels.call(
-			spec.d1.scaleBrush()
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);
-		
-		/* testing peak picker */
-		/*dispatcher.peakpick(data[1000]);
-		dispatcher.peakpick(data[1110]);
-		dispatcher.peakpick(data[1100]);
-		dispatcher.peakpick(data[1100]);
-		dispatcher.peakdel({xdomain:[250, 195]});
-		dispatcher.integrate({xdomain:[265, 260]});
-		
-		focus.select(".peaks").node().addpeaks(data[1200]);
-		dispatcher.peakpick(data[1000]);*/
-		//console.log(d3.selectAll(".spec-line"))
-		
-		//console.log(getComputedStyle(d3.select(".spec-line").select(".line").node()));
-  }
- 
-  d1main.datum = function(x){
-    if (!arguments.length) return data;
-    data = x;
-    return d1main;
-  };
-
-  d1main.width = function(x){
-    if (!arguments.length) return svg_width;
-    svg_width = x;
-    return d1main;
-  };
-
-  d1main.height = function(x){
-    if (!arguments.length) return svg_height;
-    svg_height = x;
-    return d1main;
-  };
-  return d1main;
-
-};
-spec.d2 = {};
+};spec.d2 = {};
 spec.d2.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
 	var zoomer = d3.behavior.zoom()
@@ -2667,7 +2425,7 @@ spec.d2.main_focus = function () {
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
 		//dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
@@ -2735,6 +2493,363 @@ spec.d2.main_focus = function () {
     y = _;
     return _main;
   };
+	
+	return _main;
+};
+/*
+	import 'event';
+	import 'menu';
+	import 'slide';
+*/
+spec.app = function(){
+  var slides = [], elem, svg_width, svg_height;
+
+  function _main(svg){
+    /* * Check size definitions**/
+    if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'){
+        svg_width = +svg.attr("width");    svg_height = +svg.attr("height");    
+    }
+		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
+			|| isNaN(svg_width) || isNaN(svg_height)){
+				var parent_svg = svg.node();//.selectP('svg').node();
+				svg_width = parent_svg.clientWidth;
+				svg_height = parent_svg.clientHeight;
+		}
+        
+    if (svg_width < 100 || svg_height < 100){
+      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 100px");
+    }
+		
+		elem = svg.append('g')
+			.classed('spec-app', true)
+			.attr('width', svg_width)
+			.attr('height', svg_height);
+		
+		// TODO: decide whether to inject CSS styles.
+		//applyCSS2();
+		
+		elem.call(spec.menu());
+		elem.call(spec.slideChanger());
+		/**** Keyboard events and logger ****/
+		registerKeyboard(elem.node());
+		
+		elem.node().appendSlide = function (data) {
+			elem.selectAll('.spec-slide').classed('active', false);
+			elem.call(
+				spec.slide()
+					.datum(data)
+					.width(svg_width)
+					.height(svg_height)
+			);
+			elem.call(spec.slideChanger());
+		};
+		elem.node().appendToCurrentSlide = function (data) {
+			var current_slide = elem.select('.spec-slide.active').node()
+			console.log(current_slide)
+			if(!current_slide){
+				elem.node().appendSlide(data);
+			}	else{
+				current_slide.addSpec(data);
+			}
+		};
+		
+		for (var i = 0; i < slides.length; i++) {
+			elem.appendSlide(slides[i].slide);
+		}
+		
+	}
+	
+	_main.appendSlide = function(data){
+		if (!arguments.length) 
+			throw new Error("appendSlide: No data provided.");
+		
+		if (elem){
+			elem.node().appendSlide(data);
+		} else{
+			slides.push({'slide':data});
+		}
+		return _main;
+	};
+	_main.appendToCurrentSlide = function(data){
+		if (!arguments.length) 
+			throw new Error("appendToCurrentSlide: No data provided.");
+		
+		if (elem){
+			elem.node().appendToCurrentSlide(data);
+		} else{
+			if(slides.length === 0) //No slides available; create a new one
+				return _main.appendSlide(data);
+			
+			//Otherwise, append data to last slide.
+			var current_slide = slides[slides.length-1].slide;
+			//TODO: BUG
+			//We don't know if the array in slide is a data array 
+			// or an array of data arrays (i.e dataset)
+			current_slide.push(data);
+			
+			return _main;
+		}
+	};
+	
+  _main.width = function(x){
+    if (!arguments.length) return svg_width;
+    svg_width = x;
+    return _main;
+  };
+
+  _main.height = function(x){
+    if (!arguments.length) return svg_height;
+    svg_height = x;
+    return _main;
+  };
+	return _main;
+};
+/*
+	import 'event';
+	import 'd1/main-focus';
+	import 'd2/main-focus';
+	import 'd1/scale-brush';
+*/
+spec.slide = function(){
+	var data, elem, svg_width, svg_height;
+	function _main(svg){
+		if(!data){
+			create_empty_slide();
+			return ;
+		}
+		
+		var brush_margin = 20;
+
+    var margin = {
+        top: 10 + brush_margin,
+        right: 40,
+        bottom: 30,
+        left:10 + brush_margin
+    };
+
+		var width = svg_width - margin.left - margin.right,
+        height = svg_height - margin.top - margin.bottom;
+		
+    var x = d3.scale.linear().range([0, width]),
+    y = d3.scale.linear().range([height, 0]);
+  
+    var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+        yAxis = d3.svg.axis().scale(y).orient("right")
+          .tickFormat(d3.format("s"));
+  	
+		var two_d = (data["nd"] && data["nd"] === 2);
+		
+		// Event dispatcher to group all listeners in one place.
+		var dispatcher = d3.dispatch(
+			"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+			"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
+			"keyboard",																//Keyboard
+			"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
+			"integrateEnable", "integrate", "integ_refactor",						//Integration events
+			"crosshairEnable",
+			"blindregion",
+			"log"
+		);
+		dispatcher.idx = 0;
+		
+		var spec_slide = svg.append("g")
+			.classed("spec-slide", true)
+			.classed("active", true)
+		
+		var contents = spec_slide.append('g')
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		
+    var defs = spec_slide.append("defs");
+		defs.append("clipPath")
+		.attr("id", "clip") //TODO: generate unique id for each slide.
+		  .append("rect")
+		    .attr("width", width)
+		    .attr("height", height);
+
+		/** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
+				where 127 represent the zero. We want to recolor them as follows:
+			 	* positive values colored with a red-orange hue.
+				* negative values colored with a blue-cyan hue.
+				* Zeros colored as white.
+			* To do so, first copy Red component to Green and Blue.
+			* Red component will take zeros upto 255/2 (127) i.e negative values. values >127 colored using red/green gradient.
+			* constrast this for the blue component.
+		*/
+	
+		if(two_d){
+			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
+			svg_filter.append("feColorMatrix")
+				.attr("type","matrix")
+				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
+	
+			var fe_component_transfer = svg_filter.append("feComponentTransfer")
+											.attr("color-interpolation-filters","sRGB");
+	
+			fe_component_transfer.append("feFuncR")
+									.attr("type","linear")
+									.attr("slope","-1")
+									.attr("intercept","0.5");
+							
+			fe_component_transfer.append("feFuncB")
+									.attr("type","linear")
+									.attr("slope","1")
+									.attr("intercept","-0.5");
+	
+			var fe_component_transfer = svg_filter.append("feComponentTransfer")
+											.attr("color-interpolation-filters","sRGB");
+
+			fe_component_transfer.append("feFuncR")
+									.attr("id","rfunc")
+									.attr("type","linear")
+									.attr("slope","1");
+					
+			fe_component_transfer.append("feFuncB")
+									.attr("id","bfunc")
+									.attr("type","linear")
+									.attr("slope","1");
+											
+			svg_filter.append("feColorMatrix")
+				.attr("type","matrix")
+				.attr("values","-10 0 0 0 1 -10 0 -10 0 1 0 0 -10 0 1 0 0 0 1 0");
+	
+		}
+		/**********************************/				
+		
+		//axes	and their labels
+		contents.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + height + ")");
+
+		contents.append("g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(" + width + ",0)");;
+		
+		contents.append("text")
+	    .attr("class", "x label")
+	    .attr("text-anchor", "middle")
+	    .attr("x", width/2)
+	    .attr("y", height)
+			.attr("dy", "2.8em")
+	    .text("Chemical shift (ppm)");
+		
+		contents.append("text")
+	    .attr("class", "y label")
+	    .attr("text-anchor", "end")
+	    .attr("y", width)
+	    .attr("dy", "-.75em")
+	    .attr("transform", "rotate(-90)")
+	    .text("Intensity");
+		
+		dispatcher.on("redraw.slide", function (e) {
+			if(e.x)
+				contents.select(".x.axis").call(xAxis);
+			if(e.y)
+				contents.select(".y.axis").call(yAxis);
+		});
+		
+		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
+		//Main focus
+		contents.call(
+			main_focus()
+				.datum(data)
+				.xScale(x)
+				.yScale(y)
+				.width(width)
+				.height(height)
+				.dispatcher(dispatcher)
+		);
+		
+		//Scale brushes
+		contents.call(
+			spec.d1.scaleBrush()
+				.xScale(x)
+				.dispatcher(dispatcher)
+		);
+	
+		contents.call(
+			spec.d1.scaleBrush()
+				.yScale(y)
+				.dispatcher(dispatcher)
+		);
+		
+		spec_slide.node().addSpec = function (_) {
+			contents.select('.main-focus').node().addSpec(_);
+		};
+		spec_slide.node().slideDispatcher = dispatcher;
+		svg.node().dispatcher = dispatcher;
+	}
+	
+  _main.datum = function(_){
+    if (!arguments.length) return data;
+    data = _;
+    return _main;
+  };
+  _main.width = function(x){
+    if (!arguments.length) return svg_width;
+    svg_width = x;
+    return _main;
+  };
+
+  _main.height = function(x){
+    if (!arguments.length) return svg_height;
+    svg_height = x;
+    return _main;
+  };
+	return _main;
+};
+spec.slideChanger = function () {
+	function _main (svg) {
+		var inner;
+		if(svg.select('.slide-changer').size() === 0){
+			var elem = svg.append("g")
+				.attr("class", "slide-changer");
+		
+			var width = svg.attr("width"),
+					height = svg.attr("height");
+		
+			var slideout = elem.append("svg:foreignObject")
+				.attr("width", width)
+				.attr("height", height)
+				.style('pointer-events', 'all')
+				.append("xhtml:div")
+				.classed("slideout", true)
+				.on('click', function () {
+					slideout.toggleClass('active');
+				})
+		
+			slideout.append('xhtml:p').text('Slides');
+			inner = slideout.append('xhtml:div')
+				.classed('slideout_inner', true)
+				.text('Switch Slide');			
+		}else{
+			inner = svg.select('.slideout_inner');
+		}
+		
+		var slides = svg.selectAll('.spec-slide');
+		/*slides.each(function (d,i) {
+			var this_slide = this;
+			inner.append('xhtml:div').text('slide ' + i)
+				.on('click', function () {
+					slides.classed('active', false);
+					d3.select(this_slide).classed('active', true);
+					console.log(this_slide)
+					svg.node().dispatcher = this_slide.slideDispatcher;
+				});
+		});*/
+		
+		inner.selectAll('div')
+			.data(slides[0]).enter()
+			.append('xhtml:div')
+				.text(function(d,i){return 'slide ' + i;})
+			
+		inner.selectAll('div')
+			.on('click', function (d) {
+				slides.classed('active', false);
+				d3.select(d).classed('active', true);
+				svg.node().dispatcher = d.slideDispatcher;
+			});
+	}
 	
 	return _main;
 };
@@ -2898,7 +3013,7 @@ var processPNG = function (json, callback) {
 				img_data = img_data.map(function(d,i){ return {x:xscale(i), y:d}; });
 			}
 			
-			console.log("img_data",img_data);
+			//console.log("img_data",img_data);
 			var ret;
 			if(typeof json["s_id"] != 'undefined')
 				ret = {data:img_data, s_id:json['s_id']}
@@ -2945,15 +3060,30 @@ pro.get_spec = function(url, render_fun){
 	});	
 };
 
+pro.process_spectrum = function(json, render_fun){
+	if (json.constructor === Array) {
+		for (var i = json.length - 1; i >= 0; i--) {
+			pro.process_spectrum(json[i], render_fun);	
+		}
+		return;
+	}
+	switch (json['format']){
+		case 'xy':
+			process_xy(json, render_fun);
+			break;
+		case 'base64'://add base64 processing
+			process_b64(json, render_fun)
+			break;
+		case 'png':
+		case 'png16':
+			processPNG(json, render_fun);
+			break;
+	}	
+};
+
 pro.get_spectrum = function (url, render_fun) {
 	ajaxJSONGet(url, function (response) {
-		if (response.constructor === Array) {
-			for (var i = response.length - 1; i >= 0; i--) {
-				processPNG(response[i], render_fun);	
-			}
-		}else{
-			processPNG(response, render_fun);	
-		}
+		pro.process_spectrum(response, render_fun);
 	});
 };
 var find_menu_item = function (menu, item) {
@@ -2970,7 +3100,9 @@ var find_menu_item = function (menu, item) {
 var append_menu_item = function(menu, item){
 	if ("fun" in item) {
 		if("args" in item && item["args"]){
-			menu["fun"] = spec.method_args(item["fun"] ,item["args"], item["title"])
+			menu["fun"] = function(){
+				spec.method_args(item["fun"] ,item["args"], item["title"])();
+			};
 		}else{
 			menu["fun"] = function () {pro.plugin_funcs (item["fun"])	};			
 		}
@@ -3003,7 +3135,7 @@ pro.output.overwriteSpec = function (new_data, s_id) {
 		s_id = new_data['s_id'];
 	}
 	
-	var _main_focus = d3.select(".main-focus");
+	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
 	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
 	var overwrite_spec = _main_focus.selectAll(classname)
 	.filter(function(e){ return this.s_id()==s_id; });
@@ -3014,13 +3146,13 @@ pro.output.preview = function (new_data) {
 	if(d3.select(".preview-spec").size() > 0){
 		d3.select(".preview-spec").node().setData(new_data);
 	}else{
-		d3.select(".main-focus").node()
+		d3.select(".spec-slide.active").select(".main-focus").node()
 			.addSpecLine(new_data, false)
 			.classed("preview-spec", true);		
 	}
 };
 pro.output.newSpec = function (new_data) {
-	d3.select(".main-focus").node().addSpecLine(new_data);
+	d3.select(".spec-slide.active").select(".main-focus").node().addSpecLine(new_data);
 };
 pro.output.newSlide = function (new_data) {
 	
@@ -3048,7 +3180,7 @@ pro.pp = function (alg, threshold, seg) {
 
 
 var get_selected_spec = function () {
-	var _main_focus = d3.select(".main-focus");
+	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
 	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
 	
 	var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
@@ -3061,7 +3193,7 @@ var get_selected_spec = function () {
 pro.plugin_funcs = function (fun, params, s_id) {
 	if(!s_id) s_id = get_selected_spec();
 	
-	var params_str = "sid="+s_id+"&" + fun+'_=null';
+	var params_str = "sid=["+s_id+"]&" + fun+'_=null';
 	for(var key in params){
 		if(params_str.length>0) params_str +='&';			
 		params_str += fun+'_'+key+'='+params[key];
@@ -3071,7 +3203,7 @@ pro.plugin_funcs = function (fun, params, s_id) {
 	ajaxJSONGet(url, function (response) {
 		var output_fun = response["output"]? pro.output[ response["output"] ]: pro.output.overwriteSpec;
 		
-		processPNG(response, output_fun);
+		pro.process_spectrum(response, output_fun);
 	});
 };  window.spec = spec;
 	window.pro = pro;

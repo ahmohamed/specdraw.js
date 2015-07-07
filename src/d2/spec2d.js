@@ -66,7 +66,7 @@ spec.d2.spec2d = function () {
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
 		//dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
