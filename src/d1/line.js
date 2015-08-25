@@ -38,20 +38,45 @@ spec.d1.line = function () {
 			)(svg_elem);
 		
 		svg_elem
-			.on("_redraw", function(e){				
-				path_elem.attr("d", path);
-				svg_elem.selectAll(".segment").attr("d", path);
+			.on("_redraw", function(e){
+				if(e.x){
+					path_elem.attr("d", path)
+						.attr("transform", 'scale(1,1)translate(0,0)');
+					svg_elem.selectAll(".segment").attr("d", path);
+				}else{ //change is in the Y axis only.
+					var orignial_xscale = x.copy().domain(svg.node().range.x),
+						orignial_yscale = y.copy().domain(svg.node().range.y);
+					
+						var translate_coor = [0,
+			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+
+						var	scale_coor = [ 1,
+						  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
+						
+						path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+				}
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
-					//if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
-					//	return;
-					
+
 					data_slice = new_slice;
 					
-					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);	
+					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);
 					path_elem.datum(dataResample);
+					
+					// if the number data points in the path is less that 
+					// the number of pixels, interpolate between points to
+					// avoid pixelation.
+					if(dataResample.length < width){
+						path.interpolate('cardinal');
+					}else{
+						// In large number of data points, cardinal interpolation
+						// has a pronounced effect on efficiency with no visual
+						// enhancement. Use linear instead.
+						path.interpolate('linear');
+					}
+						
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
@@ -112,6 +137,11 @@ spec.d1.line = function () {
 			if (!arguments.length) return scale_factor;
 			scale_factor = _;
 			svg_elem.on("_redraw")({y:true});
+		};
+		svg_elem.node().addPeaks = function (idx) { //TODO:assign color to peaks
+			svg.select(".peaks").node().addpeaks(data.subset(idx), line_idx);			
+			svg.select(".peaks").on("_regionchange")({xdomain:true});
+			svg.select(".peaks").on("_redraw")({x:true});			
 		};
 		svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){

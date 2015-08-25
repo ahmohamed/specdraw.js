@@ -28,8 +28,8 @@ spec.d1.crosshair = function(){
 			.on("click",function(){
 				svg.toggleClass("selected");
 			})
-			.on("mouseenter",function(){svg.classed("highlighted",true)})
-			.on("mouseleave",function(){svg.classed("highlighted",false)});
+			.on("mouseenter",function(){highlight(line_idx, true);svg.classed("highlighted",true)})
+			.on("mouseleave",function(){highlight(line_idx, false);svg.classed("highlighted",false)});
 
 		svg_elem.append("text")
 			.attr("x", 9)

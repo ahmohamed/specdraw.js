@@ -113,6 +113,64 @@ var processPNG = function (json, callback) {
 	}
 };
 
+var processPNGworker = function (json, callback) {
+	if (!json['nd'] || json['nd'] == 1){
+		var img = document.createElement("img");
+	
+		img.onload = function(){
+	    var canvas = document.createElement("canvas");
+	    canvas.width = img.width;
+	    canvas.height = img.height;
+
+	    
+	    
+	
+			var e = {};
+			e._16bit = (json['format'] == "png16")
+			
+	    // Copy the image contents to the canvas
+	    var ctx = canvas.getContext("2d");
+	    ctx.drawImage(img, 0, 0);    
+			e.buffer = ctx.getImageData(0,0,img.width,img.height).data;
+			
+			e.y_range = json['y_domain']
+			e.y_domain = [0, 255];
+			if(e._16bit) e.y_domain = [0,Math.pow(2,16)-1];
+			
+			var worker_callback = function(e) {
+				console.log('worker done')
+				var img_data = [].slice.call(e.data);
+				
+				if(json['x_domain']){
+					var xscale = d3.scale.linear().range(json['x_domain']).domain([0, img_data.length]);
+					img_data = img_data.map(function(d,i){ return {x:xscale(i), y:d}; });
+				}
+			
+				/*var ret;
+				if(typeof json["s_id"] != 'undefined')
+					ret = {data:img_data, s_id:json['s_id']}
+				else{ ret = {data:img_data}; }
+				
+				callback(ret);*/
+				json['data'] = img_data;
+				callback(json)
+			};
+			
+			var worker_message = [e, [e.buffer.buffer]];
+			pro.worker.queue.addJob({message:worker_message, callback:worker_callback});
+		}
+		var png_data = json['data']? json['data']: json['y'];
+		img.src = "data:image/png;base64," + png_data;
+	}else if (json['nd'] == 2){
+		// Mapping data and rendering
+		callback(json);
+	}else{
+		console.log("Unsupported data dimension: "+ json['nd'])
+	}
+};
+
+
+
 /* * get the sepctrum from the web service in one these formats:
 	* Plain JSON X-Y ['xy']
 	* JSON X(range), Y (base64) ['base64'] --> if scaled down to 8 or 16 bits: require "y_domain"
@@ -143,9 +201,10 @@ pro.get_spec = function(url, render_fun){
 };
 
 pro.process_spectrum = function(json, render_fun){
+	console.log('processing')
 	if (json.constructor === Array) {
 		for (var i = json.length - 1; i >= 0; i--) {
-			pro.process_spectrum(json[i], render_fun);	
+			pro.process_spectrum(json[i], render_fun);
 		}
 		return;
 	}
@@ -158,7 +217,8 @@ pro.process_spectrum = function(json, render_fun){
 			break;
 		case 'png':
 		case 'png16':
-			processPNG(json, render_fun);
+			//pro.worker(json, render_fun);
+			processPNGworker(json, render_fun);
 			break;
 	}	
 };

@@ -1,6 +1,9 @@
 (function () { "use strict";
   var spec = {version: "0.5.2"}; // semver
-	var pro = {};var setCookie = function(cname, cvalue, exdays) {
+	var pro = {};
+	spec.globals = {};
+	spec.globals.render = true;
+	var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
   var expires = "expires="+d.toUTCString();
@@ -50,14 +53,11 @@ Array.prototype.rotateTo =function(val){
 // TODO: Needs a lot of debugging!!
 // parent.class is undefined if the node doesn't have a class
 // Similarly, parent.id
-d3.selection.prototype.selectP =function(name){
+d3.selection.prototype.selectP =function(selector){
 	var parent = this.node().parentNode;
 	while(parent){       
-		if(name.toUpperCase() === parent.tagName.toUpperCase() || //tagname
-			name.toUpperCase() === "#"+parent.id.toUpperCase() || //id
-			name.toUpperCase() === "."+parent.class.toUpperCase()) //class
+		if(parent.matches(selector))
 				return d3.select(parent);
-
 		parent = parent.parentNode;
 	}
 	return null;
@@ -174,10 +174,10 @@ var applyCSS2 = function () {
 var saveSVG = function (svg) {
 	svgAsDataUri (svg.node(), {}, function(uri) {
 	  var a = document.createElement("a");
-	    a.download = "spec.svg";
-	    a.href = uri;
-	    a.setAttribute("data-downloadurl", uri);
-	    a.click();    
+    a.download = "spec.svg";
+    a.href = uri;
+    a.setAttribute("data-downloadurl", uri);
+    a.click();    
 	});	
 };
 
@@ -185,6 +185,18 @@ var savePNG = function (svg, filename) {
 	saveSvgAsPng(svg.node(), filename)
 };
 
+var searchNMRShiftDB = function (){
+	var base = 'http://nmrshiftdb.org/portal/js_pane/P-Results/nmrshiftdbaction/searchBySpectrumSpec/spectrumtypespectrumsearch/1/suborwhole/whole/spectrum/'
+	var peak_str = ''
+	d3.select('.peaks')
+		.selectAll('text').each(function(){ 
+			peak_str += (this.childNodes[0].nodeValue+'%0A');
+		});
+  var a = document.createElement("a");
+  a.href = base + peak_str;
+	a.target = '_blank'
+  a.click();
+};
 /* Use characters as cursor.
 $(function() {
     var canvas = document.createElement("canvas");
@@ -207,7 +219,16 @@ var drawTrace = function (svg, data, xdomain) {
 }
 
 
+
 var clr_space = ["#5e94e5", "#26aa0e", "#fd5f11", "#fe25fb", "#a6906a", "#f75a93", "#02a783", "#b974f3", "#969904", "#b684a5", "#e07559", "#6a9baa", "#cd8313", "#fd45c6", "#69a24d", "#d46fbf", "#769c7d", "#a584d2", "#d77786", "#af9039", "#fb5d67", "#0f9ed1", "#04aa53", "#e258ed", "#8587f9", "#6ca313", "#8692be", "#0ca4a3", "#9f9091", "#bf8578", "#e4742d", "#c8844a", "#8a9a5c", "#fa6046", "#df6d9f", "#ef5cb3", "#fe37e0", "#d46ad9", "#859d36", "#5aa26f", "#4aa734", "#4b92ff", "#ed6780", "#c07db8", "#bc79d9", "#b88d0d", "#839891", "#26a868", "#0ca2b7", "#5c9f97", "#a388be", "#a0944f", "#ce7f65", "#6097d1", "#878ed2", "#878be5", "#b68c57", "#e66e6d", "#ca7b9f", "#d87b43", "#c869fa", "#8f9777", "#fd587a", "#8f93a4", "#eb5acc", "#c68632", "#b4888b", "#57a183", "#f045f4", "#0e98f9", "#a87eec", "#01aa3c", "#dc7a03", "#a7931a", "#619abe", "#a08cab", "#f7652f", "#fe4ab3", "#289ae5", "#67a335", "#4ca64c", "#ef6d0c", "#9e9638", "#829e15", "#51a710", "#a68f7e", "#c5808b", "#ec6d45", "#ee6a5a", "#f04fda", "#be8764", "#8f9947", "#779e69", "#d67972", "#29a590", "#d075ac", "#fe4fa0", "#d57e2b", "#e25ce0", "#4ca562", "#759f5b", "#c677c5", "#dd68c6", "#259fc4", "#ef60a0", "#e0708c", "#ef638d", "#959663", "#bf7fab", "#ca6ced", "#fe5c54", "#7b9e46", "#c572df", "#47a0aa", "#a67cf9", "#a98b98", "#7f95b1", "#979384", "#829984", "#6c90ec", "#e16aac", "#84969e", "#519db7", "#ce7d7f", "#44a47c", "#b381c5", "#c2881e", "#699f76", "#6b9c9d", "#379bd8", "#b68a71", "#a3925d", "#e154fa", "#cf813b", "#f46274", "#d27e51", "#849a70", "#93992e", "#9f83e5", "#b98b41", "#78a02d", "#f552c0", "#df7379", "#ff5387", "#d77499", "#31a92a", "#fe2fed", "#fe3fd3", "#35a844", "#f04ae7", "#6e93d8", "#e3743d", "#b18f27", "#ad9048", "#43a296", "#35a75a", "#b483b8", "#cf70cc", "#de7566", "#918ec5", "#b37fd2", "#6f96c4", "#928ad8", "#f16667", "#c18757", "#c18198", "#6f9d8a", "#b38c64", "#b28a7e", "#29a775", "#ce7b92", "#929491", "#9c9377", "#b58698", "#718df9", "#cc7f72", "#64a25b", "#7b92cb", "#509acb", "#998db8", "#9b89cb", "#e267b9", "#e67407", "#8f91b1", "#aa88b1", "#e1754b", "#9682f9", "#ee6d25", "#bb8b31", "#ed6d36", "#d663ed", "#ea5ec0", "#d55ffa", "#cb76b9", "#7b8fdf", "#f23dfa", "#f5654d", "#fb6038", "#da7b34", "#aa80df", "#c48642", "#8e9b24", "#ff586e", "#9484f3", "#cb832a", "#75a03e", "#9c85df", "#42a56f", "#e86893", "#0399f2", "#4d98de", "#4695f2", "#fb50ad", "#eb61ac", "#e36f80", "#f756a6", "#9a9725", "#d472b2", "#be8949", "#f75e80", "#ba76e6", "#ee55d3", "#fc6027", "#ca825e", "#f6653f", "#6aa062", "#7e9d55", "#4c9cc4", "#bb71fa", "#54a554", "#1da3aa", "#828af2", "#d57c5f", "#5aa445", "#c2856b", "#9d8ea4", "#c76fe6", "#f8641d", "#41a1a3", "#57a090", "#749b90", "#ab9056", "#aa89a5", "#ba895e", "#9a956a", "#aa8d84", "#af8e5d", "#6e99b1", "#939855", "#c18385", "#969297", "#9b928b", "#8e968a", "#789a97", "#a882d8", "#6fa054", "#13a961", "#99909e", "#e4725f", "#d16dd3", "#4993f9", "#ae8c78", "#819c62", "#db7b22", "#e064cc", "#7898a4", "#97983f", "#a686c5", "#899c01", "#1ba1bd", "#93957d", "#9186ec", "#d27c6c", "#d77e15", "#f76161", "#bd7bcc", "#c575d2", "#5b9ea4", "#7b97aa", "#4397eb", "#aa8e71", "#ad910a", "#44a389", "#bd8392", "#ab9230", "#ec6499", "#1ca689", "#a99240", "#8394b7", "#6e8ef2", "#6a9e83", "#c879b2", "#1596ff", "#e66c86", "#cd78a5", "#e865a6", "#8d9869", "#9c9647", "#e96b7a", "#7197b7", "#b28e4f", "#4c9eb0", "#a29507", "#c0893a", "#d871a6", "#c37abf", "#d18121", "#62a421", "#53a468", "#ea7019", "#dc7852", "#57a52b", "#e07717", "#879b4e", "#d466e6", "#43a81f", "#8a9b3f", "#e67152", "#72a122", "#52a63d", "#f54dcd", "#e360d3", "#fb559a", "#f258b9", "#f642e7", "#e1726c", "#f45ba0", "#e856e0", "#d87b4b", "#fb39e7", "#f63cf4", "#db5afa", "#d95ef3", "#39a83c", "#f847d3", "#e852ed", "#dc6bb9", "#cc74c5", "#fa614d", "#bc8b28", "#fa4cc0", "#df5de6", "#dc7199", "#e87136", "#35a91f", "#e96e60", "#ef6773", "#40a82a", "#f25f93", "#cc68f3", "#b47ae6", "#d76cc6", "#ea4cf4", "#29a853", "#ad78f9", "#da748c", "#e77145", "#eb6d4c", "#e563bf", "#3fa661", "#f941e0", "#5ca43d", "#f349e0", "#ed46fa", "#60a42b", "#ab7bf3", "#59a520", "#20a944", "#d766e0", "#6da13e", "#ba80b8", "#c27fa5", "#ad85b8", "#55a276", "#889a63", "#658ff9", "#7ba015", "#cc8151", "#61a083", "#889977", "#c98265", "#a680e6", "#b08b85", "#28a1b0", "#948ccb", "#928fb8", "#7e9e36", "#419cca", "#f3627a", "#c68272", "#63a16f", "#7e8de5", "#c3837f", "#1b9dd8", "#8990c4", "#8a8dd8", "#b782b2", "#a38e98", "#c68629", "#a984cb", "#9c8bbe", "#50a55b", "#e85ec6", "#6da05b", "#7596be", "#e86e66", "#6897cb", "#fa5d6e", "#df7835", "#32a396", "#bc82a5", "#839c5c", "#d37e43", "#f26660", "#b28c6b", "#d57e34", "#7e91d1", "#9e9371", "#dd7844", "#60a176", "#729f62", "#829d46", "#a09525", "#ba868b", "#da795f", "#c68457", "#61a262", "#ba7ec5", "#a48ab1", "#559bbe", "#c87e92", "#dd64d3", "#b88b49", "#f8615a", "#d57979", "#bd876b", "#8d9b2e", "#cf7f5e", "#f253c6", "#d8767f", "#9e87d2", "#ba8878", "#6f9aa4", "#d173b9", "#32a66f", "#d37c65", "#3da483", "#2fa2a3", "#9488df", "#919770", "#b385ab", "#7c9c70", "#599ac4", "#c8807f", "#97965c", "#f054cd", "#8b93ab", "#71a12c", "#e466b3", "#a89064", "#8d85f9", "#999655", "#6c9f6f", "#7192de", "#73a046", "#599db1", "#6092ec", "#7e9b7d", "#f656ad", "#cb8333", "#d67c58", "#779f54", "#439fb7", "#cc7d85", "#f55e87", "#ad83c5", "#8a9784", "#c57cac", "#e369a6", "#c98442", "#c88611", "#b081cb", "#998fab", "#719e76", "#3ca576", "#9c81f3", "#c67e98", "#d97492", "#a59256", "#a29263", "#e76999", "#51a096", "#6b9d90", "#3c9ade", "#8f9497", "#a39440", "#f9598d", "#4ba290", "#b28991", "#6b95d1", "#a29177", "#de7093", "#c38192", "#809897", "#a59430", "#8895a4", "#779b8a", "#d07a8c", "#ac9127", "#4098e5", "#5499d1", "#5b96de", "#7894c4", "#ea688d", "#a89248", "#cc7b98", "#569f9d", "#a28f8b", "#b3879e", "#a9905d", "#a68c9e", "#b58d39", "#999291", "#b38f0c", "#7295cb", "#d5759f", "#25a49d", "#a38ca4", "#fd50a7", "#7c989d", "#7399aa", "#b68885", "#a88f77", "#85997d", "#ae8b8b", "#819a76", "#6f9c97", "#36a1aa", "#ca7d8c", "#c0875e", "#ac8b91", "#a0917e", "#a58d91", "#879697", "#f951b3", "#8192c4", "#8b9691", "#7b9b83", "#ac8d7e", "#9c9705", "#49a19d", "#95948a", "#919584", "#8495aa", "#65a07d", "#91993f", "#8793b1", "#a08e9e", "#5ba17c", "#7797b1", "#969847", "#659ca4", "#bd7fb2", "#7f998a", "#8b949e", "#8097a4", "#92929e", "#ca8078", "#b98964", "#c38649", "#c78085", "#b58c5d", "#9690a4", "#5d99cb", "#87978a", "#c47e9f", "#8f9863", "#df6ab2", "#8c977d", "#3aa29d", "#8490cb", "#7c9a90", "#b78d28", "#af8998", "#9d945c", "#9a937e", "#8c9a55", "#5f9caa", "#cf7d79", "#9291ab", "#bd8b0f", "#fb5981", "#ad899e", "#b8887e", "#968fb1", "#2c9eca", "#949924", "#5ca08a", "#9d8db1", "#b48a78", "#51a289", "#99972f", "#9e9184", "#a88d8b", "#91985c", "#9c9463", "#b982ab", "#969577", "#749a9d", "#9c9097", "#a78aab", "#6598c4", "#8c8ecb", "#1ca77c", "#be819f", "#d672ac", "#bb8957", "#649bb1", "#3c9ec4", "#a48f84", "#988bc5", "#ae8e64", "#669e8a", "#aa9238", "#d067ed", "#f5626d", "#c28750", "#fe5c4d", "#c66cf3", "#8f8cd2", "#2aa683", "#9a964e", "#889c16", "#44a745", "#4ba383", "#dd784b", "#93966a", "#ed60a6", "#ad87ab", "#ee677a", "#9f89c5", "#b38e48", "#44a65a", "#da7679", "#989737", "#8b87f3", "#39a668", "#f0666d", "#b57cd9", "#f45f8d", "#aa86be", "#b087a5", "#da7b2c", "#d77b51", "#f15f99", "#bd8b1d", "#7a9d62", "#d96eb2", "#e961b3", "#5ba35b", "#ce6ed9", "#fd5c5a", "#cb6edf", "#f66546", "#cc71d2", "#bf70f3", "#6f9f69", "#e762b9", "#57a362", "#b08f30", "#6992e5", "#ac904f", "#df755f", "#21aa1e", "#64a412", "#e17552", "#d28014", "#f4680d", "#30a0b7", "#799f4d", "#71a04d", "#7490e5", "#da68cc", "#848ddf", "#a382df", "#77a036", "#e55bd9", "#9987d8", "#6fa135", "#ce8143", "#f06386", "#229cde", "#bc8685", "#47a568", "#ac82d2", "#f0694c", "#94984e", "#bf838b", "#f9640f", "#f26380", "#b278f3", "#63a345", "#6899b7", "#849d3e", "#799c76", "#d37a7f", "#38a90f", "#ec6a66", "#e07273", "#d97965", "#8e9a4e", "#c18829", "#f86427", "#d375a5", "#ef6a53", "#30a84c", "#c18572", "#5096e5", "#a6924f", "#cd6be6", "#ea6b73", "#65a33d", "#619f90", "#2fa761", "#4999d8", "#f3692f", "#4fa720", "#749e70", "#a49438", "#dc7b16", "#ae9041", "#f16945", "#dc766c", "#489dbd", "#5ea269", "#ef6d1b", "#6495d8", "#ea65a0", "#6391f2", "#cb79ac", "#369fbd", "#a69326", "#4fa645", "#ed6d3e", "#57a44c", "#5891f9", "#48a653", "#8c9b37", "#809d4d", "#d08133", "#e263c6", "#e57424", "#ee6d2e", "#e86b80", "#d67e21", "#b879df", "#d5778c", "#bd7dbf", "#3ca390", "#818fd8", "#2da934", "#9d9640", "#7f9c69", "#da65d9", "#b085b2", "#cd7f6c", "#cc8320", "#549eaa", "#f1693e", "#16a94c", "#619d9d", "#db7858", "#ea7124", "#6e9e7d", "#a37ef3", "#d17a85", "#eb55d9", "#7e94be", "#b9849e", "#8c8bdf", "#b68d31", "#de6ea6", "#819e23", "#b78692", "#ea7009", "#e36c93", "#b78a6b", "#5ba511", "#c08932", "#ac8e6a", "#fb603f", "#b17cdf", "#1baa2a", "#a185d8", "#47a73d", "#f752b9", "#768eec", "#c5845e", "#808cec", "#f96154", "#a287cb", "#9786e5", "#34a57c", "#c8826b", "#739d83", "#c974cc", "#a29447", "#d17c72", "#e6714c", "#859b55", "#c872d9", "#dd737f", "#3da0b0", "#fd601e", "#6ba321", "#f3691c", "#fe5874", "#e07723", "#cd814a", "#ac911b", "#ce76b2", "#b475fa", "#69a32c", "#d37792", "#b780bf", "#9984ec", "#c67ab8", "#fb40da", "#4aa476", "#f343ed", "#e56f73", "#67a169", "#50a37c", "#f36926", "#c78451", "#9f952f", "#6b98be", "#899b46", "#55a534", "#9b9719", "#f46553", "#bd8950", "#c5863a", "#989570", "#cb8158", "#7b8af9", "#c26dfa", "#ea6e53", "#7aa022", "#be76df", "#5897d8", "#8f9b17", "#c37cb2", "#e8713d", "#d769d3", "#e57418", "#20a95a", "#bb8498", "#d76fb9", "#978ad2", "#e17086", "#2d99eb", "#ff5b47", "#f26937", "#c48465", "#c370ed", "#b78d1d", "#01a875", "#8b9970", "#ca843b", "#4fa46f", "#b28f1c", "#e27544", "#d17899", "#df782c", "#909b02", "#8e90be", "#5ea435", "#67a254", "#a79308", "#7d9e3e", "#46a80f", "#74a114", "#40a74c", "#de783c", "#9e7ff9", "#df59f4", "#a181ec", "#f85e7a", "#d17f58", "#c58278", "#a788b8", "#c87ca5", "#bf78d2", "#cf73bf", "#4da72b", "#e17705", "#da6bbf", "#dc7386", "#c7861f", "#db7673", "#e557e6", "#da719f", "#bf8942", "#bd857e", "#b97bd2", "#e5699f", "#27a93c", "#d16ae0", "#879c23", "#11aa33", "#c977bf", "#cf789f", "#e56c8c", "#e9712e", "#5d9bb7", "#8a91b7", "#8989ec", "#1aa86f", "#af7fd9", "#bd73ec", "#c275d9", "#60a34d", "#b67ecc", "#6ba145", "#b08c71", "#f66167", "#929937", "#df67bf", "#ba8b3a", "#9f9456", "#7f9e2d", "#3496f9", "#e47435", "#ad7de6", "#fc4bba", "#a08ab8", "#ed6a60", "#ed6493", "#c173e6", "#a1951a", "#459bd1", "#798cf2", "#958dbe", "#f95d74", "#17a596", "#af7aec", "#fc6030", "#eb6b6d", "#d27e4a", "#e16d99", "#6794de", "#d46ccc", "#3794ff", "#5693f2", "#ea6e59", "#34a489", "#c07ac5", "#4f9fa3", "#b48d41", "#7891d8", "#869d2d", "#eb6886", "#d97b3c", "#3197f2", "#b08e56", "#d170c6", "#959918", "#7593d1", "#a0936a", "#5ea354", "#c378cc", "#d7796c", "#f3665a", "#3da834", "#669d97", "#7a96b7", "#d0812b", "#f76537", "#8f88e5", "#fc5c61", "#c28810", "#7c9d5c", "#869a69", "#d77d01", "#db6eac", "#3ba753", "#329dd1", "#e46f79", "#a49171", "#b677ec", "#bb8771", "#e37266", "#e57259", "#5395ec", "#e666ac", "#d47e3c", "#b083be", "#b78b50", "#e060d9", "#fb46cd", "#fe548d", "#fa5987", "#f833fb", "#d962e6", "#e453f4", "#ed4bed", "#ff44c0", "#d263f3", "#f34ed3", "#ec5db9", "#ef58c0", "#f93aed", "#f25ba6", "#cf64fa", "#ed59c6", "#dd61e0", "#ee50e0", "#dc5eed", "#eb51e7", "#f648da", "#f955a0", "#f15cad", "#fb31f4", "#e55fcc", "#f84dc6", "#e85ad3", "#f65a9a", "#fc5494", "#f457b3", "#e74dfa"];
+var highlight = function (line_idx, on) {
+	var classname = '.clr' + line_idx;
+	d3.select('.spec-slide.active').selectAll('.line')
+		.classed('disabled', on);
+	
+	d3.select('.spec-slide.active').selectAll(classname)
+		.classed('disabled', false);
+}
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -315,172 +336,277 @@ function editText(evt){
 	}
 }*/
 
-/************************** Methods modals **************************/
-
-var makeMethodParams = function(params){
-  return function(div){
-		//console.log(div[0][0].children)
-		
-    for (var key in params){
-			var p = params[key];
-			if(typeof p == 'function') continue; //Exclude Array prototype functions.
-				
-      var label = div.append("label")
-      	.text(key).classed("param", true);
-			
-			label.node().id = key;
-			//console.log(div[0][0].children, key)
-				
-      parseParams.apply(label, p);      
-    }
-  };
+var inp = {};
+inp.num = function (label, val, _min, _max, step, unit) {
+	var elem = d3.select(document.createElement("label"));
+	elem.classed('param num', true)
+		.text(label)
+		.append("input")
+			.attr({
+				type: 'number',
+				value: typeof val === "undefined" ? 0: val,
+				min: typeof _min === 'undefined'? -Infinity: _min,
+				max: typeof _max === 'undefined'? Infinity: _max,
+				step: typeof unit === 'undefined'? 1: step
+			})
+			.text(typeof unit === 'undefined'? '': unit);
+	
+	elem.node().getValue = function(){ 
+		return elem.select('input').node().value;
+	};
+	return function () { return elem.node()	}
 };
 
-var parseNum = function (val, min, max, step) {
-	var input = this.append("input").attr("type", "number");
-
-  if(!(typeof val === "undefined")){
-		if(val.constructor === Array){
-			input.attr({
-				value: val[0],
-				min:val[1],
-				max:val[2],
-				step:val[3]
-			});
-				
-		}else{
-			input.attr("value", val);
-		}	  
-  }	
+inp.checkbox = function (label, val) {
+	var elem = d3.select(document.createElement('label'));
+	elem.classed('param checkbox', true)
+		.append("input")
+			.attr('type', 'checkbox')
+      .on('change', function () {
+        fireEvent(this, 'input');
+      })
+      .node().checked = val ? true: false;
 	
-	return input;
-}
-
-var parseParams = function(label, type, val, fields, fields_label){
-  if(label)
-    this.text(label);
+	elem.append('div')
+			.classed('checker', true);
+  elem.append('div')
+		.classed('label', true)
+		.text(label);
+	
+	elem.node().getValue = function(){ 
+		return elem.select('input').node().checked;
+	};
+	return function () { return elem.node()	}
+};
+inp.checkbox_toggle = function (label, val, div_data) {
+	var elem = d3.select(document.createElement('div'))
+    .classed('param checkbox-toggle', true);
   
-	var input;
+  elem.append(inp.checkbox(label, val))
+    .select('input').on('change', function () {
+      elem.select('.div_enable')
+        .classed('disabled', !this.checked);
+      fireEvent(this, 'input');
+    });
+	
+  elem.append(inp.div(div_data))
+		.classed('div_enable', true);
+  
+  elem.node().getValue = elem.select('.param.checkbox').node().getValue;
+  
+  return function () { return elem.node();	};
+};
+inp.select = function (label, options, val) {
+	var elem = d3.select(document.createElement('label'))
+		.classed('param select', true)
+		.text(label);
+	var select_elem = elem.append("select");
+  
+  select_elem.selectAll('option')
+		.data(options).enter()
+		.append('option')
+			.text(function(d){return d;});
+  
+  select_elem.node().value = val;
+  
+	elem.node().getValue = function(){ 
+		return select_elem.node().value;
+	};
+	return function () { return elem.node()	}
+};
 
-  if(type === 0){
-		input = parseNum.apply(this, [val]);		
-  }
-	else if(type === 1){
-		input = this.append("input").attr("type", "checkbox");
-		if(val)
-			input.attr("checked", true)
-	}
-  else if(type === 3){
-  	input = this.append("select");
-		
-		if(fields.constructor === Array){
-			input.selectAll("option")
-				.data(fields)
-				.enter()
-				.append("option")
-				.attr("value", function(d){return d[0];})
-				.text(function(d){return d[1];})
-			
-		}else{
-			input.selectAll("option")
-				.data(Object.keys(fields))
-				.enter()
-				.append("option")
-				.attr("value", function(d){return d;})
-				.text(function(d){return fields[d][0];})			
-			
-			input.on("input", function(){
-				
-				d3.select(this.parentNode).select(".method_params").select("fieldset").remove();
-				// Add a fieldset only if the method has args.
-			  if( Object.keys(fields[this.value][1]).length >0 ){
-					d3.select(this.parentNode).select(".method_params")
-				    .append("fieldset")
-				  	.call(makeMethodParams(fields[this.value][1]))
-					  .append("legend").text( fields_label? fields_label : "Parameters");
-			  }
+inp.select_multi = function (label, options) {
+	var elem = d3.select(document.createElement('div'))
+    .classed('param select-multi', true);
+  
+	elem.append('label')
+    .text(label)
+		.append("input")
+			.attr('type', 'checkbox')
+			.style('display', 'none')
+      .on('change', function () {
+        elem.select('ul')
+          .classed('shown', this.checked);
+      })
+			.node().checked = false;
+	
+	elem.append('ul')
+		.selectAll('li')
+		.data(options).enter()
+		.append('li')
+			.each(function(d){
+        d3.select(this).append(inp.checkbox(d, true))
+      });
+	
+	elem.node().getValue = function(){ 
+		return elem.selectAll('.param.checkbox')
+			.filter(function () {
+				return this.children[0].checked;
+			})[0]
+			.map(function (e) {
+				return typeof(e.value) !== 'undefined' ? e.value
+					: d3.select(e).select('.label').text();
 			});
+		return elem.select('input').node().value;
+	};
+	return function () { return elem.node()	}
+};
 
-			var fieldset = this.append("div")
-				.classed("method_params", true);
-			
-			if( Object.keys(fields[input.node().value][1]).length >0 ){
-				fieldset.append("fieldset")	
-					.call(makeMethodParams(fields[input.node().value][1]))
-					.append("legend").text(fields_label? fields_label : "Parameters");					
-			}
+inp.select_toggle = function (label, options) {
+	console.log(label, options);
+	var elem = d3.select(document.createElement('div'))
+    .classed('param select-toggle', true);
+  
+  elem.append(inp.select(label, Object.keys(options))) 
+	  .selectAll('option')
+      .attr('value', function(d){return d;})
+      .text(function(d){return options[d][0];});
+	
+	var fieldset = elem.append("div")
+		.classed("method_params", true);
+	var select_elem = elem.select('select').node();
+	
+	elem.select('select').on('input', function () {
+    d3.event.stopPropagation();
+  })
+    .on('change', function () {
+		fieldset.select('fieldset').remove();
+
+		if( Object.keys( options[select_elem.value][1]).length > 0 ){
+			fieldset.append("fieldset")
+				.append(inp.div( options[select_elem.value][1] ))
+				//.appened('legend', 'Parameters');
 		}
-  }
-  else if(type === 5){		
-		this.text(" ");
-    input = this.append("input").attr("type", "button")
-			.attr("value", label)
-    	.on("click", function(){ fireEvent(this, 'input') });
+    
+    fireEvent(this.parentNode, 'input');
+	});
+	
+	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
+		fieldset.append("fieldset")	
+			.append(inp.div( options[ select_elem.value ][1] ));
+	}
+	
+	elem.node().getValue = function(){ 
+		return select_elem.value;
+	};
+	return function(){return elem.node();};
+};
+inp.button = function (label) {
+	var elem = d3.select(document.createElement('input'))
+		.classed('param btn', true)
+		.attr('type', 'button')
+		.attr('value', label)
+		.on("click", function(){ fireEvent(this, 'input') });
+	
+	elem.node().getValue = function(){ 
+		return d3.event && d3.event.target === elem.node();
+	};	
+	return function(){return elem.node();};
+};
+inp.threshold = function (label) {
+	var elem = d3.select(document.createElement('div'))
+	.classed('param threshold', true);
+	
+	input = elem.append("input").attr("type", "hidden")
+
+	var val = elem.append("input")
+		.attr("type", "text")
+		.attr('readonly', 'readonly');
+	
+	elem.insert(inp.button(label), ':last-child')
+  	.on("click", function(){ 
+			var modal = d3.select(".nanoModalOverride[style*='display: block']")
+				.style('display', 'none');
+			
+			d3.select('.spec-slide.active').select('.main-focus').node()
+				.getThreshold(function (t) {
+					val.attr('value', t.toExponential(2));
+					input.attr('value', t);
+					modal.style('display', 'block');
+				});
+		});
+	
+	elem.node().getValue = function () {
+		return input.value;
+	};
+	return function(){return elem.node()}
+};
+/* parses the GUI data into a div HTML element.
+	 @param div_data object containing parameter names as keys
+	 and GUI information (Array) as values.
+	 The GUI array consists of the following:
+	 * label: text label of the input
+	 * type: the input type:
+			0:number 1:checkbox 2:text 3:select_toggle 4:checkbox_toggle
+			5:button 6:threshold
+*/
+inp.div = function (div_data) {
+	var div = d3.select(document.createElement('div'));
+  for (var key in div_data){
+		var p = div_data[key];
+		if(typeof p == 'function') continue; //Exclude Array prototype functions.
+		console.log('from_div', p);	
+    div.append(parseInputElem.apply(null, p))
+			.node().id = key;
   }
 	
-  return input;
+	return function() {return div.node();};
 };
 
-var methods = {}
-
-methods.bl = 
-{
-	"a":["Baseline correction method", 3, null,
-		{
-			'cbf':["Constant",
-				{"last":["Percentage of points used to calculate baseline", 0, 10]}
-			], 
-			'med':["Median filter",
-				{
-		     "mw":["Median window size",0,200],
-		     "sf":["Smooth window size", 0,16],
-		     "sigma":["sigma" , 0, 5],
-		  	}
-			],
-			'polynom':["Polynomial", {"n":["Order", 0, 3]}],
-			'cos':["Cosine series", {"n":["Order", 0, 3]}],
-			'bern':["Bernstein polynomials", {"n":["Order", 0, 3]}],
-			'iter_polynom':["Iterative Polynomial", {"n":["Order", 0, 3]}],			
-			'airpls':["airPLS", {"n":["Order", 0, 1], "lambda":["lambda", 0, 10]}],
-			'whit':["Whittaker smoother", {}],
-			'th':["Tophat", {}],
-			'als':["Asymmetric least squares", {}],
-			'fft':["Low FFT filter", {}],
-		}
-	],
-	"prev":["Preview", 3, null, [[0,"Estimated baseline"], [1,"Corrected spectrum"]] ],
-	"prev_auto":["Auto Preview", 1, true],
-	"prev_btn":["Apply Preview", 5, null]
+var parseInputElem = function (label, type, details) {
+	var f = [
+		inp.num, inp.checkbox, inp.text, inp.select_toggle,
+		inp.checkbox_toggle, inp.button, inp.threshold
+	][type];
+	return f.apply(null, [label].concat(details));
 };
-methods.ps = 
-{
-	"a":["Phase correction method", 3, null,
-		{
-			'auto':["Automatic",
-				{"opt":["Optimization", 3, null, 
-						[['auto',"Sequential optimization of zero & first order phases"],
-						['autosim',"Simultaneous optimization of zero & first order phases"],
-						['auto0',"Zero order phase only"]] 
-					],
-				"obj":["Objective function", 3, null, 
-						[['entropy', "Entropy minimization"],['integ', "Integral maximization"],['minp', "Minimum point maximization"]]
-					]
-				}
-			], 
-			'atan':["Automatic using Arc tan method",
-				{"p0":["Zero order only", 1, false]}
-			],
-			'man':["Manual", 
-				{
-		     "p0":["Zero order",0,0],
-		     "p1":["First order", 0,0]
-		  	}
-			],
-		}
-	],
-	"prev_auto":["Auto Preview", 1, true],
-	"prev_btn":["Preview Corrected", 5, null]
-};spec.elem = {};
+
+inp.spectrumSelector = function () {
+	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
+	if (specs.size() === 0) return;
+		
+	var elem = 	d3.select(
+			inp.select_multi('Select Spectrum', specs[0])()
+		).classed('spec-selector', true)
+	
+	elem.selectAll('li')
+	  	.each(function(d){
+				var _input = d3.select(this).select('.checkbox')
+					.style('color', getComputedStyle(d.childNodes[0]).stroke)
+					.on('mouseover', function () {
+						specs.classed('dimmed', true);
+						d3.select(d).classed('dimmed', false)
+							.classed('highlighted', true);
+					})//mouseover
+					.on('mouseout', function () {
+						specs.classed('dimmed', false);
+						d3.select(d).classed('highlighted', false);
+					})//mouseout
+					.select('.label').text(d.label);
+			});//end each
+	
+	elem.node().getValue = function () {
+		return elem.selectAll('li')
+			.filter(function () {
+				return d3.select(this).select('input').node().checked === true;
+			})
+			.data().map(function(e){
+	        return e.s_id();
+	    });
+	};
+	elem.node().id = 'sid';
+	
+	return function(){return elem.node();};
+};
+inp.preview = function(auto){
+	var div_data = {
+		"prev_auto":["Instant Preview", 1, typeof auto !== 'undefined'],
+		"prev_btn":["Preview", 5, null],
+	};
+	return inp.div(div_data);
+};
+
+spec.elem = {};
 
 spec.elem.dropdown = function (parent, label, options) {
 	var selector = parent.append('div')
@@ -543,7 +669,7 @@ spec.elem.spectrumSelector = function (el) {
 	specs.each(function () {
 		var s = this;
 		var o = selector.node().appendOption(s.label + legend)
-			.style('color', getComputedStyle(s.children[0]).stroke)
+			.style('color', getComputedStyle(s.childNodes[0]).stroke)
 			.on('mouseover', function () {
 				d3.select(s).classed('highlighted', true);
 			})
@@ -569,6 +695,7 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		content,
 		{
 		overlayClose: false,
+		autoRemove:true,
 		buttons: [
 			{
 		    text: "OK",
@@ -753,26 +880,44 @@ var add_preview = function (el, ok_fun) {
 
 
 modals.method_args = function (fun ,args, title, specSelector, preview) {
-  var form_data = {}, el;
+	var el;
 	var ok_fun = function (modal) {
-	  el.selectAll(".param")[0].forEach(function(e){
-	    form_data[e.id] =  e.children[0].type ==="checkbox"? e.children[0].checked :e.children[0].value;
-	  });
-		
-		if(modal) modal.hide();
-		
-		var s_ids = el.select('.spec-selector').node().getSelected();
-		pro.plugin_funcs(fun, form_data, s_ids);
-		form_data = {};
+		fireEvent(el.node(), 'input');
+		modal.hide();
 	};
 	
-	var nano = modals.proto(title, "",	ok_fun);
-	
+	var nano = modals.proto(title, '',	ok_fun);
 	el = d3.select(nano.modal.el).select(".nanoModalContent");
 	
-	el.call(add_selector, ok_fun);
-	el.call(makeMethodParams(args));
-	el.call(add_preview, ok_fun);
+	el.on('input', function () {
+		console.log('target', el, d3.event.target);
+		
+		var form_data = {};
+    el.selectAll('.param')
+      .filter(function () {
+				console.log(this, this.id);
+        return this.id !== '';
+      })
+      .each(function (e) {
+				console.log('filtered',this,this.id)
+        form_data[this.id] = this.getValue();
+      });
+		var timer = null;
+		if(timer)
+			clearTimeout(timer);		
+	
+		if(d3.event.target === el || form_data['prev_btn'] === true){
+			pro.plugin_funcs(fun, form_data);
+		}else	if(form_data['prev_auto'] === true){
+			timer = setTimeout(function () {
+				pro.plugin_funcs(fun, form_data);
+			}, 300);
+		}
+	});
+	
+	el.append(inp.spectrumSelector());
+	el.append(inp.div(args));
+	el.append(inp.preview(true));
 	return nano.show;
 };
 spec.method_args = modals.method_args;spec.menu = function(){
@@ -864,40 +1009,21 @@ spec.method_args = modals.method_args;spec.menu = function(){
 			//.call(css_trans("translateX("+ (-width) + "px)"));
 		
 		var menu = 
-			[
+			[	
 			  {
-			    label:"Peaks",
+					label:"Processing",
+				},
+			  {
+			    label:"Analysis",
 			    children:[
 			      {
-							label:"Pick peaks",
+							label:"Peak Picking",
 							children:[
 								{label:"Manual peak picking",fun:events.peakpickToggle},
-							  {
-									label:"Automatic using threshold",
-									fun: function () {
-										d3.select(".spec-slide.active").select(".main-focus").node().getThreshold(
-												function (t) { pro.pp("threshold", t); }
-										);
-							  	}
-								},
-							  {
-									label:"Peak segments using threshold",
-									fun: function () {
-										d3.select('.spec-slide.active').select(".main-focus").node().getThreshold(
-												function (t) { pro.pp("threshold", t, true); }
-										);
-							  	}
-								},
-							  {
-									label:"Automatic using CWT",
-									fun: function () {
-										pro.pp("cwt");
-							  	}
-								},								
+					  		{label:"View/manage peak table",fun:null},
+								{label:"Delete peaks",fun:events.peakdelToggle},
 							]
-						},
-			  		{label:"View/manage peak table",fun:null},
-						{label:"Delete peaks",fun:events.peakdelToggle},
+						},	
     			]
 			  },
 				{
@@ -936,6 +1062,7 @@ spec.method_args = modals.method_args;spec.menu = function(){
 						{label:"As SVG",fun:function(){
 							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
 						}},
+						{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
 						{label:"CSV",fun: function(){}},
 						{label:"Peak table",fun:function(){}},
 						{label:"JCAMP-DX",fun:function(){}},
@@ -1067,8 +1194,8 @@ spec.d1.threshold = function () {
 			.on("click",function(){
 				svg.toggleClass("selected");
 			})
-			.on("mouseenter",function(){svg.classed("highlighted",true)})
-			.on("mouseleave",function(){svg.classed("highlighted",false)});
+			.on("mouseenter",function(){highlight(line_idx, true);svg.classed("highlighted",true)})
+			.on("mouseleave",function(){highlight(line_idx, false);svg.classed("highlighted",false)});
 
 		svg_elem.append("text")
 			.attr("x", 9)
@@ -1356,20 +1483,45 @@ spec.d1.line = function () {
 			)(svg_elem);
 		
 		svg_elem
-			.on("_redraw", function(e){				
-				path_elem.attr("d", path);
-				svg_elem.selectAll(".segment").attr("d", path);
+			.on("_redraw", function(e){
+				if(e.x){
+					path_elem.attr("d", path)
+						.attr("transform", 'scale(1,1)translate(0,0)');
+					svg_elem.selectAll(".segment").attr("d", path);
+				}else{ //change is in the Y axis only.
+					var orignial_xscale = x.copy().domain(svg.node().range.x),
+						orignial_yscale = y.copy().domain(svg.node().range.y);
+					
+						var translate_coor = [0,
+			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+
+						var	scale_coor = [ 1,
+						  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
+						
+						path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+				}
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
-					//if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
-					//	return;
-					
+
 					data_slice = new_slice;
 					
-					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);	
+					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);
 					path_elem.datum(dataResample);
+					
+					// if the number data points in the path is less that 
+					// the number of pixels, interpolate between points to
+					// avoid pixelation.
+					if(dataResample.length < width){
+						path.interpolate('cardinal');
+					}else{
+						// In large number of data points, cardinal interpolation
+						// has a pronounced effect on efficiency with no visual
+						// enhancement. Use linear instead.
+						path.interpolate('linear');
+					}
+						
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
@@ -1430,6 +1582,11 @@ spec.d1.line = function () {
 			if (!arguments.length) return scale_factor;
 			scale_factor = _;
 			svg_elem.on("_redraw")({y:true});
+		};
+		svg_elem.node().addPeaks = function (idx) { //TODO:assign color to peaks
+			svg.select(".peaks").node().addpeaks(data.subset(idx), line_idx);			
+			svg.select(".peaks").on("_regionchange")({xdomain:true});
+			svg.select(".peaks").on("_redraw")({x:true});			
 		};
 		svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){
@@ -1760,7 +1917,8 @@ spec.d1.pp = function(){
 		var width = svg.attr("width"),
 				height = svg.attr("height");
 		
-		var _peaks = [], _peaks_vis = [];
+		var _peaks = [], _peaks_vis = [], 
+				cls = [], cls_vis = [];
 		
 		svg_elem = svg.append("g")
 			.attr("class", "peaks")
@@ -1772,10 +1930,18 @@ spec.d1.pp = function(){
 						d3.select(this).on("_mousemove")(e);
 					});
 				
-				var clicked_peaks = d3.selectAll(".crosshair").data()
+				// In case of manual peak picking on multiple spectra,
+				// A only the highest peak is added. 
+				/*var clicked_peaks = d3.selectAll(".crosshair").data()
 					.sort(function(a,b){return d3.descending(a.y, b.y)});
 				
-				dispatcher.peakpick(clicked_peaks[0]);				
+				dispatcher.peakpick(clicked_peaks[0]);*/
+				svg.selectAll(".crosshair").each(function(){
+					svg_elem.node().addpeaks(this.__data__, this.parentNode.line_idx);
+					svg_elem.on("_regionchange")({xdomain:true});
+					svg_elem.on("_redraw")({x:true, y:true});
+				});	
+				
 			})
 			.on("_regionchange", function (e) {
 				if(e.xdomain){
@@ -1787,7 +1953,7 @@ spec.d1.pp = function(){
 			})
 			.on("_redraw", function(e){ // TODO: redraw on x only!!				
 				var peak_text = svg_elem.selectAll("text")
-					.data(_peaks_vis)
+					.data(_peaks_vis);
 				
 				peak_text.enter()
 					.append("text")
@@ -1811,8 +1977,7 @@ spec.d1.pp = function(){
 				
 				peak_line.enter()
 					.append("path")
-					.attr("class", "peak-line")
-					.style("stroke", "black")
+					//.style("stroke", "black")
 					.style("fill", "none");	
 				
 				peak_line.exit().remove();
@@ -1829,6 +1994,7 @@ spec.d1.pp = function(){
 				svg_elem.selectAll("text")
 					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
 					.text(function(d){return d3.round(d[0] ,3);})
+					.attr("class", function(d){return 'peak-text clr'+d[2];})
 					.attr("transform",function(d,i){
 						
 						var this_x = x(d[0]);
@@ -1844,12 +2010,13 @@ spec.d1.pp = function(){
 	
 				svg_elem.selectAll("path")
 					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
+					.attr("class", function(d){return 'peak-line clr'+d[2];})
 					.attr("d", function(d,i){return peakLine(d[0],d[1],labels_x[i])});
 			})
-			.on("_peakpick", function (e) {
-				_peaks.push([e.x, e.y]);
-				_peaks_vis.push([e.x, e.y]);				
-				
+			.on("_peakpick", function (e, line_idx) {
+				this.addPeaks(e, line_idx)
+				//_peaks_vis.push([e.x, e.y]);				
+				svg_elem.on("_regionchange")({xdomain:true});
 				svg_elem.on("_redraw")({x:true, y:true});
 			})
 			.on("_peakdel", function (e) {
@@ -1882,23 +2049,32 @@ spec.d1.pp = function(){
 		dispatcher.on("peakdel.peaks."+dispatch_idx, svg_elem.on("_peakdel"));
 		
 		svg_elem.node().peaks = function(){return _peaks;};
-		svg_elem.node().addpeaks = function(_){
+		svg_elem.node().addpeaks = function(_, line_idx){
 			if(!_.x){
 				for (var i = _.length - 1; i >= 0; i--) {
-					this.addpeaks( _[i] );
+					this.addpeaks( _[i], line_idx );
 				}
 			}else{
 				if(_peaks.indexOf([_.x, _.y]) == -1) //TODO:check if peak already exists.
-					_peaks.push([_.x,_.y]);
+					_peaks.push([_.x,_.y, line_idx]);
+					//cls.push('clr'+line_idx);
 			}
 		};
 		return svg_elem;						
 	}
 	
 	function peakLine(line_x, line_y, label_x){
-		return d3.svg.line()([[label_x, 40], 
-													[x(line_x), 60],
-													[x(line_x), Math.max(y(line_y)-5, 60) ]]);
+		var bottom = Math.max(y(line_y) - 10, 60);
+		return d3.svg.line()
+			.defined(function(d) { return !isNaN(d[1]); })
+			([
+			[label_x, 40], 
+			[x(line_x), 60],
+			[x(line_x), 80],
+			[NaN, NaN],
+			[x(line_x), bottom - 10],
+			[x(line_x), bottom]
+			]);
 	}	
 	
   _main.dispatcher = function(_){
@@ -1923,7 +2099,16 @@ spec.d1.pp = function(){
 };
 spec.d1.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
-
+	/*var zoomTimer;
+	var new_region;
+	var stepzoom = function () {
+		//console.log(new_region)
+		if(new_region && (new_region[0] != range.y[0] || new_region[1] != range.y[1]))
+			focus.on("_regionchange")(
+				{zoom:true,	ydomain:new_region}
+			);
+		zoomTimer = setTimeout(stepzoom, 100);
+	}*/
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function () {
 			/* * When a y brush is applied, the scaled region should go both up and down.*/
@@ -1934,11 +2119,12 @@ spec.d1.main_focus = function () {
 			if(y.domain()[0] == range.y[0]) new_region[0] = range.y[0];
 			else{new_region[0] = Math.max(y.domain()[0]-addition, range.y[0]);}
 			new_region[1] = new_region[0] + new_range;
-		
+			
 			focus.on("_regionchange")(
 				{zoom:true,	ydomain:new_region}
 			);
 		});
+
 	
 	function _main(all_panels) {
 		focus = all_panels.append("g")
@@ -1969,9 +2155,10 @@ spec.d1.main_focus = function () {
 		  
 			var s_id = null;
 			var spec_label = 'spec'+focus.node().nSpecs;
+			console.log(spec_data['label'])
 			if(!(spec_data.constructor === Array)){
 				if(typeof spec_data["s_id"] != 'undefined') s_id = spec_data["s_id"];
-				if(typeof spec_data["label"] != 'undefined') label = spec_data["label"];
+				if(typeof spec_data['label'] != 'undefined') spec_label = spec_data["label"];
 				spec_data = spec_data["data"]
 			}
 			
@@ -1996,18 +2183,23 @@ spec.d1.main_focus = function () {
 				if(s_id) elem.node().s_id(s_id);
 			}
 
+			if(spec.globals.render){
+				var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
+					x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
+					y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
+					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
 			
-			var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
-				x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
-				y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-				y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
-	
-			var xdomain = x.domain(), ydomain = y.domain();
+				var y_limits = (y1-y0);
+				y0 = y0 - (0.05 * y_limits);
+				y1 = y1 + (0.05 * y_limits);
+				
+				var xdomain = x.domain(), ydomain = y.domain();
 			
-			focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
+				focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
 			
-			if(focus.node().nSpecs > 0)
-				focus.on("_regionchange")({xdomain:xdomain});
+				if(focus.node().nSpecs > 0)
+					focus.on("_regionchange")({xdomain:xdomain});				
+			}
 			
 			focus.node().nSpecs++;
 			return elem;
@@ -2026,7 +2218,7 @@ spec.d1.main_focus = function () {
 		
 		/*********** Handling Events **************/
 		focus
-			.on("_redraw", function(e){			
+			.on("_redraw", function(e){
 				dispatcher.redraw(e);
 			})
 			.on("_regionchange", function(e){
@@ -2044,6 +2236,11 @@ spec.d1.main_focus = function () {
 					//modify range.y  and reset the zoom scale
 					var y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
 					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
+					var y_limits = (y1-y0);
+					y0 = y0 - (0.05 * y_limits);
+					y1 = y1 + (0.05 * y_limits);
+					
+					
 					range.y = [y0,y1];
 					y.domain(range.y);
 					dispatcher.rangechange({y:range.y});
@@ -2511,9 +2708,12 @@ spec.app = function(){
     }
 		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
 			|| isNaN(svg_width) || isNaN(svg_height)){
-				var parent_svg = svg.node();//.selectP('svg').node();
-				svg_width = parent_svg.clientWidth;
-				svg_height = parent_svg.clientHeight;
+				var parent_svg = svg.node();
+				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
+					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
+				
+				svg_width = dimensions[0];				
+				svg_height = dimensions[1];
 		}
         
     if (svg_width < 100 || svg_height < 100){
@@ -2545,7 +2745,6 @@ spec.app = function(){
 		};
 		elem.node().appendToCurrentSlide = function (data) {
 			var current_slide = elem.select('.spec-slide.active').node()
-			console.log(current_slide)
 			if(!current_slide){
 				elem.node().appendSlide(data);
 			}	else{
@@ -2623,7 +2822,7 @@ spec.slide = function(){
     var margin = {
         top: 10 + brush_margin,
         right: 40,
-        bottom: 30,
+        bottom: 40,
         left:10 + brush_margin
     };
 
@@ -2841,7 +3040,7 @@ spec.slideChanger = function () {
 		inner.selectAll('div')
 			.data(slides[0]).enter()
 			.append('xhtml:div')
-				.text(function(d,i){return 'slide ' + i;})
+				.text(function(d,i){return 'slide ' + (i+1);})
 			
 		inner.selectAll('div')
 			.on('click', function (d) {
@@ -2916,7 +3115,66 @@ var ajaxProgress = function () {
 	}
 	return run;
 }
-var get_png_data = function(y, callback){
+var make_png_worker = function () {
+	var png_worker = function () {
+		function scale(range, domain){
+			var domain_limits = domain[1] - domain[0];
+			var range_limits = range[1] - range[0];
+		
+			return function(_){
+				return ((_ - domain[0]) / domain_limits) * range_limits + range[0];
+			};
+		}
+	
+		self.onmessage = function(e, buf){
+			e = e.data;
+			var buffer = e.buffer;
+			var len = e._16bit? buffer.length/2: buffer.length;
+		
+			var yscale = scale(e.y_range, e.y_domain);
+			var img_data = new Float64Array(len/4);
+		
+			for (var i = 0; i < len; i+=4) {
+				if(! e._16bit){
+					img_data[i/4] = yscale(buffer[i]);
+				}else{
+					img_data[i/4] = yscale( (buffer[ i + len ] << 8) + buffer[i] );
+				}
+			}
+			self.postMessage(img_data, [img_data.buffer]);
+		};	
+	};
+	var blob = new Blob(['('+ png_worker.toString() +')()'],
+		{ type: 'application/javascript' });
+	var blobURL = window.URL.createObjectURL(blob);
+	var worker = new Worker(blobURL);	
+	return worker;
+}
+
+pro.worker = make_png_worker();
+pro.worker_queue = function (worker) {
+	var q = [], job;
+	var init = {};
+	init.next = function () {
+		job = q.shift();
+		if (!job) // if the queue is finished.
+			return;
+		
+		worker.onmessage = function (e) {
+			var callback = job['callback'];
+			init.next();
+			callback(e);
+		};
+		worker.postMessage(job['message'][0], job['message'][1]);
+	};
+	init.addJob = function (_) {
+		q.push(_);
+		if (!job) //if not job is currently excuting, do this job.
+			init.next();
+	};
+	return init;
+};
+pro.worker.queue = pro.worker_queue(pro.worker);var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
 	img.onload = function(){
@@ -3031,6 +3289,64 @@ var processPNG = function (json, callback) {
 	}
 };
 
+var processPNGworker = function (json, callback) {
+	if (!json['nd'] || json['nd'] == 1){
+		var img = document.createElement("img");
+	
+		img.onload = function(){
+	    var canvas = document.createElement("canvas");
+	    canvas.width = img.width;
+	    canvas.height = img.height;
+
+	    
+	    
+	
+			var e = {};
+			e._16bit = (json['format'] == "png16")
+			
+	    // Copy the image contents to the canvas
+	    var ctx = canvas.getContext("2d");
+	    ctx.drawImage(img, 0, 0);    
+			e.buffer = ctx.getImageData(0,0,img.width,img.height).data;
+			
+			e.y_range = json['y_domain']
+			e.y_domain = [0, 255];
+			if(e._16bit) e.y_domain = [0,Math.pow(2,16)-1];
+			
+			var worker_callback = function(e) {
+				console.log('worker done')
+				var img_data = [].slice.call(e.data);
+				
+				if(json['x_domain']){
+					var xscale = d3.scale.linear().range(json['x_domain']).domain([0, img_data.length]);
+					img_data = img_data.map(function(d,i){ return {x:xscale(i), y:d}; });
+				}
+			
+				/*var ret;
+				if(typeof json["s_id"] != 'undefined')
+					ret = {data:img_data, s_id:json['s_id']}
+				else{ ret = {data:img_data}; }
+				
+				callback(ret);*/
+				json['data'] = img_data;
+				callback(json)
+			};
+			
+			var worker_message = [e, [e.buffer.buffer]];
+			pro.worker.queue.addJob({message:worker_message, callback:worker_callback});
+		}
+		var png_data = json['data']? json['data']: json['y'];
+		img.src = "data:image/png;base64," + png_data;
+	}else if (json['nd'] == 2){
+		// Mapping data and rendering
+		callback(json);
+	}else{
+		console.log("Unsupported data dimension: "+ json['nd'])
+	}
+};
+
+
+
 /* * get the sepctrum from the web service in one these formats:
 	* Plain JSON X-Y ['xy']
 	* JSON X(range), Y (base64) ['base64'] --> if scaled down to 8 or 16 bits: require "y_domain"
@@ -3061,9 +3377,10 @@ pro.get_spec = function(url, render_fun){
 };
 
 pro.process_spectrum = function(json, render_fun){
+	console.log('processing')
 	if (json.constructor === Array) {
 		for (var i = json.length - 1; i >= 0; i--) {
-			pro.process_spectrum(json[i], render_fun);	
+			pro.process_spectrum(json[i], render_fun);
 		}
 		return;
 	}
@@ -3076,7 +3393,8 @@ pro.process_spectrum = function(json, render_fun){
 			break;
 		case 'png':
 		case 'png16':
-			processPNG(json, render_fun);
+			//pro.worker(json, render_fun);
+			processPNGworker(json, render_fun);
 			break;
 	}	
 };
@@ -3136,6 +3454,7 @@ pro.output.overwriteSpec = function (new_data, s_id) {
 	}
 	
 	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
+	
 	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
 	var overwrite_spec = _main_focus.selectAll(classname)
 	.filter(function(e){ return this.s_id()==s_id; });
@@ -3156,6 +3475,36 @@ pro.output.newSpec = function (new_data) {
 };
 pro.output.newSlide = function (new_data) {
 	
+};
+
+pro.analysis = {};
+pro.analysis.addPeaks = function (json) {
+	var s_id = json['s_id'];
+	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
+	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
+	var spec = _main_focus.selectAll(classname)
+		.filter(function(e){ return this.s_id() === s_id; });
+	
+	console.log(spec);
+	if (spec.size() != 1){
+		modals.error('Incompatible server response', 
+		'Can\'t find spectrum with s_id:'+s_id)
+	}
+	spec.node().addPeaks(json['peaks']);		
+};
+pro.analysis.addSegments = function (json) {
+	var s_id = json['s_id'];
+	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
+	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
+	var spec = _main_focus.selectAll(classname)
+		.filter(function(e){ return this.s_id() === s_id; });
+	
+	if (spec.size() != 1) {
+		modals.error('Incompatible server response', 
+		'Can\'t find spectrum with s_id:'+s_id)
+	}
+	
+	spec.node().addSegmentByIndex(json['segs']);
 };
 pro.pp = function (alg, threshold, seg) {
 	var a;
@@ -3189,21 +3538,54 @@ var get_selected_spec = function () {
 	
 	return s_id;
 };
+var plugin_handler = function (json) {
+	if (json.constructor === Array) {
+		for (var i = json.length - 1; i >= 0; i--) {
+			plugin_handler(json[i]);
+		}
+		return;
+	}
+	console.log('pass', json)
+	if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
+		console.log('is spec', json['data-type'])
+		var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
+		pro.process_spectrum(json, output_fun);
+		return;
+	}
+	if (json['peaks'] !== undefined){
+		pro.analysis.addPeaks(json);
+	}
+	if (json['segs'] !== undefined){
+		pro.analysis.addSegments(json);
+	}
+}
 
 pro.plugin_funcs = function (fun, params, s_id) {
-	if(!s_id) s_id = get_selected_spec();
+	if(!params) params = {};
 	
-	var params_str = "sid=["+s_id+"]&" + fun+'_=null';
+	if(!params['sid']){
+		if(s_id){
+			params['sid'] = s_id;
+		}else{
+			params['sid'] = get_selected_spec();
+		}
+	}
+	if(params['sid'].length === 0)
+		error('No Spectra selected', 'Please select one or more spectra!');
+		
+	var prefix = fun+'_';
+	var params_str = 'sid=' + JSON.stringify(params['sid']) + '&' + prefix + '=null';
+	
 	for(var key in params){
-		if(params_str.length>0) params_str +='&';			
-		params_str += fun+'_'+key+'='+params[key];
+		if(key === 'sid') continue;
+		if(params_str.length>0) params_str +='&';
+		
+		params_str += prefix + key+'='+params[key];
 	}
 	
 	var url = '/nmr/plugins?'+params_str;
 	ajaxJSONGet(url, function (response) {
-		var output_fun = response["output"]? pro.output[ response["output"] ]: pro.output.overwriteSpec;
-		
-		pro.process_spectrum(response, output_fun);
+			plugin_handler(response);
 	});
 };  window.spec = spec;
 	window.pro = pro;

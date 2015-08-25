@@ -17,7 +17,7 @@ spec.slide = function(){
     var margin = {
         top: 10 + brush_margin,
         right: 40,
-        bottom: 30,
+        bottom: 40,
         left:10 + brush_margin
     };
 

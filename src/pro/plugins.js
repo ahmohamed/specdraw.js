@@ -30,20 +30,53 @@ var get_selected_spec = function () {
 	
 	return s_id;
 };
+var plugin_handler = function (json) {
+	if (json.constructor === Array) {
+		for (var i = json.length - 1; i >= 0; i--) {
+			plugin_handler(json[i]);
+		}
+		return;
+	}
+	console.log('pass', json)
+	if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
+		console.log('is spec', json['data-type'])
+		var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
+		pro.process_spectrum(json, output_fun);
+		return;
+	}
+	if (json['peaks'] !== undefined){
+		pro.analysis.addPeaks(json);
+	}
+	if (json['segs'] !== undefined){
+		pro.analysis.addSegments(json);
+	}
+}
 
 pro.plugin_funcs = function (fun, params, s_id) {
-	if(!s_id) s_id = get_selected_spec();
+	if(!params) params = {};
 	
-	var params_str = "sid=["+s_id+"]&" + fun+'_=null';
+	if(!params['sid']){
+		if(s_id){
+			params['sid'] = s_id;
+		}else{
+			params['sid'] = get_selected_spec();
+		}
+	}
+	if(params['sid'].length === 0)
+		error('No Spectra selected', 'Please select one or more spectra!');
+		
+	var prefix = fun+'_';
+	var params_str = 'sid=' + JSON.stringify(params['sid']) + '&' + prefix + '=null';
+	
 	for(var key in params){
-		if(params_str.length>0) params_str +='&';			
-		params_str += fun+'_'+key+'='+params[key];
+		if(key === 'sid') continue;
+		if(params_str.length>0) params_str +='&';
+		
+		params_str += prefix + key+'='+params[key];
 	}
 	
 	var url = '/nmr/plugins?'+params_str;
 	ajaxJSONGet(url, function (response) {
-		var output_fun = response["output"]? pro.output[ response["output"] ]: pro.output.overwriteSpec;
-		
-		pro.process_spectrum(response, output_fun);
+			plugin_handler(response);
 	});
 };

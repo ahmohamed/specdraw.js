@@ -1,6 +1,15 @@
 spec.d1.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
-
+	/*var zoomTimer;
+	var new_region;
+	var stepzoom = function () {
+		//console.log(new_region)
+		if(new_region && (new_region[0] != range.y[0] || new_region[1] != range.y[1]))
+			focus.on("_regionchange")(
+				{zoom:true,	ydomain:new_region}
+			);
+		zoomTimer = setTimeout(stepzoom, 100);
+	}*/
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function () {
 			/* * When a y brush is applied, the scaled region should go both up and down.*/
@@ -11,11 +20,12 @@ spec.d1.main_focus = function () {
 			if(y.domain()[0] == range.y[0]) new_region[0] = range.y[0];
 			else{new_region[0] = Math.max(y.domain()[0]-addition, range.y[0]);}
 			new_region[1] = new_region[0] + new_range;
-		
+			
 			focus.on("_regionchange")(
 				{zoom:true,	ydomain:new_region}
 			);
 		});
+
 	
 	function _main(all_panels) {
 		focus = all_panels.append("g")
@@ -46,9 +56,10 @@ spec.d1.main_focus = function () {
 		  
 			var s_id = null;
 			var spec_label = 'spec'+focus.node().nSpecs;
+			console.log(spec_data['label'])
 			if(!(spec_data.constructor === Array)){
 				if(typeof spec_data["s_id"] != 'undefined') s_id = spec_data["s_id"];
-				if(typeof spec_data["label"] != 'undefined') label = spec_data["label"];
+				if(typeof spec_data['label'] != 'undefined') spec_label = spec_data["label"];
 				spec_data = spec_data["data"]
 			}
 			
@@ -73,18 +84,23 @@ spec.d1.main_focus = function () {
 				if(s_id) elem.node().s_id(s_id);
 			}
 
+			if(spec.globals.render){
+				var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
+					x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
+					y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
+					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
 			
-			var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
-				x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
-				y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-				y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
-	
-			var xdomain = x.domain(), ydomain = y.domain();
+				var y_limits = (y1-y0);
+				y0 = y0 - (0.05 * y_limits);
+				y1 = y1 + (0.05 * y_limits);
+				
+				var xdomain = x.domain(), ydomain = y.domain();
 			
-			focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
+				focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
 			
-			if(focus.node().nSpecs > 0)
-				focus.on("_regionchange")({xdomain:xdomain});
+				if(focus.node().nSpecs > 0)
+					focus.on("_regionchange")({xdomain:xdomain});				
+			}
 			
 			focus.node().nSpecs++;
 			return elem;
@@ -103,7 +119,7 @@ spec.d1.main_focus = function () {
 		
 		/*********** Handling Events **************/
 		focus
-			.on("_redraw", function(e){			
+			.on("_redraw", function(e){
 				dispatcher.redraw(e);
 			})
 			.on("_regionchange", function(e){
@@ -121,6 +137,11 @@ spec.d1.main_focus = function () {
 					//modify range.y  and reset the zoom scale
 					var y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
 					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
+					var y_limits = (y1-y0);
+					y0 = y0 - (0.05 * y_limits);
+					y1 = y1 + (0.05 * y_limits);
+					
+					
 					range.y = [y0,y1];
 					y.domain(range.y);
 					dispatcher.rangechange({y:range.y});

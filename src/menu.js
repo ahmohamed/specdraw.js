@@ -87,40 +87,21 @@ spec.menu = function(){
 			//.call(css_trans("translateX("+ (-width) + "px)"));
 		
 		var menu = 
-			[
+			[	
 			  {
-			    label:"Peaks",
+					label:"Processing",
+				},
+			  {
+			    label:"Analysis",
 			    children:[
 			      {
-							label:"Pick peaks",
+							label:"Peak Picking",
 							children:[
 								{label:"Manual peak picking",fun:events.peakpickToggle},
-							  {
-									label:"Automatic using threshold",
-									fun: function () {
-										d3.select(".spec-slide.active").select(".main-focus").node().getThreshold(
-												function (t) { pro.pp("threshold", t); }
-										);
-							  	}
-								},
-							  {
-									label:"Peak segments using threshold",
-									fun: function () {
-										d3.select('.spec-slide.active').select(".main-focus").node().getThreshold(
-												function (t) { pro.pp("threshold", t, true); }
-										);
-							  	}
-								},
-							  {
-									label:"Automatic using CWT",
-									fun: function () {
-										pro.pp("cwt");
-							  	}
-								},								
+					  		{label:"View/manage peak table",fun:null},
+								{label:"Delete peaks",fun:events.peakdelToggle},
 							]
-						},
-			  		{label:"View/manage peak table",fun:null},
-						{label:"Delete peaks",fun:events.peakdelToggle},
+						},	
     			]
 			  },
 				{
@@ -159,6 +140,7 @@ spec.menu = function(){
 						{label:"As SVG",fun:function(){
 							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
 						}},
+						{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
 						{label:"CSV",fun: function(){}},
 						{label:"Peak table",fun:function(){}},
 						{label:"JCAMP-DX",fun:function(){}},

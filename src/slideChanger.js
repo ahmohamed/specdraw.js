@@ -41,7 +41,7 @@ spec.slideChanger = function () {
 		inner.selectAll('div')
 			.data(slides[0]).enter()
 			.append('xhtml:div')
-				.text(function(d,i){return 'slide ' + i;})
+				.text(function(d,i){return 'slide ' + (i+1);})
 			
 		inner.selectAll('div')
 			.on('click', function (d) {

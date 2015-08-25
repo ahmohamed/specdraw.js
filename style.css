@@ -15,13 +15,14 @@ svg {
 .clr5{stroke:#8c564b}
 .clr15{stroke:#c49c94}
 .clr6{stroke:#e377c2}
-.clr15{stroke:#f7b6d2}
+.clr16{stroke:#f7b6d2}
 .clr7{stroke:#7f7f7f}
 .clr17{stroke:#c7c7c7}
 .clr8{stroke:#bcbd22}
 .clr18{stroke:#dbdb8d}
 .clr9{stroke:#17becf}
 .clr19{stroke:#9edae5}
+.disabled{stroke:#999999}
 
 .crosshair circle {
   fill: none;
@@ -32,11 +33,19 @@ svg {
   shape-rendering: optimizeSpeed;
 }
 
+
+.spec-line.dimmed .line{
+  stroke: #bbb;
+}
 .highlighted .line{
   stroke-width: 2;
 }
-.selected .line{
-  stroke-width: 1.5;
+.spec-line.selected .line{
+  stroke-width: 3;
+}
+
+.threshold.line{
+	stroke:black;
 }
 .integration .line {
   stroke: green;
@@ -140,7 +149,7 @@ svg {
 /****************** Modals CSS values ***********************/
 
 .nanoModalContent input:invalid{
-  background: red;
+  background: #d9534f;
 }
 
 input:required:invalid, input:focus:invalid {
@@ -236,7 +245,8 @@ input::-webkit-inner-spin-button {
 .div-menu .nav > li > a {
 	position: relative;
 	display: block;
-	z-index: 510;f
+	padding-left: 10px;
+	z-index: 510;
 	padding: 0 10px;
 	
 	font-family: Helvetica, Arial, sans-serif;
@@ -325,85 +335,325 @@ input::-webkit-inner-spin-button {
 }
 
 
-/************* Specrum selector *************/
-.checkbox-dropdown {
-    width: 200px;
-    border: 1px solid silver;
-    cursor: pointer; /* use correct mouse pointer when hovering over the dropdown */
-    padding: 10px;
-    position: relative;
-    /*margin: 0 auto;*/
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+/************* Input elements *************/
+@font-face {
+  font-family: myFirstFont;
+  src: url(https://dl.dropboxusercontent.com/s/dz18bu2ve5yc3is/icomoon.woff?dl=1);
 }
 
+.param {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  display: block;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  font-weight: 700;
+}
+
+.param input,
+.param select {
+  margin-left: 10px;
+  height: 30px;
+  padding: 0px 12px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+  -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  -moz-appearance: textfield;
+}
+
+.param.num input {
+  width: 50px;
+}
+
+.param input:required:invalid,
+input:invalid {
+  background: #d9534f url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZlcnNpb249JzEuMScgaGVpZ2h0PScyMHB4JyB3aWR0aD0nMjBweCc+PHRleHQgeD0nMCcgeT0nMjAnIGZpbGw9JyMwMDAnIGZvbnQtc2l6ZT0nMjUnPuKcljwvdGV4dD48L3N2Zz4=") no-repeat;
+  background-size: 10px, 10px;
+  background-position: right 5px center;
+}
+/* Remove spin-button from input numbers*/
+
+.param input::-webkit-outer-spin-button,
+.param input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/*checkboxes*/
+
+.param.checkbox {
+  cursor: pointer;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  margin-bottom: 10px;
+  margin-right: 10px;
+}
+
+.param.checkbox input[type=checkbox] {
+  display: none;
+}
+
+.param.checkbox >div {
+  margin-right: 5px;
+}
+
+.param.checkbox .checker {
+  position: relative;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  -webkit-border-radius: 50px;
+  -moz-border-radius: 50px;
+  border-radius: 50px;
+  -webkit-box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.5), 0px 1px 0px rgba(255, 255, 255, 1);
+  -moz-box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.5), 0px 1px 0px rgba(255, 255, 255, 1);
+  box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.5), 0px 1px 0px rgba(255, 255, 255, 1);
+  background: -webkit-linear-gradient(top, #222 0%, #45484d 100%);
+  background: -moz-linear-gradient(top, #222 0%, #45484d 100%);
+  background: -o-linear-gradient(top, #222 0%, #45484d 100%);
+  background: -ms-linear-gradient(top, #222 0%, #45484d 100%);
+  background: linear-gradient(top, #222 0%, #45484d 100%);
+  filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#222', endColorstr='#45484d', GradientType=0);
+}
+
+.param.checkbox .checker:after {
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+  filter: alpha(opacity=0);
+  opacity: 0;
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 5px;
+  background: transparent;
+  top: 5px;
+  left: 4px;
+  border: 3px solid #fcfff4;
+  border-top: none;
+  border-right: none;
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
+
+.param.checkbox .checker:hover::after {
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=30)";
+  filter: alpha(opacity=30);
+  opacity: 0.3;
+}
+
+.param.checkbox input[type=checkbox]:checked + .checker:after {
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
+  filter: alpha(opacity=100);
+  opacity: 1;
+}
+/*checkbox toggle*/
+
+.param.checkbox-toggle {
+  display: -webkit-box;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  
+  display: -moz-box;
+  /* OLD - Firefox 19- (buggy but mostly works) */
+  
+  display: -ms-flexbox;
+  /* TWEENER - IE 10 */
+  
+  display: -webkit-flex;
+  /* NEW - Chrome */
+  
+  display: flex;
+}
+
+.div_enable .param {
+  display: table-cell;
+}
+
+.div_enable * {
+  pointer-events: all;
+  background: none;
+  color: #555;
+}
+
+.div_enable.disabled * {
+  pointer-events: none;
+  background: #eee;
+  color: #999;
+}
+/* select_multi */
+
+.param.select-multi{
+  display: block;
+  position: relative;
+  border: 1px solid silver;
+}
 /* Display CSS arrow to the right of the dropdown text */
-.checkbox-dropdown:after {
-    content:'';
-    height: 0;
-    position: absolute;
-    width: 0;
-    border: 6px solid transparent;
-    border-top-color: #000;
-    top: 50%;
-    right: 10px;
-    margin-top: -3px;
+.param.select-multi > label{
+  display: block;
+  height: 20px;
+  cursor: pointer;
+  /* use correct mouse pointer when hovering over the dropdown */
+  padding: 10px;
+  /*margin: 0 auto;*/
+  
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.param.select-multi > label:after {
+  content: '';
+  height: 0;
+  position: absolute;
+  width: 0;
+  border: 6px solid transparent;
+  border-top-color: #000;
+  top: 50%;
+  right: 10px;
+  margin-top: -3px;
 }
 
-/* Reverse the CSS arrow when the dropdown is active */
-.checkbox-dropdown.is-active:after {
-    border-bottom-color: #000;
-    border-top-color: transparent;
-    margin-top: -9px;
+.param.select-multi > ul {
+  white-space: nowrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  top: 100%;
+  /* align the dropdown right below the dropdown text */
+  
+  border: inherit;
+  left: -1px;
+  /* align the dropdown to the left */
+  
+  right: -1px;
+  /* align the dropdown to the right */
+  /*opacity: 0; /* hide the dropdown */
+  
+  visibility: hidden;
+  pointer-events: none;
+  /* avoid mouse click events inside the dropdown */
 }
 
-.checkbox-dropdown-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    position: absolute;
-    top: 100%; /* align the dropdown right below the dropdown text */
-    border: inherit;
-    border-top: none;
-    left: -1px; /* align the dropdown to the left */
-    right: -1px; /* align the dropdown to the right */
-    opacity: 0; /* hide the dropdown */
-    -webkit-transition: opacity 0.4s ease-in-out;
-    -moz-transition: opacity 0.4s ease-in-out;
-    -o-transition: opacity 0.4s ease-in-out;
-    -ms-transition: opacity 0.4s ease-in-out;
-    transition: opacity 0.4s ease-in-out;
-    pointer-events: none; /* avoid mouse click events inside the dropdown */
-}
-.is-active .checkbox-dropdown-list {
-    opacity: 1; /* display the dropdown */
-    pointer-events: auto; /* make sure that the user still can select checkboxes */
-}
-
-.checkbox-dropdown-list li label {
-		background-color: white;
-    display: block;
-    border-bottom: 1px solid silver;
-    padding: 10px;
-    -webkit-transition: all 0.2s ease-out;
-    -moz-transition: all 0.2s ease-out;
-    -o-transition: all 0.2s ease-out;
-    -ms-transition: all 0.2s ease-out;
-    transition: all 0.2s ease-out;
+.param.select-multi li label {
+  z-index: 9999;
+  position: relative;
+  background-color: white;
+  display: -webkit-box;
+  /* OLD - iOS 6-, Safari 3.1-6 */
+  
+  display: -moz-box;
+  /* OLD - Firefox 19- (buggy but mostly works) */
+  
+  display: -ms-flexbox;
+  /* TWEENER - IE 10 */
+  
+  display: -webkit-flex;
+  /* NEW - Chrome */
+  
+  display: flex;
+  border-bottom: 1px solid silver;
+  margin: 0px;
+  padding: 10px;
+  -webkit-transition: background-color 0.2s ease-out;
+  -moz-transition: background-color 0.2s ease-out;
+  -o-transition: background-color 0.2s ease-out;
+  -ms-transition: background-color 0.2s ease-out;
+  transition: background-color 0.2s ease-out;
 }
 
-.checkbox-dropdown-list li label:hover {
-    background-color: #c41230;
-    color: white;
+.param.select-multi > ul.shown {
+  opacity: 1;
+  /* display the dropdown */
+  
+  visibility: visible;
+  pointer-events: auto;
+  /* make sure that the user still can select checkboxes */
 }
-.checkbox-dropdown-list .spec-legend{
+
+.param.select-multi li label:hover {
+  background-color: #ddd;
+}
+
+.param fieldset {
+  margin-top: 10px;
+}
+
+.spec-selector li label:after {
+  content: '\a0\a0\a0\a0\a0\a0\a0\a0\a0\a0';
+  position: absolute;
+  right: 10px;
   font-weight: bold;
   text-decoration: line-through;
 }
+
+.param.btn,
+.nanoModalBtn {
+  display: inline-block;
+  font-weight: normal;
+  text-align: center;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
+  margin-left: 0px;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  padding: 0px 12px;
+  min-height:30px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  border-radius: 4px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #333;
+  background-color: #fff;
+  border-color: #ccc;
+}
+
+.param.btn:hover,
+.nanoModalBtn:hover {
+  color: #333;
+  background-color: #e6e6e6;
+  border-color: #adadad;
+}
+
+.param.btn-primary {
+  color: #fff;
+  background-color: #333;
+  border-color: #222;
+}
+
+.param.btn-primary:hover,
+.param.btn-primary:focus {
+  color: #fff;
+  background-color: #777;
+  border-color: #000;
+}
+.param.threshold {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+/*******************************************/
 .slideout {
     position: fixed;
     top: 40px;

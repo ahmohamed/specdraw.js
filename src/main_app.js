@@ -13,9 +13,12 @@ spec.app = function(){
     }
 		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
 			|| isNaN(svg_width) || isNaN(svg_height)){
-				var parent_svg = svg.node();//.selectP('svg').node();
-				svg_width = parent_svg.clientWidth;
-				svg_height = parent_svg.clientHeight;
+				var parent_svg = svg.node();
+				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
+					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
+				
+				svg_width = dimensions[0];				
+				svg_height = dimensions[1];
 		}
         
     if (svg_width < 100 || svg_height < 100){
@@ -47,7 +50,6 @@ spec.app = function(){
 		};
 		elem.node().appendToCurrentSlide = function (data) {
 			var current_slide = elem.select('.spec-slide.active').node()
-			console.log(current_slide)
 			if(!current_slide){
 				elem.node().appendSlide(data);
 			}	else{

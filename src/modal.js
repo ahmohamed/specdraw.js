@@ -11,6 +11,7 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		content,
 		{
 		overlayClose: false,
+		autoRemove:true,
 		buttons: [
 			{
 		    text: "OK",
@@ -195,26 +196,44 @@ var add_preview = function (el, ok_fun) {
 
 
 modals.method_args = function (fun ,args, title, specSelector, preview) {
-  var form_data = {}, el;
+	var el;
 	var ok_fun = function (modal) {
-	  el.selectAll(".param")[0].forEach(function(e){
-	    form_data[e.id] =  e.children[0].type ==="checkbox"? e.children[0].checked :e.children[0].value;
-	  });
-		
-		if(modal) modal.hide();
-		
-		var s_ids = el.select('.spec-selector').node().getSelected();
-		pro.plugin_funcs(fun, form_data, s_ids);
-		form_data = {};
+		fireEvent(el.node(), 'input');
+		modal.hide();
 	};
 	
-	var nano = modals.proto(title, "",	ok_fun);
-	
+	var nano = modals.proto(title, '',	ok_fun);
 	el = d3.select(nano.modal.el).select(".nanoModalContent");
 	
-	el.call(add_selector, ok_fun);
-	el.call(makeMethodParams(args));
-	el.call(add_preview, ok_fun);
+	el.on('input', function () {
+		console.log('target', el, d3.event.target);
+		
+		var form_data = {};
+    el.selectAll('.param')
+      .filter(function () {
+				console.log(this, this.id);
+        return this.id !== '';
+      })
+      .each(function (e) {
+				console.log('filtered',this,this.id)
+        form_data[this.id] = this.getValue();
+      });
+		var timer = null;
+		if(timer)
+			clearTimeout(timer);		
+	
+		if(d3.event.target === el || form_data['prev_btn'] === true){
+			pro.plugin_funcs(fun, form_data);
+		}else	if(form_data['prev_auto'] === true){
+			timer = setTimeout(function () {
+				pro.plugin_funcs(fun, form_data);
+			}, 300);
+		}
+	});
+	
+	el.append(inp.spectrumSelector());
+	el.append(inp.div(args));
+	el.append(inp.preview(true));
 	return nano.show;
 };
 spec.method_args = modals.method_args;
