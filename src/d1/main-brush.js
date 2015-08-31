@@ -62,32 +62,32 @@ spec.d1.mainBrush = function(){
 			.style('cursor', null)
 			.style('pointer-events', 'all');
 		
-		d3.select(".main-focus").style("cursor", "crosshair");
+		svg.style("cursor", "crosshair");
 		
 		svg_elem.node().peakpickEnable = function (_) {
 			svg_elem.classed("peakpick-brush", _);
-			d3.select(".main-focus")
+			svg
 				.style("cursor", _? 'url('+cursor.peakpick+'), auto' : "crosshair");
 			
 			_brush.on("brushend", _? peakpick : changeRegion);
 		};
 		svg_elem.node().peakdelEnable = function (_) {
 			svg_elem.classed("peakdel-brush", _);
-			d3.select(".main-focus")
+			svg
 					.style("cursor", _? 'url('+cursor.peakdel+'), auto' : "crosshair");
 			
 			_brush.on("brushend", _? peakdel : changeRegion);
 		};
 		svg_elem.node().integrateEnable = function (_) {
 			svg_elem.classed("integrate-brush", _);
-			d3.select(".main-focus")
+			svg
 					.style("cursor", _? 'url('+cursor.addinteg+'), auto' : "crosshair");
 			
 			_brush.on("brushend", _? integrate : changeRegion);
 		};
 	
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;		
+		var dispatch_idx = ++dispatcher.idx;		
 		dispatcher.on("peakpickEnable.brush."+dispatch_idx, svg_elem.node().peakpickEnable);
 		dispatcher.on("peakdelEnable.brush."+dispatch_idx, svg_elem.node().peakdelEnable);
 		dispatcher.on("integrateEnable.brush."+dispatch_idx, svg_elem.node().integrateEnable);

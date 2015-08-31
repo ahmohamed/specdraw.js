@@ -14,7 +14,8 @@ spec.d1.pp = function(){
 		var width = svg.attr("width"),
 				height = svg.attr("height");
 		
-		var _peaks = [], _peaks_vis = [];
+		var _peaks = [], _peaks_vis = [], 
+				cls = [], cls_vis = [];
 		
 		svg_elem = svg.append("g")
 			.attr("class", "peaks")
@@ -26,10 +27,18 @@ spec.d1.pp = function(){
 						d3.select(this).on("_mousemove")(e);
 					});
 				
-				var clicked_peaks = d3.selectAll(".crosshair").data()
+				// In case of manual peak picking on multiple spectra,
+				// A only the highest peak is added. 
+				/*var clicked_peaks = d3.selectAll(".crosshair").data()
 					.sort(function(a,b){return d3.descending(a.y, b.y)});
 				
-				dispatcher.peakpick(clicked_peaks[0]);				
+				dispatcher.peakpick(clicked_peaks[0]);*/
+				svg.selectAll(".crosshair").each(function(){
+					svg_elem.node().addpeaks(this.__data__, this.parentNode.line_idx);
+					svg_elem.on("_regionchange")({xdomain:true});
+					svg_elem.on("_redraw")({x:true, y:true});
+				});	
+				
 			})
 			.on("_regionchange", function (e) {
 				if(e.xdomain){
@@ -41,7 +50,7 @@ spec.d1.pp = function(){
 			})
 			.on("_redraw", function(e){ // TODO: redraw on x only!!				
 				var peak_text = svg_elem.selectAll("text")
-					.data(_peaks_vis)
+					.data(_peaks_vis);
 				
 				peak_text.enter()
 					.append("text")
@@ -65,8 +74,7 @@ spec.d1.pp = function(){
 				
 				peak_line.enter()
 					.append("path")
-					.attr("class", "peak-line")
-					.style("stroke", "black")
+					//.style("stroke", "black")
 					.style("fill", "none");	
 				
 				peak_line.exit().remove();
@@ -83,6 +91,7 @@ spec.d1.pp = function(){
 				svg_elem.selectAll("text")
 					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
 					.text(function(d){return d3.round(d[0] ,3);})
+					.attr("class", function(d){return 'peak-text clr'+d[2];})
 					.attr("transform",function(d,i){
 						
 						var this_x = x(d[0]);
@@ -98,12 +107,13 @@ spec.d1.pp = function(){
 	
 				svg_elem.selectAll("path")
 					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
+					.attr("class", function(d){return 'peak-line clr'+d[2];})
 					.attr("d", function(d,i){return peakLine(d[0],d[1],labels_x[i])});
 			})
-			.on("_peakpick", function (e) {
-				_peaks.push([e.x, e.y]);
-				_peaks_vis.push([e.x, e.y]);				
-				
+			.on("_peakpick", function (e, line_idx) {
+				this.addPeaks(e, line_idx)
+				//_peaks_vis.push([e.x, e.y]);				
+				svg_elem.on("_regionchange")({xdomain:true});
 				svg_elem.on("_redraw")({x:true, y:true});
 			})
 			.on("_peakdel", function (e) {
@@ -124,7 +134,7 @@ spec.d1.pp = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.peaks."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.peaks."+dispatch_idx, svg_elem.on("_redraw"));		
 		dispatcher.on("peakpickEnable.peaks."+dispatch_idx, function (_) {
@@ -136,23 +146,32 @@ spec.d1.pp = function(){
 		dispatcher.on("peakdel.peaks."+dispatch_idx, svg_elem.on("_peakdel"));
 		
 		svg_elem.node().peaks = function(){return _peaks;};
-		svg_elem.node().addpeaks = function(_){
+		svg_elem.node().addpeaks = function(_, line_idx){
 			if(!_.x){
 				for (var i = _.length - 1; i >= 0; i--) {
-					this.addpeaks( _[i] );
+					this.addpeaks( _[i], line_idx );
 				}
 			}else{
 				if(_peaks.indexOf([_.x, _.y]) == -1) //TODO:check if peak already exists.
-					_peaks.push([_.x,_.y]);
+					_peaks.push([_.x,_.y, line_idx]);
+					//cls.push('clr'+line_idx);
 			}
 		};
 		return svg_elem;						
 	}
 	
 	function peakLine(line_x, line_y, label_x){
-		return d3.svg.line()([[label_x, 40], 
-													[x(line_x), 60],
-													[x(line_x), Math.max(y(line_y)-5, 60) ]]);
+		var bottom = Math.max(y(line_y) - 10, 60);
+		return d3.svg.line()
+			.defined(function(d) { return !isNaN(d[1]); })
+			([
+			[label_x, 40], 
+			[x(line_x), 60],
+			[x(line_x), 80],
+			[NaN, NaN],
+			[x(line_x), bottom - 10],
+			[x(line_x), bottom]
+			]);
 	}	
 	
   _main.dispatcher = function(_){

@@ -17,7 +17,7 @@ spec.d1.scaleBrush = function(){
 				extent = extent.sort(brushscale.domain()[0] > brushscale.domain()[1]?
 					d3.descending : d3.ascending );
 				
-				d3.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
+				svg.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
 			})
 		
 		svg_elem = svg.append("g")
@@ -64,7 +64,7 @@ spec.d1.scaleBrush = function(){
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("rangechange.scalebrush."+dispatch_idx, svg_elem.on("_rangechange"));
 		dispatcher.on("regionchange.scalebrush."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.scalebrush."+dispatch_idx, svg_elem.on("_redraw"));		

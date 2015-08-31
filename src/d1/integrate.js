@@ -74,7 +74,7 @@ spec.d1.integrate = function(){
 				});
 				
 				// Register event listeners
-				var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+				var dispatch_idx = ++dispatcher.idx;
 				dispatcher.on("redraw.integ."+dispatch_idx, svg_elem.on("_redraw"));
 				dispatcher.on("integ_refactor."+dispatch_idx, svg_elem.on("_refactor"));
 			};

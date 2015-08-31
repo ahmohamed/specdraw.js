@@ -11,12 +11,14 @@ spec.d1.line = function () {
 		var width = svg.attr("width")
 		
 		svg_elem = svg.append("g")
-			.attr("class", "spec-line")
-			.attr("clip-path","url(#clip)")
+			.attr("class", "spec-line");
+		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
 		
 		svg_elem.node().range = range;
 			
-		var line_idx = d3.select(".main-focus").node().nSpecs;
+		var line_idx = svg.node().nSpecs;
+		svg_elem.node().line_idx = line_idx;
+		
 		var path_elem = svg_elem.append("path")
       .datum(data)
 			.attr("class", "line clr"+ line_idx)
@@ -36,20 +38,47 @@ spec.d1.line = function () {
 			)(svg_elem);
 		
 		svg_elem
-			.on("_redraw", function(e){				
-				path_elem.attr("d", path);
-				svg_elem.selectAll(".segment").attr("d", path);
+			.on("_redraw", function(e){
+				if(e.x){
+					path_elem.attr("d", path)
+						.attr("transform", 'scale(1,1)translate(0,0)');
+					svg_elem.selectAll(".segment").attr("d", path);
+				}else{ //change is in the Y axis only.
+					var orignial_xscale = x.copy().domain(svg.node().range.x),
+						orignial_yscale = y.copy().domain(svg.node().range.y);
+					
+					var translate_coor = [0,
+		 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+
+					var	scale_coor = [ 1,
+					  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
+				
+					path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					svg_elem.selectAll(".segment")
+						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+				}
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
-					//if(data_slice && new_slice.start === data_slice.start && new_slice.end === data_slice.end)
-					//	return;
-					
+
 					data_slice = new_slice;
 					
-					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);	
+					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);
 					path_elem.datum(dataResample);
+					
+					// if the number data points in the path is less that 
+					// the number of pixels, interpolate between points to
+					// avoid pixelation.
+					if(dataResample.length < width){
+						path.interpolate('cardinal');
+					}else{
+						// In large number of data points, cardinal interpolation
+						// has a pronounced effect on efficiency with no visual
+						// enhancement. Use linear instead.
+						path.interpolate('linear');
+					}
+						
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
@@ -80,12 +109,13 @@ spec.d1.line = function () {
 			});
 		
 		// Register event listeners
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
 		dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
 		
 		svg_elem.node().specData = function () { return data;	};
+		//TODO: Update peaks, integrate, segments to match new data.
 		svg_elem.node().setData = function (_) {
 			if(!_[0].x){ //if data is array, not xy format
 				data = _.map(function(d,i){ return {x:data[i].x, y:d}; });
@@ -109,6 +139,11 @@ spec.d1.line = function () {
 			if (!arguments.length) return scale_factor;
 			scale_factor = _;
 			svg_elem.on("_redraw")({y:true});
+		};
+		svg_elem.node().addPeaks = function (idx) { //TODO:assign color to peaks
+			svg.select(".peaks").node().addpeaks(data.subset(idx), line_idx);			
+			svg.select(".peaks").on("_regionchange")({xdomain:true});
+			svg.select(".peaks").on("_redraw")({x:true});			
 		};
 		svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){
@@ -151,7 +186,7 @@ spec.d1.line = function () {
     if (!arguments.length) return data;
 		if(!_[0].x){ //if data is array, not xy format
 			var xscale = d3.scale.linear()
-				.range(d3.select(".main-focus").node().range.x)
+				.range(svg.node().range.x)
 				.domain([0, _.length]);
 			
 			data = _.map(function(d,i){ return {x:xscale(i), y:d}; });

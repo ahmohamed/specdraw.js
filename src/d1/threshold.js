@@ -13,7 +13,7 @@ spec.d1.threshold = function () {
 				dispatcher.on("click.thresh."+dispatch_idx, null);
 			});
 		
-		var dispatch_idx = ++d3.select(".main-focus").node().dispatch_idx;
+		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("mousemove.thresh."+dispatch_idx, svg_elem.on("_mousemove"));	
 		dispatcher.on("click.thresh."+dispatch_idx, svg_elem.on("_click"));
 	}

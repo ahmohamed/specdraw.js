@@ -6,43 +6,43 @@ var events = {
 	zoom:["x", "y", false]
 }
 
-events.crosshairToggle = function () {
+events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
-	dispatcher.crosshairEnable(events.crosshair);
+	app.slideDispatcher.crosshairEnable(events.crosshair);
 }
 
-events.peakpickToggle = function () {
+events.peakpickToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
-	if(events.peakdel !== false)	events.peakdelToggle();
-	if(events.integrate !== false)	events.integrateToggle();
+	if(events.peakdel !== false)	events.peakdelToggle(app);
+	if(events.integrate !== false)	events.integrateToggle(app);
 	
 	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
-	dispatcher.peakpickEnable(events.peakpick);
+	app.slideDispatcher.peakpickEnable(events.peakpick);
 }
 
-events.peakdelToggle = function () {
+events.peakdelToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
-	if(events.peakpick !== false)	events.peakpickToggle();
-	if(events.integrate !== false)	events.integrateToggle();	
+	if(events.peakpick !== false)	events.peakpickToggle(app);
+	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.peakdel = !events.peakdel;
-	dispatcher.peakdelEnable(events.peakdel);	
+	app.slideDispatcher.peakdelEnable(events.peakdel);	
 }
 
-events.integrateToggle = function () {
+events.integrateToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
-	if(events.peakpick !== false)	events.peakpickToggle();
-	if(events.peakdel !== false) events.peakdelToggle();
+	if(events.peakpick !== false)	events.peakpickToggle(app);
+	if(events.peakdel !== false) events.peakdelToggle(app);
 
 	events.integrate = !events.integrate;
-	dispatcher.integrateEnable(events.integrate);	
+	app.slideDispatcher.integrateEnable(events.integrate);	
 }
 
-events.zoomToggle = function () {
-	if(events.peakpick !== false)	events.peakpickToggle();
-	if(events.peakdel !== false)	events.peakdelToggle();
-	if(events.integrate !== false)	events.integrateToggle();	
+events.zoomToggle = function (app) {
+	if(events.peakpick !== false)	events.peakpickToggle(app);
+	if(events.peakdel !== false)	events.peakdelToggle(app);
+	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.zoom.rotate();
 	console.log(events.zoom)
@@ -57,20 +57,9 @@ var cursor = {
 	refpick:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAB9klEQVRIS+WVTSilURjHWdBEkY+NnUQmH0UW1AgLCwsLylaKWJhIyYIpJRmRKEKJKImyMBYWPmJhITNCysdGFkiZxgJRZur6/afz6nW7133v7Vo59es599znPP/nfD1vaMg7t9AA42veVxiCVTiFUuiDUXiy4gYqoPmaOw8rMAZRsAUjMBwMAcWYgG2bwB79TpgKlsAggfJgGtTvhS649Vcgkwm5cG9NxEZCMRxCHFRAKjzYfP7vo5OWjFMltNucm+jnwKbZkh3skfH75+8K5B8G+5AG2vtaWIdZ0CF/hmNohv5ABLTaSagCXdG/JvAvbAPosMtgAVqhB1xOt8hKSAepYBLQdfTZPp6AXmi9OeBxn/uDgz9bpFKgl5oE1i1y+RLxR6CIYBsm4AU2HV5erDchpwLymwMFjoYaKAA9sjebU4FEopxBFqj/A1SqG4MloLKg+6/XqrpzBXdmm87fEnGyghgCnMA30M3RHNlqJ6vwJJDCxFj4CbolCtQNGfDbZJuN3TX9Euyyt1W4C3zCUeVXV1Hb8ccEVfbf3YKo9reYsXLsoknolZu7QAT/qnipYnZAoenbs7cCKJk1+GIGrrGqpDN2IU9b1IaDvkpqOsh8OHDL3vqphAagzgwsYVVRfX4PEnAKB2X16CW4fVj+8XADl/Y/ngGM/GMZMjMjNAAAAABJRU5ErkJggg==",
 	
 }
-// Event dispatcher to group all listeners in one place.
-var dispatcher = d3.dispatch(
-	"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
-	"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
-	"keyboard",																//Keyboard
-	"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-	"integrateEnable", "integrate", "integ_refactor",						//Integration events
-	"crosshairEnable",
-	"blindregion",
-	"log"
-);
 
-var registerKeyboard = function(){
-
+var registerKeyboard = function(app){
+	console.log(app)
 	d3.select("body").on("keydown", function() {
       /*svg.append("text")
           .attr("x","5")
@@ -82,24 +71,24 @@ var registerKeyboard = function(){
           .style("fill-opacity",".1")
 	        .remove();
 			*/
-			dispatcher.log("keyCode: " + d3.event.keyCode);
+			app.slideDispatcher.log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
-				events.peakpickToggle();
+				events.peakpickToggle(app);
 			}else if (d3.event.keyCode===68) { // d
-				events.peakdelToggle();
+				events.peakdelToggle(app);
 			}else if (d3.event.keyCode===73) { // i
-				events.integrateToggle();
+				events.integrateToggle(app);
 			}else if (d3.event.keyCode===67) { // c
-				events.crosshairToggle();
+				events.crosshairToggle(app);
 			}else if (d3.event.keyCode===70) { // f
-				dispatcher.regionfull();
-			}else if (d3.event.keyCode===90) { // f
-				events.zoomToggle();
+				dispatcher.regionfull(app);
+			}else if (d3.event.keyCode===90) { // z
+				events.zoomToggle(app);
 			}
 			
 			
-			dispatcher.keyboard(d3.event);
+			app.slideDispatcher.keyboard(d3.event);
 	  });
 }
 

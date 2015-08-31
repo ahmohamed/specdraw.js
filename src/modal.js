@@ -5,12 +5,17 @@ var modals = {
 	integrate:false,	
 }
 
+nanoModal.customHide = function(defaultHide, modalAPI) {
+	modalAPI.modal.el.style.display = 'block';
+	defaultHide();
+};
+	
 modals.proto = function (title, content, ok_fun, cancel_fun) {	
 	var nano = nanoModal(
-		//'<div><div class="title">' + (title?title:"Dialogue") +  '</div>' + content + '</div>',
 		content,
 		{
 		overlayClose: false,
+		autoRemove:true,
 		buttons: [
 			{
 		    text: "OK",
@@ -25,28 +30,43 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		]}
 	);
 	
-	d3.select(nano.modal.el).insert("div", ":first-child")
+	//TODO: define spec-app;
+	var spec_app = d3.select('.spec-app');
+	spec_app.append(function () {return nano.overlay.el});
+	spec_app.append(function () {return nano.modal.el});
+	
+	var el = d3.select(nano.modal.el);
+	
+	el.insert("div", ":first-child")
 		.classed('title', true)
-		.text( title? title : "Dialogue" )
-	d3.select(nano.modal.el).on("keydown", function() {
+		.text( title? title : "Dialogue" );
+	
+	el.on("keydown", function() {
 		if (d3.event.keyCode===13) { // Enter
 			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
 		}
 		if (d3.event.keyCode===27) { // Escape
 			d3.select(nano.modal.el).select(".cancelBtn").node().click();
 		}
-	})
+	});
 	
 	nano.onShow(function () {
+		el.style({
+			'display': 'flex',
+			'flex-direction': 'column',
+			'margin-left': -el.node().clientWidth /2,
+			'max-width': 0.8 * el.node().parentNode.clientWidth,
+			'max-height': 0.8 * el.node().parentNode.clientHeight
+		});
 		var drag = d3.behavior.drag()
 			.on("drag", function () {
-				//console.log(d3.event.sourceEvent.pageX, d3.event.y)
-		    d3.select(nano.modal.el)
-		      .style("top", d3.event.sourceEvent.pageY+"px")
+		    el.style("top", d3.event.sourceEvent.pageY+"px")
 		      .style("left", d3.event.sourceEvent.pageX+"px")				
 			});
 		d3.select(nano.modal.el).select(".title").call(drag)
 		d3.select(nano.modal.el).select(".cancelBtn").node().focus();
+		
+		//{display: flex,flex-direction: column}
 	});
 	return nano;
 }
@@ -122,18 +142,18 @@ modals.input = function (text, value,callback){
 modals.xRegion = function () {
 	modals.range(
 		"Set x region to:\n",
-		d3.select(".main-focus").node().range.x,
-		function (new_range) { d3.select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-		d3.select(".main-focus").node().xScale.domain()
+		d3.select('.spec-slide.active').select(".main-focus").node().range.x,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
 	)();
 };
 
 modals.yRegion = function () {
 	modals.range(
 		"Set y region to:\n",
-		d3.select(".main-focus").node().range.y,
-		function (new_range) { d3.select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-		d3.select(".main-focus").node().yScale.domain()
+		d3.select('.spec-slide.active').select(".main-focus").node().range.y,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
 	)();
 };
 
@@ -167,20 +187,7 @@ modals.scaleLine = function () {
 };
 
 var add_selector = function (el, ok_fun) {
-	var specs = d3.select(".main-focus").selectAll(".spec-line")
-	var specs_labels =	specs[0].map(function (e) {
-			return e.label;
-		});
-	
-	spec.elem.dropdown(el, 'Select Spectrum', specs_labels)
-		.classed('spec-selector', true)
-		.selectAll('label').each(function (d,i) {
-			this.value = specs[0][i].s_id();
-			console.log('value',this.value)
-		})
-		.selectAll('input')
-			.attr('checked', true);
-	
+	spec.elem.spectrumSelector(el)
 };
 
 var add_preview = function (el, ok_fun) {
@@ -208,27 +215,44 @@ var add_preview = function (el, ok_fun) {
 
 
 modals.method_args = function (fun ,args, title, specSelector, preview) {
-  var form_data = {}, el;
+	var el;
 	var ok_fun = function (modal) {
-	  el.selectAll(".param")[0].forEach(function(e){
-			//TODO: change to e.children[0].type ==="checkbox"
-	    form_data[e.id] =  e.children[0].type ==="checkbox"? e.children[0].checked :e.children[0].value;
-	  });
-		
-		if(modal) modal.hide();
-		
-		var s_ids = el.select('.spec-selector').node().getSelected()
-		pro.plugin_funcs(fun, form_data, s_ids);
-		form_data = {};
+		fireEvent(el.node(), 'input');
+		modal.hide();
 	};
 	
-	var nano = modals.proto(title, "",	ok_fun);
-	
+	var nano = modals.proto(title, '',	ok_fun);
 	el = d3.select(nano.modal.el).select(".nanoModalContent");
 	
-	el.call(add_selector, ok_fun);
-	el.call(makeMethodParams(args));
-	el.call(add_preview, ok_fun);
+	el.on('input', function () {
+		console.log('target', el, d3.event.target);
+		
+		var form_data = {};
+    el.selectAll('.param')
+      .filter(function () {
+				console.log(this, this.id);
+        return this.id !== '';
+      })
+      .each(function (e) {
+				console.log('filtered',this,this.id)
+        form_data[this.id] = this.getValue();
+      });
+		var timer = null;
+		if(timer)
+			clearTimeout(timer);		
+	
+		if(d3.event.target === el || form_data['prev_btn'] === true){
+			pro.plugin_funcs(fun, form_data);
+		}else	if(form_data['prev_auto'] === true){
+			timer = setTimeout(function () {
+				pro.plugin_funcs(fun, form_data);
+			}, 300);
+		}
+	});
+	
+	el.append(inp.spectrumSelector());
+	el.append(inp.div(args));
+	el.append(inp.preview(true));
 	return nano.show;
 };
 spec.method_args = modals.method_args;
