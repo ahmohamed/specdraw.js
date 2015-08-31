@@ -5,6 +5,8 @@ layout: doc-tocify
 # specdraw.js
 A javascript library for interactive visualization and client-side manipulation of NMR spectra. The package is still under developlment.
 
+##Documentation
+
 ### Exmaples
 To see the package in action, visit my [codepen](http://codepen.io/collection/ngYkmJ)
 
