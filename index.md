@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: doc-tocify
 ---
 
 # specdraw.js
