@@ -10,8 +10,8 @@ spec.d2.main_focus = function () {
 			d3.select("#bfunc").attr("slope", zoomer.scale());
 		}).scaleExtent([0.1,100]);	
 	
-	function _main(all_panels) {
-		focus = all_panels.append("g")
+	function _main(slide) {
+		focus = slide.append("g")
 		    .attr("class", "main-focus")
 		    .attr("pointer-events", "all")
 				.attr("width", width)

@@ -5,9 +5,13 @@ var modals = {
 	integrate:false,	
 }
 
+nanoModal.customHide = function(defaultHide, modalAPI) {
+	modalAPI.modal.el.style.display = 'block';
+	defaultHide();
+};
+	
 modals.proto = function (title, content, ok_fun, cancel_fun) {	
 	var nano = nanoModal(
-		//'<div><div class="title">' + (title?title:"Dialogue") +  '</div>' + content + '</div>',
 		content,
 		{
 		overlayClose: false,
@@ -26,28 +30,43 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		]}
 	);
 	
-	d3.select(nano.modal.el).insert("div", ":first-child")
+	//TODO: define spec-app;
+	var spec_app = d3.select('.spec-app');
+	spec_app.append(function () {return nano.overlay.el});
+	spec_app.append(function () {return nano.modal.el});
+	
+	var el = d3.select(nano.modal.el);
+	
+	el.insert("div", ":first-child")
 		.classed('title', true)
-		.text( title? title : "Dialogue" )
-	d3.select(nano.modal.el).on("keydown", function() {
+		.text( title? title : "Dialogue" );
+	
+	el.on("keydown", function() {
 		if (d3.event.keyCode===13) { // Enter
 			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
 		}
 		if (d3.event.keyCode===27) { // Escape
 			d3.select(nano.modal.el).select(".cancelBtn").node().click();
 		}
-	})
+	});
 	
 	nano.onShow(function () {
+		el.style({
+			'display': 'flex',
+			'flex-direction': 'column',
+			'margin-left': -el.node().clientWidth /2,
+			'max-width': 0.8 * el.node().parentNode.clientWidth,
+			'max-height': 0.8 * el.node().parentNode.clientHeight
+		});
 		var drag = d3.behavior.drag()
 			.on("drag", function () {
-				//console.log(d3.event.sourceEvent.pageX, d3.event.y)
-		    d3.select(nano.modal.el)
-		      .style("top", d3.event.sourceEvent.pageY+"px")
+		    el.style("top", d3.event.sourceEvent.pageY+"px")
 		      .style("left", d3.event.sourceEvent.pageX+"px")				
 			});
 		d3.select(nano.modal.el).select(".title").call(drag)
 		d3.select(nano.modal.el).select(".cancelBtn").node().focus();
+		
+		//{display: flex,flex-direction: column}
 	});
 	return nano;
 }

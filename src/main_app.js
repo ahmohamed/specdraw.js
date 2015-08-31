@@ -6,35 +6,45 @@
 spec.app = function(){
   var slides = [], elem, svg_width, svg_height;
 
-  function _main(svg){
+  function _main(div){
     /* * Check size definitions**/
-    if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'){
-        svg_width = +svg.attr("width");    svg_height = +svg.attr("height");    
-    }
 		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
 			|| isNaN(svg_width) || isNaN(svg_height)){
-				var parent_svg = svg.node();
+				var parent_svg = div.node();
 				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
 					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
 				
-				svg_width = dimensions[0];				
+				svg_width = dimensions[0] - 50; //deduct 50px for column menu.
 				svg_height = dimensions[1];
-		}
-        
-    if (svg_width < 100 || svg_height < 100){
-      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 100px");
+		};
+		
+    if (svg_width < 400 || svg_height < 400){
+      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
     }
 		
-		elem = svg.append('g')
+		
+		var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
+		
+		elem = div.append('div')
 			.classed('spec-app', true)
-			.attr('width', svg_width)
-			.attr('height', svg_height);
+			.attr({
+				width:svg_width,
+				height:svg_height				
+			});
+		
+		elem.node().dispatcher = app_dispatcher;
 		
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		
 		elem.call(spec.menu());
-		elem.call(spec.slideChanger());
+		/*var svg_elem = elem.append('svg')
+			.attr({
+				width:svg_width,
+				height:svg_height				
+			}).append('g');
+		*/
+		//elem.call(spec.slideChanger());
 		/**** Keyboard events and logger ****/
 		registerKeyboard(elem.node());
 		
@@ -46,21 +56,27 @@ spec.app = function(){
 					.width(svg_width)
 					.height(svg_height)
 			);
-			elem.call(spec.slideChanger());
+			app_dispatcher.slideChange();
+			//elem.call(spec.slideChanger());
 		};
 		elem.node().appendToCurrentSlide = function (data) {
-			var current_slide = elem.select('.spec-slide.active').node()
+			var current_slide = elem.select('.spec-slide.active').node();
 			if(!current_slide){
 				elem.node().appendSlide(data);
 			}	else{
 				current_slide.addSpec(data);
+				app_dispatcher.slideContentChange();
 			}
 		};
 		
-		for (var i = 0; i < slides.length; i++) {
-			elem.appendSlide(slides[i].slide);
-		}
+		elem.node().options = _main.options;
+		app_dispatcher.on('slideChange.app', function () {
+			elem.node().slideDispatcher = elem.select('.spec-slide.active').node().slideDispatcher;
+		});
 		
+		for (var i = 0; i < slides.length; i++) {
+			elem.node().appendSlide(slides[i].slide);
+		}		
 	}
 	
 	_main.appendSlide = function(data){
@@ -106,5 +122,8 @@ spec.app = function(){
     svg_height = x;
     return _main;
   };
+	_main.options = {
+		grid:{x:false, y:false}
+	};
 	return _main;
 };

@@ -9,7 +9,7 @@ inp.num = function (label, val, _min, _max, step, unit) {
 				value: typeof val === "undefined" ? 0: val,
 				min: typeof _min === 'undefined'? -Infinity: _min,
 				max: typeof _max === 'undefined'? Infinity: _max,
-				step: typeof unit === 'undefined'? 1: step
+				step: typeof step === 'undefined'? 1: step
 			})
 			.text(typeof unit === 'undefined'? '': unit);
 	
@@ -52,8 +52,9 @@ inp.checkbox_toggle = function (label, val, div_data) {
     });
 	
   elem.append(inp.div(div_data))
-		.classed('div_enable', true);
-  
+		.classed('div_enable', true)
+  	.classed('disabled', !elem.select('input').node().checked);
+		
   elem.node().getValue = elem.select('.param.checkbox').node().getValue;
   
   return function () { return elem.node();	};
@@ -93,6 +94,7 @@ inp.select_multi = function (label, options) {
 			.node().checked = false;
 	
 	elem.append('ul')
+		.classed('block-list', true)
 		.selectAll('li')
 		.data(options).enter()
 		.append('li')
@@ -169,7 +171,7 @@ inp.threshold = function (label) {
 	var elem = d3.select(document.createElement('div'))
 	.classed('param threshold', true);
 	
-	input = elem.append("input").attr("type", "hidden")
+	var input = elem.append("input").attr("type", "hidden")
 
 	var val = elem.append("input")
 		.attr("type", "text")
@@ -177,7 +179,7 @@ inp.threshold = function (label) {
 	
 	elem.insert(inp.button(label), ':last-child')
   	.on("click", function(){ 
-			var modal = d3.select(".nanoModalOverride[style*='display: block']")
+			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
 				.style('display', 'none');
 			
 			d3.select('.spec-slide.active').select('.main-focus').node()
@@ -189,7 +191,7 @@ inp.threshold = function (label) {
 		});
 	
 	elem.node().getValue = function () {
-		return input.value;
+		return input.node().value;
 	};
 	return function(){return elem.node()}
 };
@@ -207,7 +209,6 @@ inp.div = function (div_data) {
   for (var key in div_data){
 		var p = div_data[key];
 		if(typeof p == 'function') continue; //Exclude Array prototype functions.
-		console.log('from_div', p);	
     div.append(parseInputElem.apply(null, p))
 			.node().id = key;
   }
@@ -225,7 +226,11 @@ var parseInputElem = function (label, type, details) {
 
 inp.spectrumSelector = function () {
 	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0) return;
+	if (specs.size() === 0){
+		return function () {
+			return d3.select(document.createElement('div')).text('No Spectra to show').node();
+		};
+	} 
 		
 	var elem = 	d3.select(
 			inp.select_multi('Select Spectrum', specs[0])()
@@ -233,18 +238,18 @@ inp.spectrumSelector = function () {
 	
 	elem.selectAll('li')
 	  	.each(function(d){
-				var _input = d3.select(this).select('.checkbox')
+				d3.select(this).select('.checkbox')					
 					.style('color', getComputedStyle(d.childNodes[0]).stroke)
-					.on('mouseover', function () {
-						specs.classed('dimmed', true);
-						d3.select(d).classed('dimmed', false)
-							.classed('highlighted', true);
-					})//mouseover
-					.on('mouseout', function () {
-						specs.classed('dimmed', false);
-						d3.select(d).classed('highlighted', false);
-					})//mouseout
 					.select('.label').text(d.label);
+					
+				d3.select(this).on('mouseenter', function () {
+						d3.select(d.parentNode).classed('dimmed', true);
+						d3.select(d).classed('highlighted', true);
+					})//mouseover
+					.on('mouseleave', function () {
+						d3.select(d.parentNode).classed('dimmed', false);
+						d3.select(d).classed('highlighted', false);
+					});//mouseout
 			});//end each
 	
 	elem.node().getValue = function () {
@@ -267,3 +272,14 @@ inp.preview = function(auto){
 	};
 	return inp.div(div_data);
 };
+inp.popover = function (title) {
+	var div = d3.select(document.createElement('div'))
+		.classed('popover right', true);
+	
+	div.append('div').classed('arrow', true);
+	var inner = div.append('div').classed('popover-inner', true)
+	inner.append('h3').classed('popover-title', true).text(title);
+	inner.append('div').classed('popover-content', true);
+	
+	return function() {return div.node();};
+}

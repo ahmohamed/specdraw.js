@@ -8,7 +8,7 @@ var events = {
 
 events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
-	app.dispatcher.crosshairEnable(events.crosshair);
+	app.slideDispatcher.crosshairEnable(events.crosshair);
 }
 
 events.peakpickToggle = function (app) {
@@ -18,7 +18,7 @@ events.peakpickToggle = function (app) {
 	
 	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
-	app.dispatcher.peakpickEnable(events.peakpick);
+	app.slideDispatcher.peakpickEnable(events.peakpick);
 }
 
 events.peakdelToggle = function (app) {
@@ -27,7 +27,7 @@ events.peakdelToggle = function (app) {
 	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.peakdel = !events.peakdel;
-	app.dispatcher.peakdelEnable(events.peakdel);	
+	app.slideDispatcher.peakdelEnable(events.peakdel);	
 }
 
 events.integrateToggle = function (app) {
@@ -36,7 +36,7 @@ events.integrateToggle = function (app) {
 	if(events.peakdel !== false) events.peakdelToggle(app);
 
 	events.integrate = !events.integrate;
-	app.dispatcher.integrateEnable(events.integrate);	
+	app.slideDispatcher.integrateEnable(events.integrate);	
 }
 
 events.zoomToggle = function (app) {
@@ -59,7 +59,7 @@ var cursor = {
 }
 
 var registerKeyboard = function(app){
-
+	console.log(app)
 	d3.select("body").on("keydown", function() {
       /*svg.append("text")
           .attr("x","5")
@@ -71,7 +71,7 @@ var registerKeyboard = function(app){
           .style("fill-opacity",".1")
 	        .remove();
 			*/
-			app.dispatcher.log("keyCode: " + d3.event.keyCode);
+			app.slideDispatcher.log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
 				events.peakpickToggle(app);
@@ -83,12 +83,12 @@ var registerKeyboard = function(app){
 				events.crosshairToggle(app);
 			}else if (d3.event.keyCode===70) { // f
 				dispatcher.regionfull(app);
-			}else if (d3.event.keyCode===90) { // f
+			}else if (d3.event.keyCode===90) { // z
 				events.zoomToggle(app);
 			}
 			
 			
-			app.dispatcher.keyboard(d3.event);
+			app.slideDispatcher.keyboard(d3.event);
 	  });
 }
 

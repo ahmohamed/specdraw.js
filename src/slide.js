@@ -6,9 +6,9 @@
 */
 spec.slide = function(){
 	var data, elem, svg_width, svg_height;
-	function _main(svg){
+	function _main(app){
 		if(!data){
-			create_empty_slide();
+			create_empty_slide();//TODO
 			return ;
 		}
 		
@@ -30,6 +30,13 @@ spec.slide = function(){
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("right")
           .tickFormat(d3.format("s"));
+		
+    var xGrid = d3.svg.axis().scale(x)
+					.orient("bottom").innerTickSize(height)
+					.tickFormat(''),
+        yGrid = d3.svg.axis().scale(y)
+					.orient("right").innerTickSize(width)
+					.tickFormat('');
   	
 		var two_d = (data["nd"] && data["nd"] === 2);
 		
@@ -46,17 +53,21 @@ spec.slide = function(){
 		);
 		dispatcher.idx = 0;
 		
-		var spec_slide = svg.append("g")
-			.classed("spec-slide", true)
+		var spec_slide = app.append("svg")
+			.attr({
+				width:svg_width,
+				height:svg_height				
+			}).classed("spec-slide", true)
 			.classed("active", true)
 		
 		var contents = spec_slide.append('g')
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		
 		
+		spec_slide.node().clip_id = guid();
     var defs = spec_slide.append("defs");
 		defs.append("clipPath")
-		.attr("id", "clip") //TODO: generate unique id for each slide.
+		.attr("id", spec_slide.node().clip_id)
 		  .append("rect")
 		    .attr("width", width)
 		    .attr("height", height);
@@ -114,10 +125,14 @@ spec.slide = function(){
 		contents.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")");
+			
 
 		contents.append("g")
 			.attr("class", "y axis")
 			.attr("transform", "translate(" + width + ",0)");;
+		
+		contents.append("g").classed('x grid', true);
+		contents.append("g").classed('y grid', true);
 		
 		contents.append("text")
 	    .attr("class", "x label")
@@ -136,10 +151,17 @@ spec.slide = function(){
 	    .text("Intensity");
 		
 		dispatcher.on("redraw.slide", function (e) {
-			if(e.x)
+			if(e.x){
 				contents.select(".x.axis").call(xAxis);
-			if(e.y)
+				if(app.node().options.grid.x)
+					contents.select(".x.grid").call(xGrid);
+			}
+			if(e.y){
 				contents.select(".y.axis").call(yAxis);
+				if(app.node().options.grid.y)
+					contents.select(".y.grid").call(yGrid);
+				
+			}
 		});
 		
 		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
@@ -167,11 +189,11 @@ spec.slide = function(){
 				.dispatcher(dispatcher)
 		);
 		
+		spec_slide.node().nd = two_d ? 2 : 1;
 		spec_slide.node().addSpec = function (_) {
 			contents.select('.main-focus').node().addSpec(_);
 		};
 		spec_slide.node().slideDispatcher = dispatcher;
-		svg.node().dispatcher = dispatcher;
 	}
 	
   _main.datum = function(_){

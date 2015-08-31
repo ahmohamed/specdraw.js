@@ -93,6 +93,47 @@ var fireEvent = function(element,event){
     return !element.dispatchEvent(evt);
     }
 };
+var launchFullScreen = function(element) {
+console.log('go full screen');
+if (element.requestFullscreen)
+{ element.requestFullscreen(); }
+else if (element.mozRequestFullScreen)
+{ element.mozRequestFullScreen(); }
+else if (element.webkitRequestFullscreen)
+{ element.webkitRequestFullscreen(); }
+else if (element.msRequestFullscreen)
+{ element.msRequestFullscreen(); }
+};
+function isFullScreen(){
+ return document.fullscreenElement ||
+	document.mozFullScreenElement ||
+	document.webkitFullscreenElement ||
+	document.msFullscreenElement;
+}
+function toggleFullScreen(element) {
+  if (!isFullScreen() ) {  // current working methods
+		launchFullScreen(element);
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+}
+
+function guid(){
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+		/[xy]/g, function(c) {
+			var r = Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;
+			return v.toString(16);
+		}
+	);
+}
 var css_trans = function(transform){
   return function(svg){
     svg.style({
@@ -103,17 +144,18 @@ var css_trans = function(transform){
     });
   }
 };
+
+
 var sliceDataIdx = function(data, domain, range){
   var datalen = data.length*(domain[0] - domain[1])/(range[0]-range[1]);
 
   var dataResamplestart = data.length*(domain[0] - range[0])/(range[1]-range[0]);
   return {start:dataResamplestart, end:dataResamplestart+datalen};	
-}
-
+};
 var getSlicedData = function (data, domain, range) {
 	var slice_idx = sliceDataIdx(data, domain, range);
 	return data.slice(slice_idx.start, slice_idx.end);
-}
+};
 var resample = function (data, domain, npoints) {
   var dataResample = simplify(data, (domain[0] - domain[1])/npoints);
   

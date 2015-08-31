@@ -98,6 +98,47 @@ var fireEvent = function(element,event){
     return !element.dispatchEvent(evt);
     }
 };
+var launchFullScreen = function(element) {
+console.log('go full screen');
+if (element.requestFullscreen)
+{ element.requestFullscreen(); }
+else if (element.mozRequestFullScreen)
+{ element.mozRequestFullScreen(); }
+else if (element.webkitRequestFullscreen)
+{ element.webkitRequestFullscreen(); }
+else if (element.msRequestFullscreen)
+{ element.msRequestFullscreen(); }
+};
+function isFullScreen(){
+ return document.fullscreenElement ||
+	document.mozFullScreenElement ||
+	document.webkitFullscreenElement ||
+	document.msFullscreenElement;
+}
+function toggleFullScreen(element) {
+  if (!isFullScreen() ) {  // current working methods
+		launchFullScreen(element);
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+}
+
+function guid(){
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
+		/[xy]/g, function(c) {
+			var r = Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;
+			return v.toString(16);
+		}
+	);
+}
 var css_trans = function(transform){
   return function(svg){
     svg.style({
@@ -108,17 +149,18 @@ var css_trans = function(transform){
     });
   }
 };
+
+
 var sliceDataIdx = function(data, domain, range){
   var datalen = data.length*(domain[0] - domain[1])/(range[0]-range[1]);
 
   var dataResamplestart = data.length*(domain[0] - range[0])/(range[1]-range[0]);
   return {start:dataResamplestart, end:dataResamplestart+datalen};	
-}
-
+};
 var getSlicedData = function (data, domain, range) {
 	var slice_idx = sliceDataIdx(data, domain, range);
 	return data.slice(slice_idx.start, slice_idx.end);
-}
+};
 var resample = function (data, domain, npoints) {
   var dataResample = simplify(data, (domain[0] - domain[1])/npoints);
   
@@ -239,7 +281,7 @@ var events = {
 
 events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
-	app.dispatcher.crosshairEnable(events.crosshair);
+	app.slideDispatcher.crosshairEnable(events.crosshair);
 }
 
 events.peakpickToggle = function (app) {
@@ -249,7 +291,7 @@ events.peakpickToggle = function (app) {
 	
 	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
-	app.dispatcher.peakpickEnable(events.peakpick);
+	app.slideDispatcher.peakpickEnable(events.peakpick);
 }
 
 events.peakdelToggle = function (app) {
@@ -258,7 +300,7 @@ events.peakdelToggle = function (app) {
 	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.peakdel = !events.peakdel;
-	app.dispatcher.peakdelEnable(events.peakdel);	
+	app.slideDispatcher.peakdelEnable(events.peakdel);	
 }
 
 events.integrateToggle = function (app) {
@@ -267,7 +309,7 @@ events.integrateToggle = function (app) {
 	if(events.peakdel !== false) events.peakdelToggle(app);
 
 	events.integrate = !events.integrate;
-	app.dispatcher.integrateEnable(events.integrate);	
+	app.slideDispatcher.integrateEnable(events.integrate);	
 }
 
 events.zoomToggle = function (app) {
@@ -290,7 +332,7 @@ var cursor = {
 }
 
 var registerKeyboard = function(app){
-
+	console.log(app)
 	d3.select("body").on("keydown", function() {
       /*svg.append("text")
           .attr("x","5")
@@ -302,7 +344,7 @@ var registerKeyboard = function(app){
           .style("fill-opacity",".1")
 	        .remove();
 			*/
-			app.dispatcher.log("keyCode: " + d3.event.keyCode);
+			app.slideDispatcher.log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
 				events.peakpickToggle(app);
@@ -314,12 +356,12 @@ var registerKeyboard = function(app){
 				events.crosshairToggle(app);
 			}else if (d3.event.keyCode===70) { // f
 				dispatcher.regionfull(app);
-			}else if (d3.event.keyCode===90) { // f
+			}else if (d3.event.keyCode===90) { // z
 				events.zoomToggle(app);
 			}
 			
 			
-			app.dispatcher.keyboard(d3.event);
+			app.slideDispatcher.keyboard(d3.event);
 	  });
 }
 
@@ -347,7 +389,7 @@ inp.num = function (label, val, _min, _max, step, unit) {
 				value: typeof val === "undefined" ? 0: val,
 				min: typeof _min === 'undefined'? -Infinity: _min,
 				max: typeof _max === 'undefined'? Infinity: _max,
-				step: typeof unit === 'undefined'? 1: step
+				step: typeof step === 'undefined'? 1: step
 			})
 			.text(typeof unit === 'undefined'? '': unit);
 	
@@ -390,8 +432,9 @@ inp.checkbox_toggle = function (label, val, div_data) {
     });
 	
   elem.append(inp.div(div_data))
-		.classed('div_enable', true);
-  
+		.classed('div_enable', true)
+  	.classed('disabled', !elem.select('input').node().checked);
+		
   elem.node().getValue = elem.select('.param.checkbox').node().getValue;
   
   return function () { return elem.node();	};
@@ -431,6 +474,7 @@ inp.select_multi = function (label, options) {
 			.node().checked = false;
 	
 	elem.append('ul')
+		.classed('block-list', true)
 		.selectAll('li')
 		.data(options).enter()
 		.append('li')
@@ -507,7 +551,7 @@ inp.threshold = function (label) {
 	var elem = d3.select(document.createElement('div'))
 	.classed('param threshold', true);
 	
-	input = elem.append("input").attr("type", "hidden")
+	var input = elem.append("input").attr("type", "hidden")
 
 	var val = elem.append("input")
 		.attr("type", "text")
@@ -515,7 +559,7 @@ inp.threshold = function (label) {
 	
 	elem.insert(inp.button(label), ':last-child')
   	.on("click", function(){ 
-			var modal = d3.select(".nanoModalOverride[style*='display: block']")
+			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
 				.style('display', 'none');
 			
 			d3.select('.spec-slide.active').select('.main-focus').node()
@@ -527,7 +571,7 @@ inp.threshold = function (label) {
 		});
 	
 	elem.node().getValue = function () {
-		return input.value;
+		return input.node().value;
 	};
 	return function(){return elem.node()}
 };
@@ -545,7 +589,6 @@ inp.div = function (div_data) {
   for (var key in div_data){
 		var p = div_data[key];
 		if(typeof p == 'function') continue; //Exclude Array prototype functions.
-		console.log('from_div', p);	
     div.append(parseInputElem.apply(null, p))
 			.node().id = key;
   }
@@ -563,7 +606,11 @@ var parseInputElem = function (label, type, details) {
 
 inp.spectrumSelector = function () {
 	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0) return;
+	if (specs.size() === 0){
+		return function () {
+			return d3.select(document.createElement('div')).text('No Spectra to show').node();
+		};
+	} 
 		
 	var elem = 	d3.select(
 			inp.select_multi('Select Spectrum', specs[0])()
@@ -571,18 +618,18 @@ inp.spectrumSelector = function () {
 	
 	elem.selectAll('li')
 	  	.each(function(d){
-				var _input = d3.select(this).select('.checkbox')
+				d3.select(this).select('.checkbox')					
 					.style('color', getComputedStyle(d.childNodes[0]).stroke)
-					.on('mouseover', function () {
-						specs.classed('dimmed', true);
-						d3.select(d).classed('dimmed', false)
-							.classed('highlighted', true);
-					})//mouseover
-					.on('mouseout', function () {
-						specs.classed('dimmed', false);
-						d3.select(d).classed('highlighted', false);
-					})//mouseout
 					.select('.label').text(d.label);
+					
+				d3.select(this).on('mouseenter', function () {
+						d3.select(d.parentNode).classed('dimmed', true);
+						d3.select(d).classed('highlighted', true);
+					})//mouseover
+					.on('mouseleave', function () {
+						d3.select(d.parentNode).classed('dimmed', false);
+						d3.select(d).classed('highlighted', false);
+					});//mouseout
 			});//end each
 	
 	elem.node().getValue = function () {
@@ -605,83 +652,17 @@ inp.preview = function(auto){
 	};
 	return inp.div(div_data);
 };
-
-spec.elem = {};
-
-spec.elem.dropdown = function (parent, label, options) {
-	var selector = parent.append('div')
-		.text(label)
-		.classed('checkbox-dropdown', true)
-		.on('click', function (e) {
-			d3.select(this).toggleClass('is-active');
-		})
-		.append('ul')
-		.classed('checkbox-dropdown-list', true)
-		//.attr('multiple', true);
+inp.popover = function (title) {
+	var div = d3.select(document.createElement('div'))
+		.classed('popover right', true);
 	
-
-	var option_labels = selector.selectAll("li")
-		.data(options)
-		.enter()
-		.append("li")
-		.append("label")
-		
-	option_labels.append('input')
-		.attr('type', 'checkbox');
+	div.append('div').classed('arrow', true);
+	var inner = div.append('div').classed('popover-inner', true)
+	inner.append('h3').classed('popover-title', true).text(title);
+	inner.append('div').classed('popover-content', true);
 	
-	option_labels.html(function(d){
-		return d3.select(this).html() + d
-	});
-	
-	selector.on('click', function (e) {
-		d3.event.stopPropagation();
-	});
-	
-	selector.node().getSelected = function () {
-		return selector.selectAll('label')[0]
-			.filter(function (e) {
-				return e.children[0].checked;
-			})
-			.map(function (e) {
-				return typeof(e.value) !== 'undefined' ? e.value : d3.select(e).text();
-			});
-	};
-	selector.node().appendOption = function (_) {
-		var label = selector.append('li')
-			.append('label')
-		
-		label.append('input')
-		.attr('type', 'checkbox');
-	
-		label.html(label.html() + _);
-		return label;
-	};
-	return selector;
-};
-
-spec.elem.spectrumSelector = function (el) {
-	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0) return;
-	
-	var selector = 	spec.elem.dropdown(el, 'Select Spectrum', [])
-		.classed('spec-selector', true)
-	var legend = '<span class="spec-legend">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</span>';
-	specs.each(function () {
-		var s = this;
-		var o = selector.node().appendOption(s.label + legend)
-			.style('color', getComputedStyle(s.childNodes[0]).stroke)
-			.on('mouseover', function () {
-				d3.select(s).classed('highlighted', true);
-			})
-			.on('mouseout', function () {
-				d3.select(s).classed('highlighted', false);
-			});
-			
-		o.node().value = s.s_id();
-		o.select('input')
-			.attr('checked', d3.select(s).classed('selected'));
-	});
-};
+	return function() {return div.node();};
+}
 var modals = {
 	crosshair:true,
 	peakpick:false,
@@ -689,9 +670,13 @@ var modals = {
 	integrate:false,	
 }
 
+nanoModal.customHide = function(defaultHide, modalAPI) {
+	modalAPI.modal.el.style.display = 'block';
+	defaultHide();
+};
+	
 modals.proto = function (title, content, ok_fun, cancel_fun) {	
 	var nano = nanoModal(
-		//'<div><div class="title">' + (title?title:"Dialogue") +  '</div>' + content + '</div>',
 		content,
 		{
 		overlayClose: false,
@@ -710,28 +695,43 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		]}
 	);
 	
-	d3.select(nano.modal.el).insert("div", ":first-child")
+	//TODO: define spec-app;
+	var spec_app = d3.select('.spec-app');
+	spec_app.append(function () {return nano.overlay.el});
+	spec_app.append(function () {return nano.modal.el});
+	
+	var el = d3.select(nano.modal.el);
+	
+	el.insert("div", ":first-child")
 		.classed('title', true)
-		.text( title? title : "Dialogue" )
-	d3.select(nano.modal.el).on("keydown", function() {
+		.text( title? title : "Dialogue" );
+	
+	el.on("keydown", function() {
 		if (d3.event.keyCode===13) { // Enter
 			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
 		}
 		if (d3.event.keyCode===27) { // Escape
 			d3.select(nano.modal.el).select(".cancelBtn").node().click();
 		}
-	})
+	});
 	
 	nano.onShow(function () {
+		el.style({
+			'display': 'flex',
+			'flex-direction': 'column',
+			'margin-left': -el.node().clientWidth /2,
+			'max-width': 0.8 * el.node().parentNode.clientWidth,
+			'max-height': 0.8 * el.node().parentNode.clientHeight
+		});
 		var drag = d3.behavior.drag()
 			.on("drag", function () {
-				//console.log(d3.event.sourceEvent.pageX, d3.event.y)
-		    d3.select(nano.modal.el)
-		      .style("top", d3.event.sourceEvent.pageY+"px")
+		    el.style("top", d3.event.sourceEvent.pageY+"px")
 		      .style("left", d3.event.sourceEvent.pageX+"px")				
 			});
 		d3.select(nano.modal.el).select(".title").call(drag)
 		d3.select(nano.modal.el).select(".cancelBtn").node().focus();
+		
+		//{display: flex,flex-direction: column}
 	});
 	return nano;
 }
@@ -920,207 +920,239 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
 	el.append(inp.preview(true));
 	return nano.show;
 };
-spec.method_args = modals.method_args;spec.menu = function(){
-	var svg_elem, x, y, menu_on=false;
-	
-	function _main(svg) {		
-		function toggle() {
-		  if(!menu_on){
-				button.text("✖").on("click",null)
-				
-				d3.select(".spec-slide.active")
-					.transition().duration(500)
-					.attrTween("transform",function(){
-				 	return function(t){
-						nav.style("max-height", (t*height) +"px");
-	          //nav.call(css_trans("translateX("+ (-width+t*width) + "px)"));
-	          //button.call(css_trans("translateY("+ t*height + "px)"));
-				    //return "translate(0,"+ t*height+")";
-						return "translate(0,"+ 0+")";
-				 	}
-				}).each("end", function(){
-	        button.on("click", toggle);
-					nav.style("overflow-y","visible")
-					div_menu.style("overflow", "visible");
-	        menu_on = true;
-	      });    
-		  }else{
-		    button.text("☰").on("click",null);    
-				nav.style("overflow-y","hidden");
-				
-		    d3.select(".spec-slide.active")
-					.transition().duration(500)
-					.attrTween("transform",function(){
-					 	return function(t){
-		          nav.style("max-height", (height-t*height) +"px");
-		          //button.call(css_trans("translateY("+ (height-t*height) + "px)"));
-					    //return "translate(0,"+ (height-t*height) +")";
-							return "translate(0,"+ 0+")";
-					 	}
-					})
-		    .each("end", function(){
-		      	div_menu.style("overflow", "hidden");
-		      	nav
-							//.style("max-height","none")
-		          //.call(css_trans("translate("+ (-width) + "px,0px)"));
-		        button.on("click", toggle);
-		        menu_on = false;
-		    	});
-		  }
+spec.method_args = modals.method_args;spec.menu = function(){	
+	function toggle(e){
+	  if(d3.event.target !== this) return;
   
-		}
-		
-		
-		var width = svg.attr("width"),
-				height = 25;
-	
-	
-		svg_elem = svg.append("g")
-			.attr("class", "all-menu");
-
-		var div_menu = svg_elem.append("svg:foreignObject")
-			.attr("width", height)
-			.attr("height", height)
-			.style('pointer-events', 'all')
-			.append("xhtml:div")
-			.attr("class", "div-menu")
-			.style({
-        "width": width+"px",
-				"height": height*2+"px",
-				"vertical-align": "middle",
-				"line-height": height+"px",
-				"overflow": "hidden",
-				"color": "white"
-			});
-			
-			
-
-		var button = div_menu.append("xhtml:a")
-			.style("width", height+"px")			
-			.attr("class", "open-menu")
-		  .attr("href", "#")
-			.text("☰")
-			.on("click", toggle);
- 
-		var nav = div_menu.append("ul")
-			.attr("class","nav")
-			.style("overflow-y","hidden")
-			.style("max-height",'0px')
-			//.call(css_trans("translateX("+ (-width) + "px)"));
-		
-		var menu = 
-			[	
-			  {
-					label:"Processing",
-				},
-			  {
-			    label:"Analysis",
-			    children:[
-			      {
-							label:"Peak Picking",
-							children:[
-								{label:"Manual peak picking",fun:events.peakpickToggle},
-					  		{label:"View/manage peak table",fun:null},
-								{label:"Delete peaks",fun:events.peakdelToggle},
-							]
-						},	
-    			]
-			  },
-				{
-					label:"View",
-					children:[
-						{
-							label:"Change region",
-							children:[
-								{label:"Set X region",fun:modals.xRegion},
-								{label:"Set Y region",fun:modals.yRegion},
-								{label:"Full spectrum",fun:null,//dispatcher.regionfull,
-									children:[{label:"Error",fun:function(){modals.error('error message')}},]
-								},
-								{label:"Reverse Spectrum",fun:null},
-								{label:"Invert Phases",fun:null},
-							]
-						},
-					],
-				},
-			  {
-					label:"Integration",
-					fun:events.integrateToggle,
-				},
-			  {label:"crosshair",fun:events.crosshairToggle},
-			  {label:"Selected",fun:function(){},
-					children:[
-						{label:"Scale",fun:modals.scaleLine},
-					]
-				},
-				{
-					label:"Export",
-					children:[
-						{label:"As PNG",fun:function(){
-							setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
-						}},
-						{label:"As SVG",fun:function(){
-							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
-						}},
-						{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
-						{label:"CSV",fun: function(){}},
-						{label:"Peak table",fun:function(){}},
-						{label:"JCAMP-DX",fun:function(){}},
-					],
-				},
-			];
-			pro.read_menu(menu, function () {
-				var first = nav.selectAll("li").data(menu);
-				
-				first.enter()
-					.append("li")
-						.append("a")
-						.text(function(d){return d.label+ (d.children?" ▼":"");})
-						.attr("href", "#")
-						.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-
-				arr2el(first, function (_sel) {
-					var ret = _sel.append("div").append("ul").attr("class", "nav-column")
-						.selectAll("li").data(function(d){return d.children});
-				
-					ret.enter()
-					  .append("li")
-							.append("a")
-							.text(function(d){return d.label;})
-							.attr("href", "#")
-							.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-							.append("a")
-							.text(function(d){return (d.children?" ▶":"")});
-				
-					return ret;
-				});
-					
-			});
-			
-		
-		return svg_elem;									
+	  var button = d3.select(this).toggleClass('opened');
+	  button.select('.tooltip')
+	    .style('display', button.classed('opened')? 'none': null);
 	}
-	
-	function arr2el(sel, fun){
-		var second = fun(sel.filter(function(d){return d.children;}));
-	
-		if(second.filter(function(d){return d.children;}).size() > 0)
-			arr2el(second, fun);
+	function _main(app) {
+		var column_menu_buttons = [
+		  ['open-menu', 'Menu'],
+		  ['open-spec-legend', 'Spectra'],
+		  ['open-slides', 'Slides'],
+		  ['open-settings', 'Settings'],
+		  ['open-download', 'Download Spectra'],
+		  ['open-fullscreen', 'Fullscreen App'],
+		  ['connection-status', 'Connection Status'],
+		];
+		
+		var elem = app.append('div')
+			.classed('column-menu', true);
+			
+		elem.selectAll('div')
+		  .data(column_menu_buttons).enter()
+		  .append('div')
+		  .attr('class', function(d){return d[0]})
+		  .attr('title', function(d){return d[1]})
+		  .call(bootstrap.tooltip().placement('right'))
+		  .on('click', toggle);
+		
+		elem.select('.open-menu').call(spec.menu.main_menu()); 
+		
+		
+		var app_dispatcher = app.node().dispatcher;
+		
+		
+		// Full screen manipulation
+		elem.select('.open-fullscreen')
+			.on('click', function (e) {
+				toggleFullScreen(app.node());
+				toggle.apply(this);
+			});
+		
+		d3.select(window).on('resize.fullscreenbutton', function () {
+			elem.select('.open-fullscreen').classed('opened', isFullScreen());
+		});
+		/**************************/
+		
+		app_dispatcher.on('menuUpdate.menu', function () {
+			elem.select('.open-menu').call(spec.menu.main_menu());
+		});
+		app_dispatcher.on('slideChange.menu', function () {
+			elem.select('.open-spec-legend').call(spec.menu.spectra());
+			elem.select('.open-slides').call(spec.menu.slides());
+		});
+		app_dispatcher.on('slideContentChange.menu', function () {
+			elem.select('.open-spec-legend').call(spec.menu.spectra());
+		});
+		
+		pro.read_menu2(app.node()); //read menu from server.
+		return elem;									
 	}
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  }
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  }
-	
 	return _main;
 };
+
+spec.menu.main_menu = function () {
+	function add_li(sel) {
+		sel.enter()
+			.append("li")
+			.text(function(d){return d.label;})
+			.classed('menu-item', true)
+			.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0 })
+			.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0 });
+    
+		return sel;		
+	}
+	function recursive_add(sel){
+ 		var new_sel = sel.filter(function(d){return d.children;})
+			.classed('openable', true)
+			//.attr('tabindex', 1)
+			.append("div").append("ul")
+			.selectAll("li")
+				.data(function(d){return d.children})
+				.call(add_li);
+		
+		if(new_sel.filter(function(d){return d.children;}).size() > 0){
+			recursive_add(new_sel);
+		}
+	}
+	
+	function _main(div) {
+		div.select('.menu-container').remove();
+		
+		var nav = div.append(inp.popover('Menu'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+				.append('div')
+				.classed('main-menu', true)
+					.append("ul")
+					.classed('nav',true);
+		
+		nav.selectAll("li")
+			.data(spec.menu.menu_data)
+			.call(add_li)
+			.call(recursive_add);
+			
+    nav.selectAll('li')
+      .on("click", function(d){
+        if(d.fun){
+          fireEvent(div.node(), 'click'); //close the menu.
+          d.fun();
+        }else{
+        	this.focus();
+        }
+      });
+
+	}
+	return _main;
+};
+spec.menu.spectra = function () {
+	function _main(div) {
+		div.select('.menu-container').remove();
+		
+		var nav = div.append(inp.popover('Spectra'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+		
+		var spec_list = d3.select(inp.spectrumSelector()())
+			.select('ul');
+		
+		if(spec_list.size() === 0){
+			nav.append(inp.spectrumSelector());
+		}else{
+			nav.append(function () {
+				return spec_list.node();
+			}).classed('block-list spec-list no-checkbox', true);
+		}					
+		
+		return div;
+	}
+	return _main;
+};
+spec.menu.slides = function () {
+	function _main(div) {
+		var app = div.selectP('.spec-app');
+		
+		div.select('.menu-container').remove();
+		
+		var slides = app.selectAll('.spec-slide');
+		
+		var nav = div.append(inp.popover('Slides'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+		
+		nav.append('ul')
+			.classed('block-list slide-list', true)
+			.selectAll('li')
+			.data(slides[0]).enter()
+			.append('li')
+				.text(function(d,i){return 'Slide ' + (i+1);})
+				.on('click', function (d) {
+					slides.classed('active', false);
+					d3.select(d).classed('active', true);
+					app.node().dispatcher.slideChange();
+				});
+				
+		return div;
+	}
+	return _main;
+};
+
+
+spec.menu.menu_data = 
+[	
+  {
+		label:"Processing",
+	},
+  {
+    label:"Analysis",
+    children:[
+      {
+				label:"Peak Picking",
+				children:[
+					{label:"Manual peak picking",fun:events.peakpickToggle},
+		  		{label:"View/manage peak table",fun:null},
+					{label:"Delete peaks",fun:events.peakdelToggle},
+				]
+			},	
+		]
+  },
+	{
+		label:"View",
+		children:[
+			{
+				label:"Change region",
+				children:[
+					{label:"Set X region",fun:modals.xRegion},
+					{label:"Set Y region",fun:modals.yRegion},
+					{label:"Full spectrum",fun:null,//dispatcher.regionfull,
+						children:[{label:"Error",fun:function(){modals.error('error message')}},]
+					},
+					{label:"Reverse Spectrum",fun:null},
+					{label:"Invert Phases",fun:null},
+				]
+			},
+		],
+	},
+  {
+		label:"Integration",
+		fun:events.integrateToggle,
+	},
+  {label:"crosshair",fun:events.crosshairToggle},
+  {label:"Selected",fun:function(){},
+		children:[
+			{label:"Scale",fun:modals.scaleLine},
+		]
+	},
+	{
+		label:"Export",
+		children:[
+			{label:"As PNG",fun:function(){
+				setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
+			}},
+			{label:"As SVG",fun:function(){
+				setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
+			}},
+			{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
+			{label:"CSV",fun: function(){}},
+			{label:"Peak table",fun:function(){}},
+			{label:"JCAMP-DX",fun:function(){}},
+		],
+	},
+];
 spec.d1 = {};
 spec.d1.threshold = function () {
 	var svg_elem, x, y, dispatcher, callback;
@@ -1181,12 +1213,18 @@ spec.d1.threshold = function () {
 			return i;
 		};
 		
+		var tip = d3.tip()
+		  .attr('class', 'crosshair tooltip')
+			.direction('ne')
+		  .offset([0, 0])
+			.bootstrap(true);
+			
 		var i_scale = x.copy();
 		var line_idx = svg.node().line_idx;
 		
 		svg_elem = svg.append("g")
 			.attr("class", "crosshair")
-			.datum(null);
+			.datum(null).call(tip);
 
 		svg_elem.append("circle")
 			.attr("class", "clr"+ line_idx)
@@ -1194,8 +1232,14 @@ spec.d1.threshold = function () {
 			.on("click",function(){
 				svg.toggleClass("selected");
 			})
-			.on("mouseenter",function(){highlight(line_idx, true);svg.classed("highlighted",true)})
-			.on("mouseleave",function(){highlight(line_idx, false);svg.classed("highlighted",false)});
+			.on("mouseenter",function(){
+				svg.selectP('.main-focus').classed('dimmed', true);
+				svg.classed('highlighted', true);
+			})
+			.on("mouseleave",function(){
+				svg.selectP('.main-focus').classed('dimmed', false);
+				svg.classed('highlighted', false);
+			});
 
 		svg_elem.append("text")
 			.attr("x", 9)
@@ -1219,11 +1263,12 @@ spec.d1.threshold = function () {
 					svg_elem.attr("i_pos", null);
 					svg_elem.datum(null);
 					return;
-				}				
+				}	
+					
+				tip.text(d3.round(data[i].x,3)).show(svg_elem.node());
 				svg_elem.attr("i_pos", i);			
 				svg_elem.datum(data[i]);				
-				svg_elem.attr("transform", "translate(" + x(data[i].x) + "," + y(data[i].y) + ")");
-				svg_elem.select("text").text(d3.round(data[i].x,3));				
+				svg_elem.attr("transform", "translate(" + x(data[i].x) + "," + y(data[i].y) + ")");			
 			});
 		
 		
@@ -1236,8 +1281,12 @@ spec.d1.threshold = function () {
 		svg_elem.node().show = function (_) {
 			if (!arguments.length) return !(svg_elem.style("display")==="none");			
 			svg_elem.style("display", _? null : "none");
+			
+			if(_) { tip.show(svg_elem); }
+			else{tip.hide()}
+			
 			dispatcher.on("mousemove.line."+dispatch_idx, 
-				_? svg_elem.on("_mousemove") : null);	
+				_? svg_elem.on("_mousemove") : null);
 		};
 	
 		svg_elem.node().enable = function (_) {
@@ -1456,8 +1505,8 @@ spec.d1.line = function () {
 		var width = svg.attr("width")
 		
 		svg_elem = svg.append("g")
-			.attr("class", "spec-line")
-			.attr("clip-path","url(#clip)")
+			.attr("class", "spec-line");
+		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
 		
 		svg_elem.node().range = range;
 			
@@ -1492,13 +1541,15 @@ spec.d1.line = function () {
 					var orignial_xscale = x.copy().domain(svg.node().range.x),
 						orignial_yscale = y.copy().domain(svg.node().range.y);
 					
-						var translate_coor = [0,
-			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+					var translate_coor = [0,
+		 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
 
-						var	scale_coor = [ 1,
-						  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
-						
-						path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					var	scale_coor = [ 1,
+					  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
+				
+					path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					svg_elem.selectAll(".segment")
+						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 				}
 			})
 			.on("_regionchange", function(e){
@@ -2354,6 +2405,142 @@ spec.d1.main_focus = function () {
   };
 	return _main;	
 };spec.d2 = {};
+spec.d2.crosshair = function(){
+	var svg_elem, x, y, dispatcher;
+	
+	function _main(svg) {		
+		var tip = d3.tip()
+		  .attr('class', 'crosshair tooltip')
+			.direction('ne')
+		  .offset([0, 0])
+			.bootstrap(true);
+		
+		//var i_scale = x.copy();
+		var line_idx = 0; //TODO: imp for datasets
+		
+		svg_elem = svg.append("g")
+			.classed("crosshair clr" + line_idx, true)
+			.datum(null).call(tip);
+
+		var crosslines = svg_elem.append("g")
+			.attr("class", "crosshair line");
+		
+		crosslines.append("path")
+			.attr("class", "crosshair line x")
+			.attr('d', d3.svg.line()(
+				[[-x.range()[1], 0], [x.range()[1], 0]]
+			));
+		
+		crosslines.append("path")
+			.attr("class", "crosshair line y")
+			.attr('d', d3.svg.line()(
+				[[0, -y.range()[0]], [0, y.range()[0]]]
+			));
+		
+		var cross_circle = svg_elem.append("circle")
+			.attr("r", 4.5)
+
+			/*			.on("click",function(){
+							svg.toggleClass("selected");
+						})
+			*/ //TODO: select / highlight spectrum from dataset.
+
+		svg_elem.append("text")
+			.attr("x", 9)
+			.attr("dy", "-1em");
+			
+		svg_elem
+			.on("_regionchange", function(e){
+					svg_elem.datum(null);
+					svg_elem.attr("transform", "translate(" + (-10000) + "," + (-10000) + ")");
+			})
+			.on("_mousemove", function(e){
+				var data_point = [x.invert(e.xcoor), y.invert(e.ycoor)]
+					
+				tip.text(
+					d3.round(data_point[0],3) + ', ' + d3.round(data_point[1],3)
+				).show(cross_circle.node());
+				//d3.selectAll('.tooltip').style('pointer-events', 'none');
+				
+				svg_elem.datum(data_point);				
+				svg_elem.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
+				/*svg_elem.select("text").text(
+					d3.round(data_point[0],3) + ',' + d3.round(data_point[1],3)
+				);*/				
+			});
+		
+		
+		svg_elem.node().show = function (_) {
+			if (!arguments.length) return !(svg_elem.style("display")==="none");			
+			svg_elem.style("display", _? null : "none");
+			
+			if(_) { tip.show(svg_elem); }
+			else{tip.hide()}
+			
+			dispatcher.on("mousemove.line."+dispatch_idx, 
+				_? svg_elem.on("_mousemove") : null);
+		};
+	
+		svg_elem.node().enable = function (_) {
+			if (!arguments.length) return params.crosshair;
+			if (_){
+				dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
+				dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});		
+			}
+			else{
+				dispatcher.on("mouseenter.line."+dispatch_idx, null);
+				dispatcher.on("mouseleave.line."+dispatch_idx, null);		
+			}
+			svg_elem.node().show(_);
+		};
+		/*
+		svg_elem.node().i = function (_) {
+			if (!arguments.length) return svg_elem.attr("i_pos");
+			svg_elem.attr("i_pos", i);
+			svg_elem.datum(data[i]);
+		};*/
+		svg_elem.node().remove = function () {
+			dispatcher.on("regionchange.line."+dispatch_idx, null);
+			dispatcher.on("mouseenter.line."+dispatch_idx, null);
+			dispatcher.on("mouseleave.line."+dispatch_idx, null);
+			dispatcher.on("mousemove.line."+dispatch_idx, null);	
+			dispatcher.on("crosshairEnable.line."+dispatch_idx, null);
+			data = null;
+			svg_elem.remove();			
+		};
+		
+		// Register event listeners
+		var dispatch_idx = ++dispatcher.idx;
+		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
+		dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
+		dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});
+		dispatcher.on("mousemove.line."+dispatch_idx, svg_elem.on("_mousemove"));	
+		dispatcher.on("crosshairEnable.line."+dispatch_idx, svg_elem.node().enable);
+
+		
+		return svg_elem;									
+	}
+	
+  _main.dispatcher = function(_){
+    if (!arguments.length) return dispatcher;
+    dispatcher = _;
+    return _main;
+  };
+			
+  _main.xScale = function(_){
+    if (!arguments.length) return x;
+    x = _;
+    return _main;
+  };
+
+  _main.yScale = function(_){
+    if (!arguments.length) return y;
+    y = _;
+    return _main;
+  };
+	
+	return _main;
+};
 spec.d2.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
 	var zoomer = d3.behavior.zoom()
@@ -2366,8 +2553,8 @@ spec.d2.main_focus = function () {
 			d3.select("#bfunc").attr("slope", zoomer.scale());
 		}).scaleExtent([0.1,100]);	
 	
-	function _main(all_panels) {
-		focus = all_panels.append("g")
+	function _main(slide) {
+		focus = slide.append("g")
 		    .attr("class", "main-focus")
 		    .attr("pointer-events", "all")
 				.attr("width", width)
@@ -2564,20 +2751,19 @@ spec.d2.main_focus = function () {
 				height = svg.attr("height");
 		
 		svg_elem = svg.append("g")
-			.attr("class", "spec-img")
+			.attr("class", "spec-img");
+		
+		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
 
 		var img_elem = svg_elem.append("g")
-			.attr("clip-path","url(#clip)")
 			.attr("filter", "url(#2dColorFilter)")
 			.append("svg:image")
 			  .attr('width', width)
 			  .attr('height', height)
 			  .attr('xlink:href', "data:image/ png;base64," + data)
-			  .attr("preserveAspectRatio", "none");
+			  .attr("preserveAspectRatio", "none");	
 				
 
-			
-		range
 		svg_elem.node().range = range;
 		
 		/*** TODO: 2D dataset vis *****
@@ -2589,14 +2775,12 @@ spec.d2.main_focus = function () {
 		
 		******************************/
 		
-		/*if(hasCrosshair)
-			_crosshair = (spec.d1.crosshair() 
-				.datum(data)
+		if(hasCrosshair)
+			_crosshair = (spec.d2.crosshair() 
 				.xScale(x)
 				.yScale(y)
 				.dispatcher(dispatcher)
 			)(svg_elem);
-		*/
 		// TODO: 2D integration
 		
 		svg_elem
@@ -2635,11 +2819,6 @@ spec.d2.main_focus = function () {
 		};
 		svg_elem.node().specRange = function () { return range;	};
 		svg_elem.node().s_id = function () { return s_id;	};
-		svg_elem.node().setScaleFactor = function (_) {
-			if (!arguments.length) return scale_factor;
-			scale_factor = _;
-			svg_elem.on("_redraw")({y:true});
-		};
 		
 		svg_elem.node().remove = function () {
 			dispatcher.on("regionchange.line."+dispatch_idx, null);
@@ -2701,35 +2880,45 @@ spec.d2.main_focus = function () {
 spec.app = function(){
   var slides = [], elem, svg_width, svg_height;
 
-  function _main(svg){
+  function _main(div){
     /* * Check size definitions**/
-    if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'){
-        svg_width = +svg.attr("width");    svg_height = +svg.attr("height");    
-    }
 		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
 			|| isNaN(svg_width) || isNaN(svg_height)){
-				var parent_svg = svg.node();
+				var parent_svg = div.node();
 				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
 					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
 				
-				svg_width = dimensions[0];				
+				svg_width = dimensions[0] - 50; //deduct 50px for column menu.
 				svg_height = dimensions[1];
-		}
-        
-    if (svg_width < 100 || svg_height < 100){
-      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 100px");
+		};
+		
+    if (svg_width < 400 || svg_height < 400){
+      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
     }
 		
-		elem = svg.append('g')
+		
+		var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
+		
+		elem = div.append('div')
 			.classed('spec-app', true)
-			.attr('width', svg_width)
-			.attr('height', svg_height);
+			.attr({
+				width:svg_width,
+				height:svg_height				
+			});
+		
+		elem.node().dispatcher = app_dispatcher;
 		
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		
 		elem.call(spec.menu());
-		elem.call(spec.slideChanger());
+		/*var svg_elem = elem.append('svg')
+			.attr({
+				width:svg_width,
+				height:svg_height				
+			}).append('g');
+		*/
+		//elem.call(spec.slideChanger());
 		/**** Keyboard events and logger ****/
 		registerKeyboard(elem.node());
 		
@@ -2741,21 +2930,27 @@ spec.app = function(){
 					.width(svg_width)
 					.height(svg_height)
 			);
-			elem.call(spec.slideChanger());
+			app_dispatcher.slideChange();
+			//elem.call(spec.slideChanger());
 		};
 		elem.node().appendToCurrentSlide = function (data) {
-			var current_slide = elem.select('.spec-slide.active').node()
+			var current_slide = elem.select('.spec-slide.active').node();
 			if(!current_slide){
 				elem.node().appendSlide(data);
 			}	else{
 				current_slide.addSpec(data);
+				app_dispatcher.slideContentChange();
 			}
 		};
 		
-		for (var i = 0; i < slides.length; i++) {
-			elem.appendSlide(slides[i].slide);
-		}
+		elem.node().options = _main.options;
+		app_dispatcher.on('slideChange.app', function () {
+			elem.node().slideDispatcher = elem.select('.spec-slide.active').node().slideDispatcher;
+		});
 		
+		for (var i = 0; i < slides.length; i++) {
+			elem.node().appendSlide(slides[i].slide);
+		}		
 	}
 	
 	_main.appendSlide = function(data){
@@ -2801,6 +2996,9 @@ spec.app = function(){
     svg_height = x;
     return _main;
   };
+	_main.options = {
+		grid:{x:false, y:false}
+	};
 	return _main;
 };
 /*
@@ -2811,9 +3009,9 @@ spec.app = function(){
 */
 spec.slide = function(){
 	var data, elem, svg_width, svg_height;
-	function _main(svg){
+	function _main(app){
 		if(!data){
-			create_empty_slide();
+			create_empty_slide();//TODO
 			return ;
 		}
 		
@@ -2835,6 +3033,13 @@ spec.slide = function(){
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("right")
           .tickFormat(d3.format("s"));
+		
+    var xGrid = d3.svg.axis().scale(x)
+					.orient("bottom").innerTickSize(height)
+					.tickFormat(''),
+        yGrid = d3.svg.axis().scale(y)
+					.orient("right").innerTickSize(width)
+					.tickFormat('');
   	
 		var two_d = (data["nd"] && data["nd"] === 2);
 		
@@ -2851,17 +3056,21 @@ spec.slide = function(){
 		);
 		dispatcher.idx = 0;
 		
-		var spec_slide = svg.append("g")
-			.classed("spec-slide", true)
+		var spec_slide = app.append("svg")
+			.attr({
+				width:svg_width,
+				height:svg_height				
+			}).classed("spec-slide", true)
 			.classed("active", true)
 		
 		var contents = spec_slide.append('g')
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		
 		
+		spec_slide.node().clip_id = guid();
     var defs = spec_slide.append("defs");
 		defs.append("clipPath")
-		.attr("id", "clip") //TODO: generate unique id for each slide.
+		.attr("id", spec_slide.node().clip_id)
 		  .append("rect")
 		    .attr("width", width)
 		    .attr("height", height);
@@ -2919,10 +3128,14 @@ spec.slide = function(){
 		contents.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")");
+			
 
 		contents.append("g")
 			.attr("class", "y axis")
 			.attr("transform", "translate(" + width + ",0)");;
+		
+		contents.append("g").classed('x grid', true);
+		contents.append("g").classed('y grid', true);
 		
 		contents.append("text")
 	    .attr("class", "x label")
@@ -2941,10 +3154,17 @@ spec.slide = function(){
 	    .text("Intensity");
 		
 		dispatcher.on("redraw.slide", function (e) {
-			if(e.x)
+			if(e.x){
 				contents.select(".x.axis").call(xAxis);
-			if(e.y)
+				if(app.node().options.grid.x)
+					contents.select(".x.grid").call(xGrid);
+			}
+			if(e.y){
 				contents.select(".y.axis").call(yAxis);
+				if(app.node().options.grid.y)
+					contents.select(".y.grid").call(yGrid);
+				
+			}
 		});
 		
 		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
@@ -2972,11 +3192,11 @@ spec.slide = function(){
 				.dispatcher(dispatcher)
 		);
 		
+		spec_slide.node().nd = two_d ? 2 : 1;
 		spec_slide.node().addSpec = function (_) {
 			contents.select('.main-focus').node().addSpec(_);
 		};
 		spec_slide.node().slideDispatcher = dispatcher;
-		svg.node().dispatcher = dispatcher;
 	}
 	
   _main.datum = function(_){
@@ -3436,16 +3656,58 @@ var append_menu_item = function(menu, item){
 	}
 };
 
-pro.read_menu = function (menu, callback) {
+pro.read_menu = function (app) {
 	ajaxJSONGet('/nmr/test', function (response) {
 		for (var k in response) {
-			var sub_menu = find_menu_item(menu, k);
+			var sub_menu = find_menu_item(spec.menu.menu_data, k);
 			append_menu_item(sub_menu, response[k]);
 		}
-		callback(menu);
+		app.dispatcher.menuUpdate();
 	});
 };
-//pro.read_menu();
+
+var find_menu_item2 = function (menu, item) {
+	console.log(menu, item)
+	for (var i = menu.length - 1; i >= 0; i--) {
+		if(menu[i].label == item){
+			if(!menu[i].children) menu[i].children = [];
+			return menu[i];
+		}
+	}
+	menu.push({label:item, children:[]});
+	return menu[menu.length-1];
+};
+var plugin_functor = function (c) {
+	if(c["args"]){
+		return function() {
+			spec.method_args(c["fun"], c["args"], c["title"])();
+		};
+	}else{
+		return function () { pro.plugin_funcs (c["fun"]) };
+	}
+};
+
+pro.read_menu2 = function (app) {
+	ajaxJSONGet('/nmr/test', function (response) {
+		console.log(spec.menu.menu_data)
+		var c = response;
+		for (var i = 0; i < response.length; i++) {
+			var path = find_menu_item2(spec.menu.menu_data, c[i]['menu_path'][0]);
+			
+			for (var j = 1; j < c[i]['menu_path'].length; j++) {
+				path = find_menu_item2(path.children, c[i]['menu_path'][j]);
+			}
+			path.children = null;
+			path.fun = plugin_functor(c[i]);
+			path.nd = c[i]['nd'];			
+			
+		}		
+		console.log(spec.menu.menu_data)
+		app.dispatcher.menuUpdate();
+		
+	});
+};
+
 pro.output = {};
 pro.output.overwriteSpec = function (new_data, s_id) {
 	if(typeof s_id === 'undefined' && 

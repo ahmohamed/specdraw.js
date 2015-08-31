@@ -8,20 +8,19 @@ spec.d2.spec2d = function () {
 				height = svg.attr("height");
 		
 		svg_elem = svg.append("g")
-			.attr("class", "spec-img")
+			.attr("class", "spec-img");
+		
+		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
 
 		var img_elem = svg_elem.append("g")
-			.attr("clip-path","url(#clip)")
 			.attr("filter", "url(#2dColorFilter)")
 			.append("svg:image")
 			  .attr('width', width)
 			  .attr('height', height)
 			  .attr('xlink:href', "data:image/ png;base64," + data)
-			  .attr("preserveAspectRatio", "none");
+			  .attr("preserveAspectRatio", "none");	
 				
 
-			
-		range
 		svg_elem.node().range = range;
 		
 		/*** TODO: 2D dataset vis *****
@@ -33,14 +32,12 @@ spec.d2.spec2d = function () {
 		
 		******************************/
 		
-		/*if(hasCrosshair)
-			_crosshair = (spec.d1.crosshair() 
-				.datum(data)
+		if(hasCrosshair)
+			_crosshair = (spec.d2.crosshair() 
 				.xScale(x)
 				.yScale(y)
 				.dispatcher(dispatcher)
 			)(svg_elem);
-		*/
 		// TODO: 2D integration
 		
 		svg_elem
@@ -79,11 +76,6 @@ spec.d2.spec2d = function () {
 		};
 		svg_elem.node().specRange = function () { return range;	};
 		svg_elem.node().s_id = function () { return s_id;	};
-		svg_elem.node().setScaleFactor = function (_) {
-			if (!arguments.length) return scale_factor;
-			scale_factor = _;
-			svg_elem.on("_redraw")({y:true});
-		};
 		
 		svg_elem.node().remove = function () {
 			dispatcher.on("regionchange.line."+dispatch_idx, null);

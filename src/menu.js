@@ -1,201 +1,233 @@
-spec.menu = function(){
-	var svg_elem, x, y, menu_on=false;
-	
-	function _main(svg) {		
-		function toggle() {
-		  if(!menu_on){
-				button.text("✖").on("click",null)
-				
-				d3.select(".spec-slide.active")
-					.transition().duration(500)
-					.attrTween("transform",function(){
-				 	return function(t){
-						nav.style("max-height", (t*height) +"px");
-	          //nav.call(css_trans("translateX("+ (-width+t*width) + "px)"));
-	          //button.call(css_trans("translateY("+ t*height + "px)"));
-				    //return "translate(0,"+ t*height+")";
-						return "translate(0,"+ 0+")";
-				 	}
-				}).each("end", function(){
-	        button.on("click", toggle);
-					nav.style("overflow-y","visible")
-					div_menu.style("overflow", "visible");
-	        menu_on = true;
-	      });    
-		  }else{
-		    button.text("☰").on("click",null);    
-				nav.style("overflow-y","hidden");
-				
-		    d3.select(".spec-slide.active")
-					.transition().duration(500)
-					.attrTween("transform",function(){
-					 	return function(t){
-		          nav.style("max-height", (height-t*height) +"px");
-		          //button.call(css_trans("translateY("+ (height-t*height) + "px)"));
-					    //return "translate(0,"+ (height-t*height) +")";
-							return "translate(0,"+ 0+")";
-					 	}
-					})
-		    .each("end", function(){
-		      	div_menu.style("overflow", "hidden");
-		      	nav
-							//.style("max-height","none")
-		          //.call(css_trans("translate("+ (-width) + "px,0px)"));
-		        button.on("click", toggle);
-		        menu_on = false;
-		    	});
-		  }
+spec.menu = function(){	
+	function toggle(e){
+	  if(d3.event.target !== this) return;
   
-		}
-		
-		
-		var width = svg.attr("width"),
-				height = 25;
-	
-	
-		svg_elem = svg.append("g")
-			.attr("class", "all-menu");
-
-		var div_menu = svg_elem.append("svg:foreignObject")
-			.attr("width", height)
-			.attr("height", height)
-			.style('pointer-events', 'all')
-			.append("xhtml:div")
-			.attr("class", "div-menu")
-			.style({
-        "width": width+"px",
-				"height": height*2+"px",
-				"vertical-align": "middle",
-				"line-height": height+"px",
-				"overflow": "hidden",
-				"color": "white"
-			});
-			
-			
-
-		var button = div_menu.append("xhtml:a")
-			.style("width", height+"px")			
-			.attr("class", "open-menu")
-		  .attr("href", "#")
-			.text("☰")
-			.on("click", toggle);
- 
-		var nav = div_menu.append("ul")
-			.attr("class","nav")
-			.style("overflow-y","hidden")
-			.style("max-height",'0px')
-			//.call(css_trans("translateX("+ (-width) + "px)"));
-		
-		var menu = 
-			[	
-			  {
-					label:"Processing",
-				},
-			  {
-			    label:"Analysis",
-			    children:[
-			      {
-							label:"Peak Picking",
-							children:[
-								{label:"Manual peak picking",fun:events.peakpickToggle},
-					  		{label:"View/manage peak table",fun:null},
-								{label:"Delete peaks",fun:events.peakdelToggle},
-							]
-						},	
-    			]
-			  },
-				{
-					label:"View",
-					children:[
-						{
-							label:"Change region",
-							children:[
-								{label:"Set X region",fun:modals.xRegion},
-								{label:"Set Y region",fun:modals.yRegion},
-								{label:"Full spectrum",fun:null,//dispatcher.regionfull,
-									children:[{label:"Error",fun:function(){modals.error('error message')}},]
-								},
-								{label:"Reverse Spectrum",fun:null},
-								{label:"Invert Phases",fun:null},
-							]
-						},
-					],
-				},
-			  {
-					label:"Integration",
-					fun:events.integrateToggle,
-				},
-			  {label:"crosshair",fun:events.crosshairToggle},
-			  {label:"Selected",fun:function(){},
-					children:[
-						{label:"Scale",fun:modals.scaleLine},
-					]
-				},
-				{
-					label:"Export",
-					children:[
-						{label:"As PNG",fun:function(){
-							setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
-						}},
-						{label:"As SVG",fun:function(){
-							setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
-						}},
-						{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
-						{label:"CSV",fun: function(){}},
-						{label:"Peak table",fun:function(){}},
-						{label:"JCAMP-DX",fun:function(){}},
-					],
-				},
-			];
-			pro.read_menu(menu, function () {
-				var first = nav.selectAll("li").data(menu);
-				
-				first.enter()
-					.append("li")
-						.append("a")
-						.text(function(d){return d.label+ (d.children?" ▼":"");})
-						.attr("href", "#")
-						.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-
-				arr2el(first, function (_sel) {
-					var ret = _sel.append("div").append("ul").attr("class", "nav-column")
-						.selectAll("li").data(function(d){return d.children});
-				
-					ret.enter()
-					  .append("li")
-							.append("a")
-							.text(function(d){return d.label;})
-							.attr("href", "#")
-							.on("click", function(d){ if(d.fun){ toggle(); d.fun();}})
-							.append("a")
-							.text(function(d){return (d.children?" ▶":"")});
-				
-					return ret;
-				});
-					
-			});
-			
-		
-		return svg_elem;									
+	  var button = d3.select(this).toggleClass('opened');
+	  button.select('.tooltip')
+	    .style('display', button.classed('opened')? 'none': null);
 	}
-	
-	function arr2el(sel, fun){
-		var second = fun(sel.filter(function(d){return d.children;}));
-	
-		if(second.filter(function(d){return d.children;}).size() > 0)
-			arr2el(second, fun);
+	function _main(app) {
+		var column_menu_buttons = [
+		  ['open-menu', 'Menu'],
+		  ['open-spec-legend', 'Spectra'],
+		  ['open-slides', 'Slides'],
+		  ['open-settings', 'Settings'],
+		  ['open-download', 'Download Spectra'],
+		  ['open-fullscreen', 'Fullscreen App'],
+		  ['connection-status', 'Connection Status'],
+		];
+		
+		var elem = app.append('div')
+			.classed('column-menu', true);
+			
+		elem.selectAll('div')
+		  .data(column_menu_buttons).enter()
+		  .append('div')
+		  .attr('class', function(d){return d[0]})
+		  .attr('title', function(d){return d[1]})
+		  .call(bootstrap.tooltip().placement('right'))
+		  .on('click', toggle);
+		
+		elem.select('.open-menu').call(spec.menu.main_menu()); 
+		
+		
+		var app_dispatcher = app.node().dispatcher;
+		
+		
+		// Full screen manipulation
+		elem.select('.open-fullscreen')
+			.on('click', function (e) {
+				toggleFullScreen(app.node());
+				toggle.apply(this);
+			});
+		
+		d3.select(window).on('resize.fullscreenbutton', function () {
+			elem.select('.open-fullscreen').classed('opened', isFullScreen());
+		});
+		/**************************/
+		
+		app_dispatcher.on('menuUpdate.menu', function () {
+			elem.select('.open-menu').call(spec.menu.main_menu());
+		});
+		app_dispatcher.on('slideChange.menu', function () {
+			elem.select('.open-spec-legend').call(spec.menu.spectra());
+			elem.select('.open-slides').call(spec.menu.slides());
+		});
+		app_dispatcher.on('slideContentChange.menu', function () {
+			elem.select('.open-spec-legend').call(spec.menu.spectra());
+		});
+		
+		pro.read_menu2(app.node()); //read menu from server.
+		return elem;									
 	}
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  }
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  }
-	
 	return _main;
 };
+
+spec.menu.main_menu = function () {
+	function add_li(sel) {
+		sel.enter()
+			.append("li")
+			.text(function(d){return d.label;})
+			.classed('menu-item', true)
+			.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0 })
+			.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0 });
+    
+		return sel;		
+	}
+	function recursive_add(sel){
+ 		var new_sel = sel.filter(function(d){return d.children;})
+			.classed('openable', true)
+			//.attr('tabindex', 1)
+			.append("div").append("ul")
+			.selectAll("li")
+				.data(function(d){return d.children})
+				.call(add_li);
+		
+		if(new_sel.filter(function(d){return d.children;}).size() > 0){
+			recursive_add(new_sel);
+		}
+	}
+	
+	function _main(div) {
+		div.select('.menu-container').remove();
+		
+		var nav = div.append(inp.popover('Menu'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+				.append('div')
+				.classed('main-menu', true)
+					.append("ul")
+					.classed('nav',true);
+		
+		nav.selectAll("li")
+			.data(spec.menu.menu_data)
+			.call(add_li)
+			.call(recursive_add);
+			
+    nav.selectAll('li')
+      .on("click", function(d){
+        if(d.fun){
+          fireEvent(div.node(), 'click'); //close the menu.
+          d.fun();
+        }else{
+        	this.focus();
+        }
+      });
+
+	}
+	return _main;
+};
+spec.menu.spectra = function () {
+	function _main(div) {
+		div.select('.menu-container').remove();
+		
+		var nav = div.append(inp.popover('Spectra'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+		
+		var spec_list = d3.select(inp.spectrumSelector()())
+			.select('ul');
+		
+		if(spec_list.size() === 0){
+			nav.append(inp.spectrumSelector());
+		}else{
+			nav.append(function () {
+				return spec_list.node();
+			}).classed('block-list spec-list no-checkbox', true);
+		}					
+		
+		return div;
+	}
+	return _main;
+};
+spec.menu.slides = function () {
+	function _main(div) {
+		var app = div.selectP('.spec-app');
+		
+		div.select('.menu-container').remove();
+		
+		var slides = app.selectAll('.spec-slide');
+		
+		var nav = div.append(inp.popover('Slides'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+		
+		nav.append('ul')
+			.classed('block-list slide-list', true)
+			.selectAll('li')
+			.data(slides[0]).enter()
+			.append('li')
+				.text(function(d,i){return 'Slide ' + (i+1);})
+				.on('click', function (d) {
+					slides.classed('active', false);
+					d3.select(d).classed('active', true);
+					app.node().dispatcher.slideChange();
+				});
+				
+		return div;
+	}
+	return _main;
+};
+
+
+spec.menu.menu_data = 
+[	
+  {
+		label:"Processing",
+	},
+  {
+    label:"Analysis",
+    children:[
+      {
+				label:"Peak Picking",
+				children:[
+					{label:"Manual peak picking",fun:events.peakpickToggle},
+		  		{label:"View/manage peak table",fun:null},
+					{label:"Delete peaks",fun:events.peakdelToggle},
+				]
+			},	
+		]
+  },
+	{
+		label:"View",
+		children:[
+			{
+				label:"Change region",
+				children:[
+					{label:"Set X region",fun:modals.xRegion},
+					{label:"Set Y region",fun:modals.yRegion},
+					{label:"Full spectrum",fun:null,//dispatcher.regionfull,
+						children:[{label:"Error",fun:function(){modals.error('error message')}},]
+					},
+					{label:"Reverse Spectrum",fun:null},
+					{label:"Invert Phases",fun:null},
+				]
+			},
+		],
+	},
+  {
+		label:"Integration",
+		fun:events.integrateToggle,
+	},
+  {label:"crosshair",fun:events.crosshairToggle},
+  {label:"Selected",fun:function(){},
+		children:[
+			{label:"Scale",fun:modals.scaleLine},
+		]
+	},
+	{
+		label:"Export",
+		children:[
+			{label:"As PNG",fun:function(){
+				setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
+			}},
+			{label:"As SVG",fun:function(){
+				setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
+			}},
+			{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
+			{label:"CSV",fun: function(){}},
+			{label:"Peak table",fun:function(){}},
+			{label:"JCAMP-DX",fun:function(){}},
+		],
+	},
+];

@@ -11,8 +11,8 @@ spec.d1.line = function () {
 		var width = svg.attr("width")
 		
 		svg_elem = svg.append("g")
-			.attr("class", "spec-line")
-			.attr("clip-path","url(#clip)")
+			.attr("class", "spec-line");
+		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
 		
 		svg_elem.node().range = range;
 			
@@ -47,13 +47,15 @@ spec.d1.line = function () {
 					var orignial_xscale = x.copy().domain(svg.node().range.x),
 						orignial_yscale = y.copy().domain(svg.node().range.y);
 					
-						var translate_coor = [0,
-			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+					var translate_coor = [0,
+		 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
 
-						var	scale_coor = [ 1,
-						  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
-						
-						path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					var	scale_coor = [ 1,
+					  Math.abs((svg.node().range.y[0]-svg.node().range.y[1])/(y.domain()[0]-y.domain()[1]))];
+				
+					path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					svg_elem.selectAll(".segment")
+						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 				}
 			})
 			.on("_regionchange", function(e){
