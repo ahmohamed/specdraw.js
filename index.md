@@ -1,5 +1,7 @@
 ---
+layout: default
 ---
+
 # specdraw.js
 A javascript library for interactive visualization and client-side manipulation of NMR spectra. The package is still under developlment.
 
