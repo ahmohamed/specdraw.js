@@ -5,6 +5,7 @@ A javascript library for interactive visualization and client-side manipulation 
 
 ### Exmaples
 To see the package in action, visit my [codepen](http://codepen.io/collection/ngYkmJ)
+
 ### Current functions:
 * Redering of 1D spectra from JSON files, including PNG compressed spectra.
 * Supports zooming, peak picking/deleting, integration.
@@ -18,4 +19,5 @@ To see the package in action, visit my [codepen](http://codepen.io/collection/ng
 * Interactivity with server-side using AJAX for baseline and phase correction.
 
 ### Contribution
-All contributions, suggestions, feature requests are exetremely welcome. Just create an issue or a pull request, or email me @ mohamed [at] kuicr.kyoto-u.ac.jp 
+All contributions, suggestions, feature requests are exetremely welcome. Just create an issue or a pull request, or email me @ mohamed [at] kuicr.kyoto-u.ac.jp
+ 
