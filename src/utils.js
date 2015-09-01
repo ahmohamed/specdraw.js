@@ -61,6 +61,9 @@ d3.selection.prototype.toggleClass = function(class_name){
 	return this.classed(class_name, !this.classed(class_name));
 };
 var whichMax = function (arr) {
+	if (!arr.length || arr.length === 0)
+		return null;
+		
 	if (arr.length === 1)
 		return 0;
 	

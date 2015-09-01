@@ -50,6 +50,11 @@ spec.menu = function(){
 			elem.select('.open-menu').call(spec.menu.main_menu());
 		});
 		app_dispatcher.on('slideChange.menu', function () {
+			//TODO: hide parent menu-item when all children are hidden
+			var two_d_slide = app.select('.spec-slide.active').node().nd == 2;
+			elem.select('.open-menu')
+				.classed('d1', !two_d_slide)
+				.classed('d2', two_d_slide);
 			elem.select('.open-spec-legend').call(spec.menu.spectra());
 			elem.select('.open-slides').call(spec.menu.slides());
 		});
