@@ -5,6 +5,7 @@ spec.d1.line = function () {
 		var _crosshair, dataResample, data_slice, segments = [], scale_factor = 1;
 		
 		var path = d3.svg.line()
+			.interpolate('linear')
 			.x(function(d) { return x(d.x); })
 			.y(function(d) { return y(d.y * scale_factor); });
 		
@@ -63,22 +64,11 @@ spec.d1.line = function () {
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
 
 					data_slice = new_slice;
-					
+					//TODO: resample factors both x and y dimensions.
+					// Both dimension need to have the same unit, i.e. pixels.
 					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);
 					path_elem.datum(dataResample);
-					
-					// if the number data points in the path is less that 
-					// the number of pixels, interpolate between points to
-					// avoid pixelation.
-					if(dataResample.length < width){
-						path.interpolate('cardinal');
-					}else{
-						// In large number of data points, cardinal interpolation
-						// has a pronounced effect on efficiency with no visual
-						// enhancement. Use linear instead.
-						path.interpolate('linear');
-					}
-						
+											
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;

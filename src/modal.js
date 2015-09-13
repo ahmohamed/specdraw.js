@@ -216,7 +216,10 @@ var add_preview = function (el, ok_fun) {
 
 modals.method_args = function (fun ,args, title, specSelector, preview) {
 	var el;
+	var preview = true;
+	
 	var ok_fun = function (modal) {
+		preview = false;
 		fireEvent(el.node(), 'input');
 		modal.hide();
 	};
@@ -224,28 +227,28 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
 	var nano = modals.proto(title, '',	ok_fun);
 	el = d3.select(nano.modal.el).select(".nanoModalContent");
 	
+	
+	var timer = null;
 	el.on('input', function () {
-		console.log('target', el, d3.event.target);
-		
 		var form_data = {};
     el.selectAll('.param')
       .filter(function () {
-				console.log(this, this.id);
         return this.id !== '';
       })
       .each(function (e) {
-				console.log('filtered',this,this.id)
         form_data[this.id] = this.getValue();
       });
-		var timer = null;
+		
 		if(timer)
 			clearTimeout(timer);		
-	
-		if(d3.event.target === el || form_data['prev_btn'] === true){
-			pro.plugin_funcs(fun, form_data);
+		
+		if(preview === false || 
+			d3.event.target === el ||
+			form_data['prev_btn'] === true){
+			pro.plugin_funcs(fun, form_data, form_data['s_id'], preview);
 		}else	if(form_data['prev_auto'] === true){
 			timer = setTimeout(function () {
-				pro.plugin_funcs(fun, form_data);
+				pro.plugin_funcs(fun, form_data, form_data['s_id'], true);
 			}, 300);
 		}
 	});

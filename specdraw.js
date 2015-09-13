@@ -884,7 +884,10 @@ var add_preview = function (el, ok_fun) {
 
 modals.method_args = function (fun ,args, title, specSelector, preview) {
 	var el;
+	var preview = true;
+	
 	var ok_fun = function (modal) {
+		preview = false;
 		fireEvent(el.node(), 'input');
 		modal.hide();
 	};
@@ -892,28 +895,28 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
 	var nano = modals.proto(title, '',	ok_fun);
 	el = d3.select(nano.modal.el).select(".nanoModalContent");
 	
+	
+	var timer = null;
 	el.on('input', function () {
-		console.log('target', el, d3.event.target);
-		
 		var form_data = {};
     el.selectAll('.param')
       .filter(function () {
-				console.log(this, this.id);
         return this.id !== '';
       })
       .each(function (e) {
-				console.log('filtered',this,this.id)
         form_data[this.id] = this.getValue();
       });
-		var timer = null;
+		
 		if(timer)
 			clearTimeout(timer);		
-	
-		if(d3.event.target === el || form_data['prev_btn'] === true){
-			pro.plugin_funcs(fun, form_data);
+		
+		if(preview === false || 
+			d3.event.target === el ||
+			form_data['prev_btn'] === true){
+			pro.plugin_funcs(fun, form_data, form_data['s_id'], preview);
 		}else	if(form_data['prev_auto'] === true){
 			timer = setTimeout(function () {
-				pro.plugin_funcs(fun, form_data);
+				pro.plugin_funcs(fun, form_data, form_data['s_id'], true);
 			}, 300);
 		}
 	});
@@ -1507,6 +1510,7 @@ spec.d1.line = function () {
 		var _crosshair, dataResample, data_slice, segments = [], scale_factor = 1;
 		
 		var path = d3.svg.line()
+			.interpolate('linear')
 			.x(function(d) { return x(d.x); })
 			.y(function(d) { return y(d.y * scale_factor); });
 		
@@ -1565,22 +1569,11 @@ spec.d1.line = function () {
 					var new_slice = sliceDataIdx(data, x.domain(), range.x);
 
 					data_slice = new_slice;
-					
+					//TODO: resample factors both x and y dimensions.
+					// Both dimension need to have the same unit, i.e. pixels.
 					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);
 					path_elem.datum(dataResample);
-					
-					// if the number data points in the path is less that 
-					// the number of pixels, interpolate between points to
-					// avoid pixelation.
-					if(dataResample.length < width){
-						path.interpolate('cardinal');
-					}else{
-						// In large number of data points, cardinal interpolation
-						// has a pronounced effect on efficiency with no visual
-						// enhancement. Use linear instead.
-						path.interpolate('linear');
-					}
-						
+											
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
@@ -3299,6 +3292,7 @@ var ajaxJSONGet = function(url, callback, show_progress){
 	var prog = ajaxProgress();
 	ajax(url, function (response) {
 		prog.stop();
+		console.log('JSONget', response, response.constructor)
 		var json = JSON.parse(response);
 		if(typeof json['error'] === 'undefined'){
 		  callback(json);
@@ -3808,29 +3802,42 @@ var get_selected_spec = function () {
 	
 	return s_id;
 };
-var plugin_handler = function (json) {
-	if (json.constructor === Array) {
-		for (var i = json.length - 1; i >= 0; i--) {
-			plugin_handler(json[i]);
-		}
-		return;
-	}
-	console.log('pass', json)
-	if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
-		console.log('is spec', json['data-type'])
-		var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
-		pro.process_spectrum(json, output_fun);
-		return;
-	}
+
+var handle_spectrum = function(json, preview){
+	var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
+	pro.process_spectrum(json, output_fun);
+	return;
+};
+
+var handle_spec_feature = function(json, preview){
 	if (json['peaks'] !== undefined){
 		pro.analysis.addPeaks(json);
 	}
 	if (json['segs'] !== undefined){
 		pro.analysis.addSegments(json);
 	}
+};
+
+var plugin_handler = function (json, preview) {
+	if (json.constructor === Array) {
+		for (var i = json.length - 1; i >= 0; i--) {
+			plugin_handler(json[i]);
+		}
+		return;
+	}
+	window.a = json;
+	console.log('plugin-handler', json, json.constructor)
+	if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
+		return handle_spectrum(json, preview);
+	}
+	if(json['data_type'] === 'spec_feature'){
+		console.log('spec_feature')
+		handle_spec_feature(json, preview);
+		return;
+	}
 }
 
-pro.plugin_funcs = function (fun, params, s_id) {
+pro.plugin_funcs = function (fun, params, s_id, preview) {
 	if(!params) params = {};
 	
 	if(!params['sid']){
@@ -3844,7 +3851,8 @@ pro.plugin_funcs = function (fun, params, s_id) {
 		error('No Spectra selected', 'Please select one or more spectra!');
 		
 	var prefix = fun+'_';
-	var params_str = 'sid=' + JSON.stringify(params['sid']) + '&' + prefix + '=null';
+	var params_str = 'sid=' + 
+		JSON.stringify(params['sid']) + '&preview=' + (+preview) +'&'+ prefix + '=null';
 	
 	for(var key in params){
 		if(key === 'sid') continue;
@@ -3855,7 +3863,7 @@ pro.plugin_funcs = function (fun, params, s_id) {
 	
 	var url = '/nmr/plugins?'+params_str;
 	ajaxJSONGet(url, function (response) {
-			plugin_handler(response);
+			plugin_handler(response, preview);
 	});
 };  window.spec = spec;
 	window.pro = pro;
