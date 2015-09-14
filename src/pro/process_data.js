@@ -183,23 +183,6 @@ var processPNGworker = function (json, callback) {
 	* y: singal intensities along the sepctrum.
 	* y_domain: if 'y' was reduced to 8 or 16 bit, y_domain scales it back to original values.
 */
-
-pro.get_spec = function(url, render_fun){
-	ajaxJSONGet(url, function(pre_data){
-		switch (pre_data['format']){
-			case 'xy':
-				process_xy(pre_data, render_fun);
-				break;
-			case 'base64'://add base64 processing
-				process_b64(pre_data, render_fun)
-				break;
-			case 'png':
-				process_png(pre_data, render_fun);
-				break;
-		}
-	});	
-};
-
 pro.process_spectrum = function(json, render_fun){
 	console.log('processing')
 	if (json.constructor === Array) {
@@ -224,7 +207,9 @@ pro.process_spectrum = function(json, render_fun){
 };
 
 pro.get_spectrum = function (url, render_fun) {
-	ajaxJSONGet(url, function (response) {
+	var ajax = pro.ajax();
+	//var ajax = require('./pro/ajax');
+	ajax.getJSON(url, function (response) {
 		pro.process_spectrum(response, render_fun);
 	});
 };

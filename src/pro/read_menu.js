@@ -25,7 +25,9 @@ pro.read_menu = function (app, menu_data) {
 		}
 	};
 	
-	ajaxJSONGet('/nmr/test', function (response) {
+	var ajax = pro.ajax();
+	//var ajax = require('./pro/ajax');
+	ajax.getJSON('/nmr/test', function (response) {
 		console.log(menu_data)
 		var c = response;
 		for (var i = 0; i < response.length; i++) {

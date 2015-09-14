@@ -51,7 +51,9 @@ pro.plugins = function (app) {
 		}
 	
 		var url = '/nmr/plugins?'+params_str;
-		ajaxJSONGet(url, function (response) {
+		var ajax = pro.ajax();
+		//var ajax = require('./pro/ajax');
+		ajax.getJSON(url, function (response) {
 				out.response(response, preview);
 		});
 	};
