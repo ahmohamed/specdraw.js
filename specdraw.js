@@ -3,7 +3,8 @@
 	var pro = {};
 	spec.globals = {};
 	spec.globals.render = true;
-	var setCookie = function(cname, cvalue, exdays) {
+	
+var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
   var expires = "expires="+d.toUTCString();
@@ -274,6 +275,7 @@ var highlight = function (line_idx, on) {
 	d3.select('.spec-slide.active').selectAll(classname)
 		.classed('disabled', false);
 }
+
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -380,6 +382,7 @@ function editText(evt){
 		textElement.firstChild.data = editedText;
 	}
 }*/
+
 
 var inp = {};
 inp.num = function (label, val, _min, _max, step, unit) {
@@ -666,6 +669,7 @@ inp.popover = function (title) {
 	
 	return function() {return div.node();};
 }
+
 var modals = {
 	crosshair:true,
 	peakpick:false,
@@ -898,7 +902,8 @@ modals.methods = function (fun ,args, title, specSelector, preview) {
 	el.append(inp.preview(true));
 	return nano.show;
 };
-spec.modals = modals;spec.menu = function(){	
+spec.modals = modals;
+spec.menu = function(){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
   
@@ -1136,7 +1141,9 @@ spec.menu.menu_data =
 		],
 	},
 ];
+
 spec.d1 = {};
+
 spec.d1.threshold = function () {
 	var svg_elem, x, y, dispatcher, callback;
 	function _main(svg) {
@@ -1179,7 +1186,8 @@ spec.d1.threshold = function () {
   };
 	
 	return _main;	
-};spec.d1.crosshair = function(){
+};
+spec.d1.crosshair = function(){
 	var svg_elem, x, y, data, dispatcher;
 	
 	function _main(svg) {
@@ -1337,6 +1345,7 @@ spec.d1.threshold = function () {
 	
 	return _main;
 };
+
 spec.d1.integrate = function(){
 	var integ_container, x, y, dispatcher;
 	
@@ -1475,6 +1484,7 @@ spec.d1.integrate = function(){
 	
 	return _main;
 };
+
 spec.d1.line = function () {
 	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
 	
@@ -1696,6 +1706,7 @@ spec.d1.line = function () {
 	
 	return _main;
 };
+
 spec.d1.mainBrush = function(){
 	var svg_elem, x, y, dispatcher;
 	
@@ -1813,6 +1824,7 @@ spec.d1.mainBrush = function(){
 	
 	return _main;
 };
+
 spec.d1.scaleBrush = function(){
 	var svg_elem, axisorient, x, y, dispatcher,brushscale;
 	
@@ -1925,6 +1937,7 @@ spec.d1.scaleBrush = function(){
 	
 	return _main;
 };
+
 spec.d1.pp = function(){
 	var svg_elem, x, y, dispatcher;
 	
@@ -2121,6 +2134,7 @@ spec.d1.pp = function(){
 	
 	return _main;
 };
+
 spec.d1.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
 	/*var zoomTimer;
@@ -2377,7 +2391,9 @@ spec.d1.main_focus = function () {
     return _main;
   };
 	return _main;	
-};spec.d2 = {};
+};
+spec.d2 = {};
+
 spec.d2.crosshair = function(){
 	var svg_elem, x, y, dispatcher;
 	
@@ -2514,6 +2530,7 @@ spec.d2.crosshair = function(){
 	
 	return _main;
 };
+
 spec.d2.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
 	var zoomer = d3.behavior.zoom()
@@ -2714,7 +2731,8 @@ spec.d2.main_focus = function () {
     return _main;
   };
 	return _main;	
-};spec.d2.spec2d = function () {
+};
+spec.d2.spec2d = function () {
 	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
 	
 	function _main(svg) {
@@ -2845,6 +2863,7 @@ spec.d2.main_focus = function () {
 	
 	return _main;
 };
+
 /*
 	import 'event';
 	import 'menu';
@@ -2974,6 +2993,7 @@ spec.app = function(){
 	};
 	return _main;
 };
+
 /*
 	import 'event';
 	import 'd1/main-focus';
@@ -3190,6 +3210,7 @@ spec.slide = function(){
   };
 	return _main;
 };
+
 spec.slideChanger = function () {
 	function _main (svg) {
 		var inner;
@@ -3245,6 +3266,7 @@ spec.slideChanger = function () {
 	
 	return _main;
 };
+
 var ajax = function (url, callback, err) {
 	var http_request = new XMLHttpRequest();
 	http_request.open("GET", url, true);
@@ -3308,6 +3330,7 @@ var ajaxProgress = function () {
 	}
 	return run;
 }
+
 var make_png_worker = function () {
 	var png_worker = function () {
 		function scale(range, domain){
@@ -3367,7 +3390,8 @@ pro.worker_queue = function (worker) {
 	};
 	return init;
 };
-pro.worker.queue = pro.worker_queue(pro.worker);var get_png_data = function(y, callback){
+pro.worker.queue = pro.worker_queue(pro.worker);
+var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
 	img.onload = function(){
@@ -3597,6 +3621,7 @@ pro.get_spectrum = function (url, render_fun) {
 		pro.process_spectrum(response, render_fun);
 	});
 };
+
 pro.read_menu = function (app, menu_data) {
 	var plugins = pro.plugins(app);
 	var modals = spec.modals;
@@ -3643,6 +3668,7 @@ pro.read_menu = function (app, menu_data) {
 
 	});
 };
+
 
 
 pro.output = {};
@@ -3705,6 +3731,7 @@ pro.analysis.addSegments = function (json) {
 	
 	spec.node().addSegmentByIndex(json['segs']);
 };
+
 pro.plugins = function (app) {
 	var out = {};
 	var get_selected_spec = function () {
@@ -3784,10 +3811,12 @@ pro.plugins = function (app) {
 	};	
 	return out;
 };
+
   window.spec = spec;
 	window.pro = pro;
 	console.log("specdraw:"+ spec.version);
 })();
+
 /*
  (c) 2013, Vladimir Agafonkin
  Simplify.js, a high-performance JS polyline simplification library
