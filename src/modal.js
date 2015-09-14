@@ -186,35 +186,7 @@ modals.scaleLine = function () {
 	)();
 };
 
-var add_selector = function (el, ok_fun) {
-	spec.elem.spectrumSelector(el)
-};
-
-var add_preview = function (el, ok_fun) {
-	var form_data = {}
-	var args = {
-		"prev_auto":["Auto Preview", 1, true],
-		"prev_btn":["Preview", 5, null],
-	};
-	el.call(makeMethodParams(args));
-	
-	var timer = null;
-	el.on("input", function(){
-	  d3.event.stopPropagation();
-		if(timer)
-			clearTimeout(timer);		
-		
-		// prev_auto and prev_btn are labels. To check the input, look at children[0]
-		if(d3.event.target === el.select('#prev_btn').node().children[0]){
-			ok_fun();
-		}else	if(el.select('#prev_auto').node().children[0].checked){
-			timer = setTimeout(ok_fun, 300);
-		}
-	});
-};
-
-
-modals.method_args = function (fun ,args, title, specSelector, preview) {
+modals.methods = function (fun ,args, title, specSelector, preview) {
 	var el;
 	var preview = true;
 	
@@ -258,4 +230,4 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
 	el.append(inp.preview(true));
 	return nano.show;
 };
-spec.method_args = modals.method_args;
+spec.modals = modals;

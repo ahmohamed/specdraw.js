@@ -62,7 +62,7 @@ spec.menu = function(){
 			elem.select('.open-spec-legend').call(spec.menu.spectra());
 		});
 		
-		pro.read_menu2(app.node()); //read menu from server.
+		pro.read_menu(app.node(), spec.menu.menu_data); //read menu from server.
 		return elem;									
 	}
 	return _main;

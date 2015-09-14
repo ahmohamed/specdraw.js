@@ -854,35 +854,7 @@ modals.scaleLine = function () {
 	)();
 };
 
-var add_selector = function (el, ok_fun) {
-	spec.elem.spectrumSelector(el)
-};
-
-var add_preview = function (el, ok_fun) {
-	var form_data = {}
-	var args = {
-		"prev_auto":["Auto Preview", 1, true],
-		"prev_btn":["Preview", 5, null],
-	};
-	el.call(makeMethodParams(args));
-	
-	var timer = null;
-	el.on("input", function(){
-	  d3.event.stopPropagation();
-		if(timer)
-			clearTimeout(timer);		
-		
-		// prev_auto and prev_btn are labels. To check the input, look at children[0]
-		if(d3.event.target === el.select('#prev_btn').node().children[0]){
-			ok_fun();
-		}else	if(el.select('#prev_auto').node().children[0].checked){
-			timer = setTimeout(ok_fun, 300);
-		}
-	});
-};
-
-
-modals.method_args = function (fun ,args, title, specSelector, preview) {
+modals.methods = function (fun ,args, title, specSelector, preview) {
 	var el;
 	var preview = true;
 	
@@ -926,7 +898,7 @@ modals.method_args = function (fun ,args, title, specSelector, preview) {
 	el.append(inp.preview(true));
 	return nano.show;
 };
-spec.method_args = modals.method_args;spec.menu = function(){	
+spec.modals = modals;spec.menu = function(){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
   
@@ -990,7 +962,7 @@ spec.method_args = modals.method_args;spec.menu = function(){
 			elem.select('.open-spec-legend').call(spec.menu.spectra());
 		});
 		
-		pro.read_menu2(app.node()); //read menu from server.
+		pro.read_menu(app.node(), spec.menu.menu_data); //read menu from server.
 		return elem;									
 	}
 	return _main;
@@ -3292,7 +3264,6 @@ var ajaxJSONGet = function(url, callback, show_progress){
 	var prog = ajaxProgress();
 	ajax(url, function (response) {
 		prog.stop();
-		console.log('JSONget', response, response.constructor)
 		var json = JSON.parse(response);
 		if(typeof json['error'] === 'undefined'){
 		  callback(json);
@@ -3626,89 +3597,53 @@ pro.get_spectrum = function (url, render_fun) {
 		pro.process_spectrum(response, render_fun);
 	});
 };
-var find_menu_item = function (menu, item) {
-	for (var i = menu.length - 1; i >= 0; i--) {
-		if(menu[i].label == item){
-			return menu[i];
+pro.read_menu = function (app, menu_data) {
+	var plugins = pro.plugins(app);
+	var modals = spec.modals;
+	//var plugins = require('./pro/plugins');
+	//var modals = require('./modals');
+	
+	var find_menu_item = function (menu, item) {
+		console.log(menu, item)
+		for (var i = menu.length - 1; i >= 0; i--) {
+			if(menu[i].label == item){
+				if(!menu[i].children) menu[i].children = [];
+				return menu[i];
+			}
 		}
-	}
-	menu.push({label:item})
-	//console.log(menu, item)
-	return menu[menu.length-1];
-};
-
-var append_menu_item = function(menu, item){
-	if ("fun" in item) {
-		if("args" in item && item["args"]){
-			menu["fun"] = function(){
-				spec.method_args(item["fun"] ,item["args"], item["title"])();
+		menu.push({label:item, children:[]});
+		return menu[menu.length-1];
+	};
+	var plugin_functor = function (c) {
+		if(c["args"]){
+			return function() {
+				modals.methods(c["fun"], c["args"], c["title"])();
 			};
 		}else{
-			menu["fun"] = function () {pro.plugin_funcs (item["fun"])	};			
+			return function () { plugins.request (c["fun"]) };
 		}
-		return;
-	}
+	};
 	
-	if(!menu.children)
-		menu.children = [];
-			
-	for (var k in item) {
-		var sub_menu = find_menu_item(menu.children, k);
-		append_menu_item(sub_menu, item[k]);
-	}
-};
-
-pro.read_menu = function (app) {
 	ajaxJSONGet('/nmr/test', function (response) {
-		for (var k in response) {
-			var sub_menu = find_menu_item(spec.menu.menu_data, k);
-			append_menu_item(sub_menu, response[k]);
-		}
-		app.dispatcher.menuUpdate();
-	});
-};
-
-var find_menu_item2 = function (menu, item) {
-	console.log(menu, item)
-	for (var i = menu.length - 1; i >= 0; i--) {
-		if(menu[i].label == item){
-			if(!menu[i].children) menu[i].children = [];
-			return menu[i];
-		}
-	}
-	menu.push({label:item, children:[]});
-	return menu[menu.length-1];
-};
-var plugin_functor = function (c) {
-	if(c["args"]){
-		return function() {
-			spec.method_args(c["fun"], c["args"], c["title"])();
-		};
-	}else{
-		return function () { pro.plugin_funcs (c["fun"]) };
-	}
-};
-
-pro.read_menu2 = function (app) {
-	ajaxJSONGet('/nmr/test', function (response) {
-		console.log(spec.menu.menu_data)
+		console.log(menu_data)
 		var c = response;
 		for (var i = 0; i < response.length; i++) {
-			var path = find_menu_item2(spec.menu.menu_data, c[i]['menu_path'][0]);
-			
+			var path = find_menu_item(menu_data, c[i]['menu_path'][0]);
+	
 			for (var j = 1; j < c[i]['menu_path'].length; j++) {
-				path = find_menu_item2(path.children, c[i]['menu_path'][j]);
+				path = find_menu_item(path.children, c[i]['menu_path'][j]);
 			}
 			path.children = null;
 			path.fun = plugin_functor(c[i]);
 			path.nd = c[i]['nd'];			
-			
+	
 		}		
-		console.log(spec.menu.menu_data)
+		console.log(menu_data)
 		app.dispatcher.menuUpdate();
-		
+
 	});
 };
+
 
 pro.output = {};
 pro.output.overwriteSpec = function (new_data, s_id) {
@@ -3770,102 +3705,86 @@ pro.analysis.addSegments = function (json) {
 	
 	spec.node().addSegmentByIndex(json['segs']);
 };
-pro.pp = function (alg, threshold, seg) {
-	var a;
+pro.plugins = function (app) {
+	var out = {};
+	var get_selected_spec = function () {
+		var _main_focus = d3.select(app).select(".spec-slide.active").select(".main-focus");
+		var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
 	
-	if(!alg || alg=="threshold")
-		a = 't';
-	else if(alg=="connected")
-		a = 'c'
-	else if(alg=="cwt")
-		a = 'cwt'
+		var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
+		if(s_id.length == 0)
+			s_id = _main_focus.selectAll(classname)[0].map(function(d){return d.s_id();});
 	
-	if(!threshold)
-		threshold = 0;
-	proc_spec('pp?pp_a='+a
-		+ '&pp_t='+threshold
-		+ '&pp_s='+(seg? 1 : 0), 
-		function (json) {
-			d3.select(".main-focus").node().addPeaks(json['peaks']);
-			if(seg) d3.select(".spec-line").node().addSegmentByIndex(json['segs']);
+		return s_id;
+	};
+	
+	var handle_spectrum = function(json, preview){
+		var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
+		pro.process_spectrum(json, output_fun);
+		return;
+	};
+
+	var handle_spec_feature = function(json, preview){
+		if (json['peaks'] !== undefined){
+			pro.analysis.addPeaks(json);
+		}
+		if (json['segs'] !== undefined){
+			pro.analysis.addSegments(json);
+		}
+	};
+	
+	out.request = function (fun, params, s_id, preview) {
+		if(!params) params = {};
+	
+		if(!params['sid']){
+			if(s_id){
+				params['sid'] = s_id;
+			}else{
+				params['sid'] = get_selected_spec();
+			}
+		}
+		if(params['sid'].length === 0)
+			error('No Spectra selected', 'Please select one or more spectra!');
+		
+		var prefix = fun+'_';
+		var params_str = 'sid=' + 
+			JSON.stringify(params['sid']) + '&preview=' + (+preview) +'&'+ prefix + '=null';
+	
+		for(var key in params){
+			if(key === 'sid') continue;
+			if(params_str.length>0) params_str +='&';
+		
+			params_str += prefix + key+'='+params[key];
+		}
+	
+		var url = '/nmr/plugins?'+params_str;
+		ajaxJSONGet(url, function (response) {
+				out.response(response, preview);
 		});
-}
-
-
-var get_selected_spec = function () {
-	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
-	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
+	};
 	
-	var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
-	if(s_id.length == 0)
-		s_id = _main_focus.selectAll(classname)[0].map(function(d){return d.s_id();});
-	
-	return s_id;
-};
-
-var handle_spectrum = function(json, preview){
-	var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
-	pro.process_spectrum(json, output_fun);
-	return;
-};
-
-var handle_spec_feature = function(json, preview){
-	if (json['peaks'] !== undefined){
-		pro.analysis.addPeaks(json);
-	}
-	if (json['segs'] !== undefined){
-		pro.analysis.addSegments(json);
-	}
-};
-
-var plugin_handler = function (json, preview) {
-	if (json.constructor === Array) {
-		for (var i = json.length - 1; i >= 0; i--) {
-			plugin_handler(json[i]);
+	out.response = function (json, preview) {
+		if (json.constructor === Array) {
+			for (var i = json.length - 1; i >= 0; i--) {
+				out.response(json[i]);
+			}
+			return;
 		}
-		return;
-	}
-	window.a = json;
-	console.log('plugin-handler', json, json.constructor)
-	if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
-		return handle_spectrum(json, preview);
-	}
-	if(json['data_type'] === 'spec_feature'){
-		console.log('spec_feature')
-		handle_spec_feature(json, preview);
-		return;
-	}
-}
-
-pro.plugin_funcs = function (fun, params, s_id, preview) {
-	if(!params) params = {};
-	
-	if(!params['sid']){
-		if(s_id){
-			params['sid'] = s_id;
-		}else{
-			params['sid'] = get_selected_spec();
+		if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
+			return handle_spectrum(json, preview);
 		}
-	}
-	if(params['sid'].length === 0)
-		error('No Spectra selected', 'Please select one or more spectra!');
-		
-	var prefix = fun+'_';
-	var params_str = 'sid=' + 
-		JSON.stringify(params['sid']) + '&preview=' + (+preview) +'&'+ prefix + '=null';
-	
-	for(var key in params){
-		if(key === 'sid') continue;
-		if(params_str.length>0) params_str +='&';
-		
-		params_str += prefix + key+'='+params[key];
-	}
-	
-	var url = '/nmr/plugins?'+params_str;
-	ajaxJSONGet(url, function (response) {
-			plugin_handler(response, preview);
-	});
-};  window.spec = spec;
+		if(json['data_type'] === 'spec_feature'){
+			handle_spec_feature(json, preview);
+			return;
+		}
+		if(json['data_type'] === 'spec_like'){
+			handle_spec_like(json, preview);
+			return;
+		}
+	};	
+	return out;
+};
+  window.spec = spec;
 	window.pro = pro;
 	console.log("specdraw:"+ spec.version);
 })();

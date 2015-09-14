@@ -1,6 +1,7 @@
 pro.plugins = function (app) {
+	var out = {};
 	var get_selected_spec = function () {
-		var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
+		var _main_focus = d3.select(app).select(".spec-slide.active").select(".main-focus");
 		var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
 	
 		var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
@@ -58,7 +59,7 @@ pro.plugins = function (app) {
 	out.response = function (json, preview) {
 		if (json.constructor === Array) {
 			for (var i = json.length - 1; i >= 0; i--) {
-				plugin_handler(json[i]);
+				out.response(json[i]);
 			}
 			return;
 		}

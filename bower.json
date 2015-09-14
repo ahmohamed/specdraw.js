@@ -1,0 +1,24 @@
+{
+  "name": "specdraw",
+  "version": "0.6.0",
+  "authors": [
+    "Ahmed Mohamed <mohamed@kuicr.kyoto-u.ac.jp>"
+  ],
+  "description": "Interactive processing and visualization of NMR spectra",
+  "moduleType": [
+    "node"
+  ],
+  "keywords": [
+    "spectra",
+    "NMR",
+    "D3"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
