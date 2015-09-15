@@ -72,12 +72,12 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 }
 
 modals.error = function (title, message) {
-	var nano = modals.proto('Error:' + title, message);
+	var nano = modals.proto('Error: ' + title, message);
 	d3.select(nano.modal.el)
 		.classed('errorModal', true)
 		.select('.cancelBtn').text('Dismiss');
 	nano.show();
-}
+};
 
 modals.range = function (text, _range, callback, _curr_val){
 	var range;

@@ -1,5 +1,8 @@
 pro.ajax = function () {
 	var out = {};
+	var modals = spec.modals;
+	//var modals = require('./modals');
+	
 	out.request = function (url, callback, err) {
 		var http_request = new XMLHttpRequest();
 		http_request.open("GET", url, true);
@@ -42,6 +45,7 @@ pro.ajax = function () {
 		function check () {
 			out.request('/nmr/test', function (response) {
 				if(!stopped){
+					// TODO: Progress should be bound to app
 					d3.select(".progress").text(response);
 					setTimeout(check, 100);
 				}else{
@@ -57,6 +61,7 @@ pro.ajax = function () {
 		run.stop = function() {
 			clearInterval(interval);
 			stopped = true;
+			// TODO: Progress should be bound to app
 		  d3.select(".progress").text("Completed")
 				/*.transition()
 		    .duration(2500)

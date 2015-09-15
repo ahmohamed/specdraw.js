@@ -76,6 +76,6 @@ pro.plugins = function (app) {
 			handle_spec_like(json, preview);
 			return;
 		}
-	};	
+	};
 	return out;
 };
