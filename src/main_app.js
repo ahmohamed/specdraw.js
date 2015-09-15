@@ -33,7 +33,7 @@ spec.app = function(){
 			});
 		
 		elem.node().dispatcher = app_dispatcher;
-		
+		require('./src/modals').init(elem.node());
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		

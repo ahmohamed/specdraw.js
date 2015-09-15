@@ -31,6 +31,8 @@ spec.d1.integrate = function(){
 					.attr("x", bbox.x -2)
 					.attr("y", bbox.y -2);
 				
+				var modals = require('./src/modals');
+				
 				text_g.on("mouseenter", function () {
 					text_rect.classed("highlight", true);
 					path_elem.classed("highlight", true);

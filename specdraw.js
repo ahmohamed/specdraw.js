@@ -1,3 +1,139 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/*
+ (c) 2013, Vladimir Agafonkin
+ Simplify.js, a high-performance JS polyline simplification library
+ mourner.github.io/simplify-js
+*/
+
+(function () { 'use strict';
+
+// to suit your point format, run search/replace for '.x' and '.y';
+// for 3D version, see 3d branch (configurability would draw significant performance overhead)
+
+// square distance between 2 points
+function getSqDist(p1, p2) {
+
+    var dx = p1.x - p2.x,
+        dy = p1.y - p2.y;
+
+    return dx * dx + dy * dy;
+}
+
+// square distance from a point to a segment
+function getSqSegDist(p, p1, p2) {
+
+    var x = p1.x,
+        y = p1.y,
+        dx = p2.x - x,
+        dy = p2.y - y;
+
+    if (dx !== 0 || dy !== 0) {
+
+        var t = ((p.x - x) * dx + (p.y - y) * dy) / (dx * dx + dy * dy);
+
+        if (t > 1) {
+            x = p2.x;
+            y = p2.y;
+
+        } else if (t > 0) {
+            x += dx * t;
+            y += dy * t;
+        }
+    }
+
+    dx = p.x - x;
+    dy = p.y - y;
+
+    return dx * dx + dy * dy;
+}
+// rest of the code doesn't care about point format
+
+// basic distance-based simplification
+function simplifyRadialDist(points, sqTolerance) {
+
+    var prevPoint = points[0],
+        newPoints = [prevPoint],
+        point;
+
+    for (var i = 1, len = points.length; i < len; i++) {
+        point = points[i];
+
+        if (getSqDist(point, prevPoint) > sqTolerance) {
+            newPoints.push(point);
+            prevPoint = point;
+        }
+    }
+
+    if (prevPoint !== point) newPoints.push(point);
+
+    return newPoints;
+}
+
+// simplification using optimized Douglas-Peucker algorithm with recursion elimination
+function simplifyDouglasPeucker(points, sqTolerance) {
+
+    var len = points.length,
+        MarkerArray = typeof Uint8Array !== 'undefined' ? Uint8Array : Array,
+        markers = new MarkerArray(len),
+        first = 0,
+        last = len - 1,
+        stack = [],
+        newPoints = [],
+        i, maxSqDist, sqDist, index;
+
+    markers[first] = markers[last] = 1;
+
+    while (last) {
+
+        maxSqDist = 0;
+
+        for (i = first + 1; i < last; i++) {
+            sqDist = getSqSegDist(points[i], points[first], points[last]);
+
+            if (sqDist > maxSqDist) {
+                index = i;
+                maxSqDist = sqDist;
+            }
+        }
+
+        if (maxSqDist > sqTolerance) {
+            markers[index] = 1;
+            stack.push(first, index, index, last);
+        }
+
+        last = stack.pop();
+        first = stack.pop();
+    }
+
+    for (i = 0; i < len; i++) {
+        if (markers[i]) newPoints.push(points[i]);
+    }
+
+    return newPoints;
+}
+
+// both algorithms combined for awesome performance
+function simplify(points, tolerance, highestQuality) {
+
+    if (points.length <= 1) return points;
+
+    var sqTolerance = tolerance !== undefined ? tolerance * tolerance : 1;
+
+    points = highestQuality ? points : simplifyRadialDist(points, sqTolerance);
+    points = simplifyDouglasPeucker(points, sqTolerance);
+
+    return points;
+}
+
+// export as AMD module / Node module / browser or worker variable
+if (typeof define === 'function' && define.amd) define(function() { return simplify; });
+else if (typeof module !== 'undefined') module.exports = simplify;
+else if (typeof self !== 'undefined') self.simplify = simplify;
+else window.simplify = simplify;
+
+})();
+
+},{}],2:[function(require,module,exports){
 (function () { "use strict";
   var spec = {version: "0.5.2"}; // semver
 	var pro = {};
@@ -166,7 +302,7 @@ var getSlicedData = function (data, domain, range) {
 	return data.slice(slice_idx.start, slice_idx.end);
 };
 var resample = function (data, domain, npoints) {
-  var dataResample = simplify(data, (domain[0] - domain[1])/npoints);
+  var dataResample = require('./lib/simplify')(data, (domain[0] - domain[1])/npoints);
   
 	return dataResample;
 };
@@ -384,525 +520,9 @@ function editText(evt){
 }*/
 
 
-var inp = {};
-inp.num = function (label, val, _min, _max, step, unit) {
-	var elem = d3.select(document.createElement("label"));
-	elem.classed('param num', true)
-		.text(label)
-		.append("input")
-			.attr({
-				type: 'number',
-				value: typeof val === "undefined" ? 0: val,
-				min: typeof _min === 'undefined'? -Infinity: _min,
-				max: typeof _max === 'undefined'? Infinity: _max,
-				step: typeof step === 'undefined'? 1: step
-			})
-			.text(typeof unit === 'undefined'? '': unit);
-	
-	elem.node().getValue = function(){ 
-		return elem.select('input').node().value;
-	};
-	return function () { return elem.node()	}
-};
+var modals = require('./src/modals');
+var inp = require('./src/elem');
 
-inp.checkbox = function (label, val) {
-	var elem = d3.select(document.createElement('label'));
-	elem.classed('param checkbox', true)
-		.append("input")
-			.attr('type', 'checkbox')
-      .on('change', function () {
-        fireEvent(this, 'input');
-      })
-      .node().checked = val ? true: false;
-	
-	elem.append('div')
-			.classed('checker', true);
-  elem.append('div')
-		.classed('label', true)
-		.text(label);
-	
-	elem.node().getValue = function(){ 
-		return elem.select('input').node().checked;
-	};
-	return function () { return elem.node()	}
-};
-inp.checkbox_toggle = function (label, val, div_data) {
-	var elem = d3.select(document.createElement('div'))
-    .classed('param checkbox-toggle', true);
-  
-  elem.append(inp.checkbox(label, val))
-    .select('input').on('change', function () {
-      elem.select('.div_enable')
-        .classed('disabled', !this.checked);
-      fireEvent(this, 'input');
-    });
-	
-  elem.append(inp.div(div_data))
-		.classed('div_enable', true)
-  	.classed('disabled', !elem.select('input').node().checked);
-		
-  elem.node().getValue = elem.select('.param.checkbox').node().getValue;
-  
-  return function () { return elem.node();	};
-};
-inp.select = function (label, options, val) {
-	var elem = d3.select(document.createElement('label'))
-		.classed('param select', true)
-		.text(label);
-	var select_elem = elem.append("select");
-  
-  select_elem.selectAll('option')
-		.data(options).enter()
-		.append('option')
-			.text(function(d){return d;});
-  
-  select_elem.node().value = val;
-  
-	elem.node().getValue = function(){ 
-		return select_elem.node().value;
-	};
-	return function () { return elem.node()	}
-};
-
-inp.select_multi = function (label, options) {
-	var elem = d3.select(document.createElement('div'))
-    .classed('param select-multi', true);
-  
-	elem.append('label')
-    .text(label)
-		.append("input")
-			.attr('type', 'checkbox')
-			.style('display', 'none')
-      .on('change', function () {
-        elem.select('ul')
-          .classed('shown', this.checked);
-      })
-			.node().checked = false;
-	
-	elem.append('ul')
-		.classed('block-list', true)
-		.selectAll('li')
-		.data(options).enter()
-		.append('li')
-			.each(function(d){
-        d3.select(this).append(inp.checkbox(d, true))
-      });
-	
-	elem.node().getValue = function(){ 
-		return elem.selectAll('.param.checkbox')
-			.filter(function () {
-				return this.children[0].checked;
-			})[0]
-			.map(function (e) {
-				return typeof(e.value) !== 'undefined' ? e.value
-					: d3.select(e).select('.label').text();
-			});
-		return elem.select('input').node().value;
-	};
-	return function () { return elem.node()	}
-};
-
-inp.select_toggle = function (label, options) {
-	console.log(label, options);
-	var elem = d3.select(document.createElement('div'))
-    .classed('param select-toggle', true);
-  
-  elem.append(inp.select(label, Object.keys(options))) 
-	  .selectAll('option')
-      .attr('value', function(d){return d;})
-      .text(function(d){return options[d][0];});
-	
-	var fieldset = elem.append("div")
-		.classed("method_params", true);
-	var select_elem = elem.select('select').node();
-	
-	elem.select('select').on('input', function () {
-    d3.event.stopPropagation();
-  })
-    .on('change', function () {
-		fieldset.select('fieldset').remove();
-
-		if( Object.keys( options[select_elem.value][1]).length > 0 ){
-			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ))
-				//.appened('legend', 'Parameters');
-		}
-    
-    fireEvent(this.parentNode, 'input');
-	});
-	
-	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
-		fieldset.append("fieldset")	
-			.append(inp.div( options[ select_elem.value ][1] ));
-	}
-	
-	elem.node().getValue = function(){ 
-		return select_elem.value;
-	};
-	return function(){return elem.node();};
-};
-inp.button = function (label) {
-	var elem = d3.select(document.createElement('input'))
-		.classed('param btn', true)
-		.attr('type', 'button')
-		.attr('value', label)
-		.on("click", function(){ fireEvent(this, 'input') });
-	
-	elem.node().getValue = function(){ 
-		return d3.event && d3.event.target === elem.node();
-	};	
-	return function(){return elem.node();};
-};
-inp.threshold = function (label) {
-	var elem = d3.select(document.createElement('div'))
-	.classed('param threshold', true);
-	
-	var input = elem.append("input").attr("type", "hidden")
-
-	var val = elem.append("input")
-		.attr("type", "text")
-		.attr('readonly', 'readonly');
-	
-	elem.insert(inp.button(label), ':last-child')
-  	.on("click", function(){ 
-			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
-				.style('display', 'none');
-			
-			d3.select('.spec-slide.active').select('.main-focus').node()
-				.getThreshold(function (t) {
-					val.attr('value', t.toExponential(2));
-					input.attr('value', t);
-					modal.style('display', 'block');
-				});
-		});
-	
-	elem.node().getValue = function () {
-		return input.node().value;
-	};
-	return function(){return elem.node()}
-};
-/* parses the GUI data into a div HTML element.
-	 @param div_data object containing parameter names as keys
-	 and GUI information (Array) as values.
-	 The GUI array consists of the following:
-	 * label: text label of the input
-	 * type: the input type:
-			0:number 1:checkbox 2:text 3:select_toggle 4:checkbox_toggle
-			5:button 6:threshold
-*/
-inp.div = function (div_data) {
-	var div = d3.select(document.createElement('div'));
-  for (var key in div_data){
-		var p = div_data[key];
-		if(typeof p == 'function') continue; //Exclude Array prototype functions.
-    div.append(parseInputElem.apply(null, p))
-			.node().id = key;
-  }
-	
-	return function() {return div.node();};
-};
-
-var parseInputElem = function (label, type, details) {
-	var f = [
-		inp.num, inp.checkbox, inp.text, inp.select_toggle,
-		inp.checkbox_toggle, inp.button, inp.threshold
-	][type];
-	return f.apply(null, [label].concat(details));
-};
-
-inp.spectrumSelector = function () {
-	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0){
-		return function () {
-			return d3.select(document.createElement('div')).text('No Spectra to show').node();
-		};
-	} 
-		
-	var elem = 	d3.select(
-			inp.select_multi('Select Spectrum', specs[0])()
-		).classed('spec-selector', true)
-	
-	elem.selectAll('li')
-	  	.each(function(d){
-				d3.select(this).select('.checkbox')					
-					.style('color', getComputedStyle(d.childNodes[0]).stroke)
-					.select('.label').text(d.label);
-					
-				d3.select(this).on('mouseenter', function () {
-						d3.select(d.parentNode).classed('dimmed', true);
-						d3.select(d).classed('highlighted', true);
-					})//mouseover
-					.on('mouseleave', function () {
-						d3.select(d.parentNode).classed('dimmed', false);
-						d3.select(d).classed('highlighted', false);
-					});//mouseout
-			});//end each
-	
-	elem.node().getValue = function () {
-		return elem.selectAll('li')
-			.filter(function () {
-				return d3.select(this).select('input').node().checked === true;
-			})
-			.data().map(function(e){
-	        return e.s_id();
-	    });
-	};
-	elem.node().id = 'sid';
-	
-	return function(){return elem.node();};
-};
-inp.preview = function(auto){
-	var div_data = {
-		"prev_auto":["Instant Preview", 1, typeof auto !== 'undefined'],
-		"prev_btn":["Preview", 5, null],
-	};
-	return inp.div(div_data);
-};
-inp.popover = function (title) {
-	var div = d3.select(document.createElement('div'))
-		.classed('popover right', true);
-	
-	div.append('div').classed('arrow', true);
-	var inner = div.append('div').classed('popover-inner', true)
-	inner.append('h3').classed('popover-title', true).text(title);
-	inner.append('div').classed('popover-content', true);
-	
-	return function() {return div.node();};
-}
-
-var modals = {
-	crosshair:true,
-	peakpick:false,
-	peakdel:false,
-	integrate:false,	
-}
-
-nanoModal.customHide = function(defaultHide, modalAPI) {
-	modalAPI.modal.el.style.display = 'block';
-	defaultHide();
-};
-	
-modals.proto = function (title, content, ok_fun, cancel_fun) {	
-	var nano = nanoModal(
-		content,
-		{
-		overlayClose: false,
-		autoRemove:true,
-		buttons: [
-			{
-		    text: "OK",
-		    handler: ok_fun,
-		    primary: true
-			}, 
-			{
-		    text: "Cancel",
-		    handler: cancel_fun? cancel_fun : "hide",
-				classes:"cancelBtn"
-			}
-		]}
-	);
-	
-	//TODO: define spec-app;
-	var spec_app = d3.select('.spec-app');
-	spec_app.append(function () {return nano.overlay.el});
-	spec_app.append(function () {return nano.modal.el});
-	
-	var el = d3.select(nano.modal.el);
-	
-	el.insert("div", ":first-child")
-		.classed('title', true)
-		.text( title? title : "Dialogue" );
-	
-	el.on("keydown", function() {
-		if (d3.event.keyCode===13) { // Enter
-			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
-		}
-		if (d3.event.keyCode===27) { // Escape
-			d3.select(nano.modal.el).select(".cancelBtn").node().click();
-		}
-	});
-	
-	nano.onShow(function () {
-		el.style({
-			'display': 'flex',
-			'flex-direction': 'column',
-			'margin-left': -el.node().clientWidth /2,
-			'max-width': 0.8 * el.node().parentNode.clientWidth,
-			'max-height': 0.8 * el.node().parentNode.clientHeight
-		});
-		var drag = d3.behavior.drag()
-			.on("drag", function () {
-		    el.style("top", d3.event.sourceEvent.pageY+"px")
-		      .style("left", d3.event.sourceEvent.pageX+"px")				
-			});
-		d3.select(nano.modal.el).select(".title").call(drag)
-		d3.select(nano.modal.el).select(".cancelBtn").node().focus();
-		
-		//{display: flex,flex-direction: column}
-	});
-	return nano;
-}
-
-modals.error = function (title, message) {
-	var nano = modals.proto('Error:' + title, message);
-	d3.select(nano.modal.el)
-		.classed('errorModal', true)
-		.select('.cancelBtn').text('Dismiss');
-	nano.show();
-}
-
-modals.range = function (text, _range, callback, _curr_val){
-	var range;
-	if(_range[0]>_range[1])
-		range = [_range[1], _range[0]];
-	else{
-		range = _range;
-	}
-	range = [d3.round(range[0],3), d3.round(range[1],3)];
-	
-	if(typeof _curr_val === 'undefined'){
-		_curr_val = range;
-	}else{
-		if(_curr_val[0]>_curr_val[1])
-			_curr_val = [_curr_val[1], _curr_val[0]];
-		
-		_curr_val = [d3.round(_curr_val[0],3), d3.round(_curr_val[1],3)];
-	}
-	
-	var content = text +
-		'<input type="number" id="range0" step="0.001" value='+_curr_val[0]+ ' min='+ range[0] + ' max='+ range[1] +'>' +
-		' - ' +
-		'<input type="number" id="range1" step="0.001" value='+_curr_val[1]+ ' min='+ range[0] + ' max='+ range[1] +'>';
-		
-	var nano = modals.proto("Range", content,
-		function(modal) {
-			modal.hide();
-      var input_range = d3.select(modal.modal.el)
-				.selectAll("input")[0].map(function(e){ return +e.value; });
-			
-			if (input_range[0] < range[0] || input_range[0] > range[1]
-				|| input_range[1] < range[0] || input_range[1] > range[1]
-				|| input_range[0] > input_range[1])
-				nanoModal("Invalid input."+input_range).show();
-			else{
-				if(_range[0]>_range[1])
-					callback(input_range.reverse());
-				else{
-					callback(input_range);
-				}
-			}
-    });
-	
-	return nano.show;	
-};
-
-modals.input = function (text, value,callback){	
-	var content = text +
-		'<input type="number" id="input0" step="0.001" value='+value+'>';
-		
-	var nano = modals.proto("Numeric", content,
-		function(modal) {
-			modal.hide();
-      var input = d3.select(modal.modal.el)
-				.select("input").node().value;
-			callback(input);
-    });
-	
-	return nano.show;	
-};
-
-modals.xRegion = function () {
-	modals.range(
-		"Set x region to:\n",
-		d3.select('.spec-slide.active').select(".main-focus").node().range.x,
-		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-		d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
-	)();
-};
-
-modals.yRegion = function () {
-	modals.range(
-		"Set y region to:\n",
-		d3.select('.spec-slide.active').select(".main-focus").node().range.y,
-		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-		d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
-	)();
-};
-
-modals.slider = function (text, value, callback){	
-	var content = text +
-		'<input id="slider" type="range" min="-5" max="5" value="0" step="0.001"/>';
-		
-	var nano = modals.proto("Slider", content,
-		function(modal) {
-			modal.hide();
-    },
-		function (modal) {
-			callback(0);
-		});
-	
-	d3.select(nano.modal.el).select("#slider")
-		.on("input", function(){
-	    callback(+this.value);
-		});
-	
-	return nano.show;	
-};
-
-modals.scaleLine = function () {
-	modals.slider(
-		"Scale spectrum by a factor:",
-		0,function (value) {
-			d3.select(".selected").node().setScaleFactor(Math.pow(2,value));
-		}	
-	)();
-};
-
-modals.methods = function (fun ,args, title, specSelector, preview) {
-	var el;
-	var preview = true;
-	
-	var ok_fun = function (modal) {
-		preview = false;
-		fireEvent(el.node(), 'input');
-		modal.hide();
-	};
-	
-	var nano = modals.proto(title, '',	ok_fun);
-	el = d3.select(nano.modal.el).select(".nanoModalContent");
-	
-	
-	var timer = null;
-	el.on('input', function () {
-		var form_data = {};
-    el.selectAll('.param')
-      .filter(function () {
-        return this.id !== '';
-      })
-      .each(function (e) {
-        form_data[this.id] = this.getValue();
-      });
-		
-		if(timer)
-			clearTimeout(timer);		
-		
-		if(preview === false || 
-			d3.event.target === el ||
-			form_data['prev_btn'] === true){
-			pro.plugin_funcs(fun, form_data, form_data['s_id'], preview);
-		}else	if(form_data['prev_auto'] === true){
-			timer = setTimeout(function () {
-				pro.plugin_funcs(fun, form_data, form_data['s_id'], true);
-			}, 300);
-		}
-	});
-	
-	el.append(inp.spectrumSelector());
-	el.append(inp.div(args));
-	el.append(inp.preview(true));
-	return nano.show;
-};
-spec.modals = modals;
 spec.menu = function(){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
@@ -1078,7 +698,6 @@ spec.menu.slides = function () {
 	}
 	return _main;
 };
-
 
 spec.menu.menu_data = 
 [	
@@ -1378,6 +997,8 @@ spec.d1.integrate = function(){
 					.attr("height", bbox.height +4)				
 					.attr("x", bbox.x -2)
 					.attr("y", bbox.y -2);
+				
+				var modals = require('./src/modals');
 				
 				text_g.on("mouseenter", function () {
 					text_rect.classed("highlight", true);
@@ -2899,7 +2520,7 @@ spec.app = function(){
 			});
 		
 		elem.node().dispatcher = app_dispatcher;
-		
+		require('./src/modals').init(elem.node());
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		
@@ -3267,75 +2888,6 @@ spec.slideChanger = function () {
 	return _main;
 };
 
-pro.ajax = function () {
-	var out = {};
-	out.request = function (url, callback, err) {
-		var http_request = new XMLHttpRequest();
-		http_request.open("GET", url, true);
-		http_request.onreadystatechange = function () {
-		  var done = 4;
-		  var ok = 200;
-		  if (http_request.readyState === done && http_request.status === ok){
-				if(typeof(callback) === 'function')
-					callback(http_request.responseText);
-			}else	if (http_request.readyState === done){
-				err(http_request.responseText)
-			}
-		};
-		http_request.send();	
-	};
-	
-	out.getJSON = function(url, callback, show_progress){
-		var prog = ajaxProgress();
-		out.request(url, function (response) {
-			prog.stop();
-			var json = JSON.parse(response);
-			if(typeof json['error'] === 'undefined'){
-			  callback(json);
-			}else{
-				modals.error(json['error']['name'], json['error']['message']);
-			}
-
-		},
-		function (err) {
-			prog.stop();
-			modals.error('Network Error', err);
-		});
-	
-		if(show_progress)
-			prog();
-	};
-
-	var ajaxProgress = function () {
-		var interval, stopped=false;
-		function check () {
-			out.request('/nmr/test', function (response) {
-				if(!stopped){
-					d3.select(".progress").text(response);
-					setTimeout(check, 100);
-				}else{
-					ajax('/nmr/test?complete=1')
-				}
-			});
-		}
-	
-		var run = function() {
-			check();
-		}
-	
-		run.stop = function() {
-			clearInterval(interval);
-			stopped = true;
-		  d3.select(".progress").text("Completed")
-				/*.transition()
-		    .duration(2500)
-		    .style("opacity", 1e-6)*/
-		}
-		return run;
-	}
-	return out;
-};
-
 var make_png_worker = function () {
 	var png_worker = function () {
 		function scale(range, domain){
@@ -3519,9 +3071,6 @@ var processPNGworker = function (json, callback) {
 	    var canvas = document.createElement("canvas");
 	    canvas.width = img.width;
 	    canvas.height = img.height;
-
-	    
-	    
 	
 			var e = {};
 			e._16bit = (json['format'] == "png16")
@@ -3605,8 +3154,8 @@ pro.process_spectrum = function(json, render_fun){
 };
 
 pro.get_spectrum = function (url, render_fun) {
-	var ajax = pro.ajax();
-	//var ajax = require('./pro/ajax');
+	//var ajax = pro.ajax();
+	var ajax = require('./src/pro/ajax');
 	ajax.getJSON(url, function (response) {
 		pro.process_spectrum(response, render_fun);
 	});
@@ -3614,7 +3163,7 @@ pro.get_spectrum = function (url, render_fun) {
 
 pro.read_menu = function (app, menu_data) {
 	var plugins = pro.plugins(app);
-	var modals = spec.modals;
+	var modals = require('./src/modals');
 	//var plugins = require('./pro/plugins');
 	//var modals = require('./modals');
 	
@@ -3639,8 +3188,8 @@ pro.read_menu = function (app, menu_data) {
 		}
 	};
 	
-	var ajax = pro.ajax();
-	//var ajax = require('./pro/ajax');
+	//var ajax = pro.ajax();
+	var ajax = require('./src/pro/ajax');
 	ajax.getJSON('/nmr/test', function (response) {
 		console.log(menu_data)
 		var c = response;
@@ -3704,6 +3253,7 @@ pro.analysis.addPeaks = function (json) {
 	
 	console.log(spec);
 	if (spec.size() != 1){
+		var modals = require('./src/modals');
 		modals.error('Incompatible server response', 
 		'Can\'t find spectrum with s_id:'+s_id)
 	}
@@ -3717,6 +3267,7 @@ pro.analysis.addSegments = function (json) {
 		.filter(function(e){ return this.s_id() === s_id; });
 	
 	if (spec.size() != 1) {
+		var modals = require('./src/modals');
 		modals.error('Incompatible server response', 
 		'Can\'t find spectrum with s_id:'+s_id)
 	}
@@ -3777,8 +3328,8 @@ pro.plugins = function (app) {
 		}
 	
 		var url = '/nmr/plugins?'+params_str;
-		var ajax = pro.ajax();
-		//var ajax = require('./pro/ajax');
+		//var ajax = pro.ajax();
+		var ajax = require('./src/pro/ajax');
 		ajax.getJSON(url, function (response) {
 				out.response(response, preview);
 		});
@@ -3802,7 +3353,7 @@ pro.plugins = function (app) {
 			handle_spec_like(json, preview);
 			return;
 		}
-	};	
+	};
 	return out;
 };
 
@@ -3811,136 +3362,612 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-/*
- (c) 2013, Vladimir Agafonkin
- Simplify.js, a high-performance JS polyline simplification library
- mourner.github.io/simplify-js
+},{"./lib/simplify":1,"./src/elem":3,"./src/modals":4,"./src/pro/ajax":5}],3:[function(require,module,exports){
+var inp = {};
+inp.num = function (label, val, _min, _max, step, unit) {
+	var elem = d3.select(document.createElement("label"));
+	elem.classed('param num', true)
+		.text(label)
+		.append("input")
+			.attr({
+				type: 'number',
+				value: typeof val === "undefined" ? 0: val,
+				min: typeof _min === 'undefined'? -Infinity: _min,
+				max: typeof _max === 'undefined'? Infinity: _max,
+				step: typeof step === 'undefined'? 1: step
+			})
+			.text(typeof unit === 'undefined'? '': unit);
+	
+	elem.node().getValue = function(){ 
+		return elem.select('input').node().value;
+	};
+	return function () { return elem.node()	}
+};
+
+inp.checkbox = function (label, val) {
+	var elem = d3.select(document.createElement('label'));
+	elem.classed('param checkbox', true)
+		.append("input")
+			.attr('type', 'checkbox')
+      .on('change', function () {
+        fireEvent(this, 'input');
+      })
+      .node().checked = val ? true: false;
+	
+	elem.append('div')
+			.classed('checker', true);
+  elem.append('div')
+		.classed('label', true)
+		.text(label);
+	
+	elem.node().getValue = function(){ 
+		return elem.select('input').node().checked;
+	};
+	return function () { return elem.node()	}
+};
+inp.checkbox_toggle = function (label, val, div_data) {
+	var elem = d3.select(document.createElement('div'))
+    .classed('param checkbox-toggle', true);
+  
+  elem.append(inp.checkbox(label, val))
+    .select('input').on('change', function () {
+      elem.select('.div_enable')
+        .classed('disabled', !this.checked);
+      fireEvent(this, 'input');
+    });
+	
+  elem.append(inp.div(div_data))
+		.classed('div_enable', true)
+  	.classed('disabled', !elem.select('input').node().checked);
+		
+  elem.node().getValue = elem.select('.param.checkbox').node().getValue;
+  
+  return function () { return elem.node();	};
+};
+inp.select = function (label, options, val) {
+	var elem = d3.select(document.createElement('label'))
+		.classed('param select', true)
+		.text(label);
+	var select_elem = elem.append("select");
+  
+  select_elem.selectAll('option')
+		.data(options).enter()
+		.append('option')
+			.text(function(d){return d;});
+  
+  select_elem.node().value = val;
+  
+	elem.node().getValue = function(){ 
+		return select_elem.node().value;
+	};
+	return function () { return elem.node()	}
+};
+
+inp.select_multi = function (label, options) {
+	var elem = d3.select(document.createElement('div'))
+    .classed('param select-multi', true);
+  
+	elem.append('label')
+    .text(label)
+		.append("input")
+			.attr('type', 'checkbox')
+			.style('display', 'none')
+      .on('change', function () {
+        elem.select('ul')
+          .classed('shown', this.checked);
+      })
+			.node().checked = false;
+	
+	elem.append('ul')
+		.classed('block-list', true)
+		.selectAll('li')
+		.data(options).enter()
+		.append('li')
+			.each(function(d){
+        d3.select(this).append(inp.checkbox(d, true))
+      });
+	
+	elem.node().getValue = function(){ 
+		return elem.selectAll('.param.checkbox')
+			.filter(function () {
+				return this.children[0].checked;
+			})[0]
+			.map(function (e) {
+				return typeof(e.value) !== 'undefined' ? e.value
+					: d3.select(e).select('.label').text();
+			});
+		return elem.select('input').node().value;
+	};
+	return function () { return elem.node()	}
+};
+
+inp.select_toggle = function (label, options) {
+	console.log(label, options);
+	var elem = d3.select(document.createElement('div'))
+    .classed('param select-toggle', true);
+  
+  elem.append(inp.select(label, Object.keys(options))) 
+	  .selectAll('option')
+      .attr('value', function(d){return d;})
+      .text(function(d){return options[d][0];});
+	
+	var fieldset = elem.append("div")
+		.classed("method_params", true);
+	var select_elem = elem.select('select').node();
+	
+	elem.select('select').on('input', function () {
+    d3.event.stopPropagation();
+  })
+    .on('change', function () {
+		fieldset.select('fieldset').remove();
+
+		if( Object.keys( options[select_elem.value][1]).length > 0 ){
+			fieldset.append("fieldset")
+				.append(inp.div( options[select_elem.value][1] ))
+				//.appened('legend', 'Parameters');
+		}
+    
+    fireEvent(this.parentNode, 'input');
+	});
+	
+	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
+		fieldset.append("fieldset")	
+			.append(inp.div( options[ select_elem.value ][1] ));
+	}
+	
+	elem.node().getValue = function(){ 
+		return select_elem.value;
+	};
+	return function(){return elem.node();};
+};
+inp.button = function (label) {
+	var elem = d3.select(document.createElement('input'))
+		.classed('param btn', true)
+		.attr('type', 'button')
+		.attr('value', label)
+		.on("click", function(){ fireEvent(this, 'input') });
+	
+	elem.node().getValue = function(){ 
+		return d3.event && d3.event.target === elem.node();
+	};	
+	return function(){return elem.node();};
+};
+inp.threshold = function (label) {
+	var elem = d3.select(document.createElement('div'))
+	.classed('param threshold', true);
+	
+	var input = elem.append("input").attr("type", "hidden")
+
+	var val = elem.append("input")
+		.attr("type", "text")
+		.attr('readonly', 'readonly');
+	
+	elem.insert(inp.button(label), ':last-child')
+  	.on("click", function(){ 
+			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
+				.style('display', 'none');
+			
+				//TODO: app-specific.
+			d3.select('.spec-slide.active').select('.main-focus').node()
+				.getThreshold(function (t) {
+					val.attr('value', t.toExponential(2));
+					input.attr('value', t);
+					modal.style('display', 'block');
+				});
+		});
+	
+	elem.node().getValue = function () {
+		return input.node().value;
+	};
+	return function(){return elem.node()}
+};
+/* parses the GUI data into a div HTML element.
+	 @param div_data object containing parameter names as keys
+	 and GUI information (Array) as values.
+	 The GUI array consists of the following:
+	 * label: text label of the input
+	 * type: the input type:
+			0:number 1:checkbox 2:text 3:select_toggle 4:checkbox_toggle
+			5:button 6:threshold
 */
+inp.div = function (div_data) {
+	var div = d3.select(document.createElement('div'));
+  for (var key in div_data){
+		var p = div_data[key];
+		if(typeof p == 'function') continue; //Exclude Array prototype functions.
+    div.append(parseInputElem.apply(null, p))
+			.node().id = key;
+  }
+	
+	return function() {return div.node();};
+};
 
-(function () { 'use strict';
+var parseInputElem = function (label, type, details) {
+	var f = [
+		inp.num, inp.checkbox, inp.text, inp.select_toggle,
+		inp.checkbox_toggle, inp.button, inp.threshold
+	][type];
+	return f.apply(null, [label].concat(details));
+};
 
-// to suit your point format, run search/replace for '.x' and '.y';
-// for 3D version, see 3d branch (configurability would draw significant performance overhead)
-
-// square distance between 2 points
-function getSqDist(p1, p2) {
-
-    var dx = p1.x - p2.x,
-        dy = p1.y - p2.y;
-
-    return dx * dx + dy * dy;
+inp.spectrumSelector = function () {
+	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
+	if (specs.size() === 0){
+		return function () {
+			return d3.select(document.createElement('div')).text('No Spectra to show').node();
+		};
+	} 
+		
+	var elem = 	d3.select(
+			inp.select_multi('Select Spectrum', specs[0])()
+		).classed('spec-selector', true)
+	
+	elem.selectAll('li')
+	  	.each(function(d){
+				d3.select(this).select('.checkbox')					
+					.style('color', getComputedStyle(d.childNodes[0]).stroke)
+					.select('.label').text(d.label);
+					
+				d3.select(this).on('mouseenter', function () {
+						d3.select(d.parentNode).classed('dimmed', true);
+						d3.select(d).classed('highlighted', true);
+					})//mouseover
+					.on('mouseleave', function () {
+						d3.select(d.parentNode).classed('dimmed', false);
+						d3.select(d).classed('highlighted', false);
+					});//mouseout
+			});//end each
+	
+	elem.node().getValue = function () {
+		return elem.selectAll('li')
+			.filter(function () {
+				return d3.select(this).select('input').node().checked === true;
+			})
+			.data().map(function(e){
+	        return e.s_id();
+	    });
+	};
+	elem.node().id = 'sid';
+	
+	return function(){return elem.node();};
+};
+inp.preview = function(auto){
+	var div_data = {
+		"prev_auto":["Instant Preview", 1, typeof auto !== 'undefined'],
+		"prev_btn":["Preview", 5, null],
+	};
+	return inp.div(div_data);
+};
+inp.popover = function (title) {
+	var div = d3.select(document.createElement('div'))
+		.classed('popover right', true);
+	
+	div.append('div').classed('arrow', true);
+	var inner = div.append('div').classed('popover-inner', true)
+	inner.append('h3').classed('popover-title', true).text(title);
+	inner.append('div').classed('popover-content', true);
+	
+	return function() {return div.node();};
 }
 
-// square distance from a point to a segment
-function getSqSegDist(p, p1, p2) {
-
-    var x = p1.x,
-        y = p1.y,
-        dx = p2.x - x,
-        dy = p2.y - y;
-
-    if (dx !== 0 || dy !== 0) {
-
-        var t = ((p.x - x) * dx + (p.y - y) * dy) / (dx * dx + dy * dy);
-
-        if (t > 1) {
-            x = p2.x;
-            y = p2.y;
-
-        } else if (t > 0) {
-            x += dx * t;
-            y += dy * t;
-        }
-    }
-
-    dx = p.x - x;
-    dy = p.y - y;
-
-    return dx * dx + dy * dy;
-}
-// rest of the code doesn't care about point format
-
-// basic distance-based simplification
-function simplifyRadialDist(points, sqTolerance) {
-
-    var prevPoint = points[0],
-        newPoints = [prevPoint],
-        point;
-
-    for (var i = 1, len = points.length; i < len; i++) {
-        point = points[i];
-
-        if (getSqDist(point, prevPoint) > sqTolerance) {
-            newPoints.push(point);
-            prevPoint = point;
-        }
-    }
-
-    if (prevPoint !== point) newPoints.push(point);
-
-    return newPoints;
+module.exports = inp;
+},{}],4:[function(require,module,exports){
+var app;
+var modals = {
+	crosshair:true,
+	peakpick:false,
+	peakdel:false,
+	integrate:false,	
 }
 
-// simplification using optimized Douglas-Peucker algorithm with recursion elimination
-function simplifyDouglasPeucker(points, sqTolerance) {
-
-    var len = points.length,
-        MarkerArray = typeof Uint8Array !== 'undefined' ? Uint8Array : Array,
-        markers = new MarkerArray(len),
-        first = 0,
-        last = len - 1,
-        stack = [],
-        newPoints = [],
-        i, maxSqDist, sqDist, index;
-
-    markers[first] = markers[last] = 1;
-
-    while (last) {
-
-        maxSqDist = 0;
-
-        for (i = first + 1; i < last; i++) {
-            sqDist = getSqSegDist(points[i], points[first], points[last]);
-
-            if (sqDist > maxSqDist) {
-                index = i;
-                maxSqDist = sqDist;
-            }
-        }
-
-        if (maxSqDist > sqTolerance) {
-            markers[index] = 1;
-            stack.push(first, index, index, last);
-        }
-
-        last = stack.pop();
-        first = stack.pop();
-    }
-
-    for (i = 0; i < len; i++) {
-        if (markers[i]) newPoints.push(points[i]);
-    }
-
-    return newPoints;
+modals.init = function(current_app){
+	app = current_app;
 }
 
-// both algorithms combined for awesome performance
-function simplify(points, tolerance, highestQuality) {
-
-    if (points.length <= 1) return points;
-
-    var sqTolerance = tolerance !== undefined ? tolerance * tolerance : 1;
-
-    points = highestQuality ? points : simplifyRadialDist(points, sqTolerance);
-    points = simplifyDouglasPeucker(points, sqTolerance);
-
-    return points;
+nanoModal.customHide = function(defaultHide, modalAPI) {
+	modalAPI.modal.el.style.display = 'block';
+	defaultHide();
+};
+	
+modals.proto = function (title, content, ok_fun, cancel_fun) {	
+	var nano = nanoModal(
+		content,
+		{
+		overlayClose: false,
+		autoRemove:true,
+		buttons: [
+			{
+		    text: "OK",
+		    handler: ok_fun,
+		    primary: true
+			}, 
+			{
+		    text: "Cancel",
+		    handler: cancel_fun? cancel_fun : "hide",
+				classes:"cancelBtn"
+			}
+		]}
+	);
+	
+	if(!app){
+		console.log('App is not defined. Initialize the modal module first.');
+		return;
+	}
+	//TODO: define spec-app;
+	d3.select(app).append(function () {return nano.overlay.el});
+	d3.select(app).append(function () {return nano.modal.el});
+	
+	var el = d3.select(nano.modal.el);
+	
+	el.insert("div", ":first-child")
+		.classed('title', true)
+		.text( title? title : "Dialogue" );
+	
+	el.on("keydown", function() {
+		if (d3.event.keyCode===13) { // Enter
+			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
+		}
+		if (d3.event.keyCode===27) { // Escape
+			d3.select(nano.modal.el).select(".cancelBtn").node().click();
+		}
+	});
+	
+	nano.onShow(function () {
+		el.style({
+			'display': 'flex',
+			'flex-direction': 'column',
+			'margin-left': -el.node().clientWidth /2,
+			'max-width': 0.8 * el.node().parentNode.clientWidth,
+			'max-height': 0.8 * el.node().parentNode.clientHeight
+		});
+		var drag = d3.behavior.drag()
+			.on("drag", function () {
+		    el.style("top", d3.event.sourceEvent.pageY+"px")
+		      .style("left", d3.event.sourceEvent.pageX+"px")				
+			});
+		d3.select(nano.modal.el).select(".title").call(drag)
+		d3.select(nano.modal.el).select(".cancelBtn").node().focus();
+		
+		//{display: flex,flex-direction: column}
+	});
+	return nano;
 }
 
-// export as AMD module / Node module / browser or worker variable
-if (typeof define === 'function' && define.amd) define(function() { return simplify; });
-else if (typeof module !== 'undefined') module.exports = simplify;
-else if (typeof self !== 'undefined') self.simplify = simplify;
-else window.simplify = simplify;
+modals.error = function (title, message) {
+	var nano = modals.proto('Error: ' + title, message);
+	d3.select(nano.modal.el)
+		.classed('errorModal', true)
+		.select('.cancelBtn').text('Dismiss');
+	nano.show();
+};
 
-})();
+modals.range = function (text, _range, callback, _curr_val){
+	var range;
+	if(_range[0]>_range[1])
+		range = [_range[1], _range[0]];
+	else{
+		range = _range;
+	}
+	range = [d3.round(range[0],3), d3.round(range[1],3)];
+	
+	if(typeof _curr_val === 'undefined'){
+		_curr_val = range;
+	}else{
+		if(_curr_val[0]>_curr_val[1])
+			_curr_val = [_curr_val[1], _curr_val[0]];
+		
+		_curr_val = [d3.round(_curr_val[0],3), d3.round(_curr_val[1],3)];
+	}
+	
+	var content = text +
+		'<input type="number" id="range0" step="0.001" value='+_curr_val[0]+ ' min='+ range[0] + ' max='+ range[1] +'>' +
+		' - ' +
+		'<input type="number" id="range1" step="0.001" value='+_curr_val[1]+ ' min='+ range[0] + ' max='+ range[1] +'>';
+		
+	var nano = modals.proto("Range", content,
+		function(modal) {
+			modal.hide();
+      var input_range = d3.select(modal.modal.el)
+				.selectAll("input")[0].map(function(e){ return +e.value; });
+			
+			if (input_range[0] < range[0] || input_range[0] > range[1]
+				|| input_range[1] < range[0] || input_range[1] > range[1]
+				|| input_range[0] > input_range[1])
+				nanoModal("Invalid input."+input_range).show();
+			else{
+				if(_range[0]>_range[1])
+					callback(input_range.reverse());
+				else{
+					callback(input_range);
+				}
+			}
+    });
+	
+	return nano.show;	
+};
+
+modals.input = function (text, value,callback){	
+	var content = text +
+		'<input type="number" id="input0" step="0.001" value='+value+'>';
+		
+	var nano = modals.proto("Numeric", content,
+		function(modal) {
+			modal.hide();
+      var input = d3.select(modal.modal.el)
+				.select("input").node().value;
+			callback(input);
+    });
+	
+	return nano.show;	
+};
+
+modals.xRegion = function () {
+	modals.range(
+		"Set x region to:\n",
+		d3.select('.spec-slide.active').select(".main-focus").node().range.x,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
+	)();
+};
+
+modals.yRegion = function () {
+	modals.range(
+		"Set y region to:\n",
+		d3.select('.spec-slide.active').select(".main-focus").node().range.y,
+		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
+		d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
+	)();
+};
+
+modals.slider = function (text, value, callback){	
+	var content = text +
+		'<input id="slider" type="range" min="-5" max="5" value="0" step="0.001"/>';
+		
+	var nano = modals.proto("Slider", content,
+		function(modal) {
+			modal.hide();
+    },
+		function (modal) {
+			callback(0);
+		});
+	
+	d3.select(nano.modal.el).select("#slider")
+		.on("input", function(){
+	    callback(+this.value);
+		});
+	
+	return nano.show;	
+};
+
+modals.scaleLine = function () {
+	modals.slider(
+		"Scale spectrum by a factor:",
+		0,function (value) {
+			d3.select(".selected").node().setScaleFactor(Math.pow(2,value));
+		}	
+	)();
+};
+
+modals.methods = function (fun ,args, title, specSelector, has_preview) {
+	var el;
+	var preview = true;
+	var plugins = pro.plugins(app);
+	
+	var ok_fun = function (modal) {
+		preview = false;
+		fireEvent(el.node(), 'input');
+		modal.hide();
+	};
+	
+	var nano = modals.proto(title, '',	ok_fun);
+	el = d3.select(nano.modal.el).select(".nanoModalContent");
+	
+	
+	var timer = null;
+	el.on('input', function () {
+		var form_data = {};
+    el.selectAll('.param')
+      .filter(function () {
+        return this.id !== '';
+      })
+      .each(function (e) {
+        form_data[this.id] = this.getValue();
+      });
+		
+		if(timer)
+			clearTimeout(timer);		
+		
+		if(preview === false || 
+			d3.event.target === el ||
+			form_data['prev_btn'] === true){
+			plugins.request(fun, form_data, form_data['s_id'], preview);
+		}else	if(form_data['prev_auto'] === true){
+			timer = setTimeout(function () {
+				plugins.request(fun, form_data, form_data['s_id'], true);
+			}, 300);
+		}
+	});
+	
+	var inp = require('./elem');
+	el.append(inp.spectrumSelector());
+	el.append(inp.div(args));
+	el.append(inp.preview(true));
+	return nano.show;
+};
+//spec.modals = modals;
+module.exports = modals;
+},{"./elem":3}],5:[function(require,module,exports){
+//TODO:var modals = spec.modals;
+var modals = require('../modals');
+
+var request = function (url, callback, err) {
+	var http_request = new XMLHttpRequest();
+	http_request.open("GET", url, true);
+	http_request.onreadystatechange = function () {
+	  var done = 4;
+	  var ok = 200;
+	  if (http_request.readyState === done && http_request.status === ok){
+			if(typeof(callback) === 'function')
+				callback(http_request.responseText);
+		}else	if (http_request.readyState === done){
+			err(http_request.responseText)
+		}
+	};
+	http_request.send();	
+};
+
+var getJSON = function(url, callback, show_progress){
+	var prog = ajaxProgress();
+	request(url, function (response) {
+		prog.stop();
+		var json = JSON.parse(response);
+		if(typeof json['error'] === 'undefined'){
+		  callback(json);
+		}else{
+			modals.error(json['error']['name'], json['error']['message']);
+		}
+
+	},
+	function (err) {
+		prog.stop();
+		modals.error('Network Error', err);
+	});
+
+	if(show_progress)
+		prog();
+};
+
+var ajaxProgress = function () {
+	var interval, stopped=false;
+	function check () {
+		request('/nmr/test', function (response) {
+			if(!stopped){
+				// TODO: Progress should be bound to app
+				d3.select(".progress").text(response);
+				setTimeout(check, 100);
+			}else{
+				ajax('/nmr/test?complete=1')
+			}
+		});
+	}
+
+	var run = function() {
+		check();
+	}
+
+	run.stop = function() {
+		clearInterval(interval);
+		stopped = true;
+		// TODO: Progress should be bound to app
+	  d3.select(".progress").text("Completed")
+			/*.transition()
+	    .duration(2500)
+	    .style("opacity", 1e-6)*/
+	}
+	return run;
+};
+
+module.exports.request = request;
+module.exports.getJSON = getJSON;
+
+},{"../modals":4}]},{},[2,5,4,3]);

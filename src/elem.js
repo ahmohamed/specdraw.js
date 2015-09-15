@@ -182,6 +182,7 @@ inp.threshold = function (label) {
 			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
 				.style('display', 'none');
 			
+				//TODO: app-specific.
 			d3.select('.spec-slide.active').select('.main-focus').node()
 				.getThreshold(function (t) {
 					val.attr('value', t.toExponential(2));
@@ -283,3 +284,5 @@ inp.popover = function (title) {
 	
 	return function() {return div.node();};
 }
+
+module.exports = inp;

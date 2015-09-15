@@ -1,3 +1,6 @@
+var modals = require('./src/modals');
+var inp = require('./src/elem');
+
 spec.menu = function(){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
@@ -173,7 +176,6 @@ spec.menu.slides = function () {
 	}
 	return _main;
 };
-
 
 spec.menu.menu_data = 
 [	

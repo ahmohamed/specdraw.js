@@ -1,8 +1,13 @@
+var app;
 var modals = {
 	crosshair:true,
 	peakpick:false,
 	peakdel:false,
 	integrate:false,	
+}
+
+modals.init = function(current_app){
+	app = current_app;
 }
 
 nanoModal.customHide = function(defaultHide, modalAPI) {
@@ -30,10 +35,13 @@ modals.proto = function (title, content, ok_fun, cancel_fun) {
 		]}
 	);
 	
+	if(!app){
+		console.log('App is not defined. Initialize the modal module first.');
+		return;
+	}
 	//TODO: define spec-app;
-	var spec_app = d3.select('.spec-app');
-	spec_app.append(function () {return nano.overlay.el});
-	spec_app.append(function () {return nano.modal.el});
+	d3.select(app).append(function () {return nano.overlay.el});
+	d3.select(app).append(function () {return nano.modal.el});
 	
 	var el = d3.select(nano.modal.el);
 	
@@ -186,9 +194,10 @@ modals.scaleLine = function () {
 	)();
 };
 
-modals.methods = function (fun ,args, title, specSelector, preview) {
+modals.methods = function (fun ,args, title, specSelector, has_preview) {
 	var el;
 	var preview = true;
+	var plugins = pro.plugins(app);
 	
 	var ok_fun = function (modal) {
 		preview = false;
@@ -217,17 +226,19 @@ modals.methods = function (fun ,args, title, specSelector, preview) {
 		if(preview === false || 
 			d3.event.target === el ||
 			form_data['prev_btn'] === true){
-			pro.plugin_funcs(fun, form_data, form_data['s_id'], preview);
+			plugins.request(fun, form_data, form_data['s_id'], preview);
 		}else	if(form_data['prev_auto'] === true){
 			timer = setTimeout(function () {
-				pro.plugin_funcs(fun, form_data, form_data['s_id'], true);
+				plugins.request(fun, form_data, form_data['s_id'], true);
 			}, 300);
 		}
 	});
 	
+	var inp = require('./elem');
 	el.append(inp.spectrumSelector());
 	el.append(inp.div(args));
 	el.append(inp.preview(true));
 	return nano.show;
 };
-spec.modals = modals;
+//spec.modals = modals;
+module.exports = modals;

@@ -160,7 +160,7 @@ var getSlicedData = function (data, domain, range) {
 	return data.slice(slice_idx.start, slice_idx.end);
 };
 var resample = function (data, domain, npoints) {
-  var dataResample = simplify(data, (domain[0] - domain[1])/npoints);
+  var dataResample = require('./lib/simplify')(data, (domain[0] - domain[1])/npoints);
   
 	return dataResample;
 };

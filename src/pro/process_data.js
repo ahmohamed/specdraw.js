@@ -121,9 +121,6 @@ var processPNGworker = function (json, callback) {
 	    var canvas = document.createElement("canvas");
 	    canvas.width = img.width;
 	    canvas.height = img.height;
-
-	    
-	    
 	
 			var e = {};
 			e._16bit = (json['format'] == "png16")
@@ -207,8 +204,8 @@ pro.process_spectrum = function(json, render_fun){
 };
 
 pro.get_spectrum = function (url, render_fun) {
-	var ajax = pro.ajax();
-	//var ajax = require('./pro/ajax');
+	//var ajax = pro.ajax();
+	var ajax = require('./src/pro/ajax');
 	ajax.getJSON(url, function (response) {
 		pro.process_spectrum(response, render_fun);
 	});

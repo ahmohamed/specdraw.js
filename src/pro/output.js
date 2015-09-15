@@ -39,6 +39,7 @@ pro.analysis.addPeaks = function (json) {
 	
 	console.log(spec);
 	if (spec.size() != 1){
+		var modals = require('./src/modals');
 		modals.error('Incompatible server response', 
 		'Can\'t find spectrum with s_id:'+s_id)
 	}
@@ -52,6 +53,7 @@ pro.analysis.addSegments = function (json) {
 		.filter(function(e){ return this.s_id() === s_id; });
 	
 	if (spec.size() != 1) {
+		var modals = require('./src/modals');
 		modals.error('Incompatible server response', 
 		'Can\'t find spectrum with s_id:'+s_id)
 	}

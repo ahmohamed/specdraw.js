@@ -1,8 +1,7 @@
 pro.read_menu = function (app, menu_data) {
 	var plugins = pro.plugins(app);
-	var modals = spec.modals;
+	var modals = require('./src/modals');
 	//var plugins = require('./pro/plugins');
-	//var modals = require('./modals');
 	
 	var find_menu_item = function (menu, item) {
 		console.log(menu, item)
@@ -25,8 +24,8 @@ pro.read_menu = function (app, menu_data) {
 		}
 	};
 	
-	var ajax = pro.ajax();
-	//var ajax = require('./pro/ajax');
+	//var ajax = pro.ajax();
+	var ajax = require('./src/pro/ajax');
 	ajax.getJSON('/nmr/test', function (response) {
 		console.log(menu_data)
 		var c = response;
