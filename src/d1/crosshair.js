@@ -8,7 +8,7 @@ spec.d1.crosshair = function(){
         var s_window = [Math.floor(i_scale.invert(e.xcoor-10)),
           Math.floor(i_scale.invert(e.xcoor+10))];
 
-        i = s_window[0] + whichMax( data.slice(s_window[0],s_window[1]+1));
+        i = s_window[0] + data.slice(s_window[0],s_window[1]+1).whichMax();
       }else{
         i = Math.floor(i_scale.invert(e.xcoor));					
       }

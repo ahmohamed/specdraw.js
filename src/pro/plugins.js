@@ -13,7 +13,7 @@ pro.plugins = function (app) {
 	
 	var handle_spectrum = function(json, preview){
 		var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
-		pro.process_spectrum(json, output_fun);
+		require('./src/pro/process_data').process_spectrum(json, output_fun);
 		return;
 	};
 

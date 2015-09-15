@@ -62,26 +62,21 @@ spec.d1.mainBrush = function(){
 			.style('cursor', null)
 			.style('pointer-events', 'all');
 		
-		svg.style("cursor", "crosshair");
-		
 		svg_elem.node().peakpickEnable = function (_) {
 			svg_elem.classed("peakpick-brush", _);
-			svg
-				.style("cursor", _? 'url('+cursor.peakpick+'), auto' : "crosshair");
+			svg.classed("peakpick-brush", _);
 			
 			_brush.on("brushend", _? peakpick : changeRegion);
 		};
 		svg_elem.node().peakdelEnable = function (_) {
 			svg_elem.classed("peakdel-brush", _);
-			svg
-					.style("cursor", _? 'url('+cursor.peakdel+'), auto' : "crosshair");
+			svg.classed("peakdel-brush", _);
 			
 			_brush.on("brushend", _? peakdel : changeRegion);
 		};
 		svg_elem.node().integrateEnable = function (_) {
 			svg_elem.classed("integrate-brush", _);
-			svg
-					.style("cursor", _? 'url('+cursor.addinteg+'), auto' : "crosshair");
+			svg.classed("integrate-brush", _);
 			
 			_brush.on("brushend", _? integrate : changeRegion);
 		};

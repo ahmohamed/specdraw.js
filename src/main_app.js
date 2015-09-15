@@ -34,10 +34,11 @@ spec.app = function(){
 		
 		elem.node().dispatcher = app_dispatcher;
 		require('./src/modals').init(elem.node());
+		elem.call(require('./src/menu')());
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		
-		elem.call(spec.menu());
+		
 		/*var svg_elem = elem.append('svg')
 			.attr({
 				width:svg_width,
@@ -46,7 +47,7 @@ spec.app = function(){
 		*/
 		//elem.call(spec.slideChanger());
 		/**** Keyboard events and logger ****/
-		registerKeyboard(elem.node());
+		require('./src/events').registerKeyboard(elem.node());
 		
 		elem.node().appendSlide = function (data) {
 			elem.selectAll('.spec-slide').classed('active', false);

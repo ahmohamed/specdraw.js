@@ -1,7 +1,8 @@
-var modals = require('./src/modals');
-var inp = require('./src/elem');
+var modals = require('./modals');
+var inp = require('./elem');
+var events = require('./events');
 
-spec.menu = function(){	
+var create_menu = function(){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
   
@@ -31,7 +32,7 @@ spec.menu = function(){
 		  .call(bootstrap.tooltip().placement('right'))
 		  .on('click', toggle);
 		
-		elem.select('.open-menu').call(spec.menu.main_menu()); 
+		elem.select('.open-menu').call(main_menu()); 
 		
 		
 		var app_dispatcher = app.node().dispatcher;
@@ -50,7 +51,7 @@ spec.menu = function(){
 		/**************************/
 		
 		app_dispatcher.on('menuUpdate.menu', function () {
-			elem.select('.open-menu').call(spec.menu.main_menu());
+			elem.select('.open-menu').call(main_menu());
 		});
 		app_dispatcher.on('slideChange.menu', function () {
 			//TODO: hide parent menu-item when all children are hidden
@@ -58,20 +59,20 @@ spec.menu = function(){
 			elem.select('.open-menu')
 				.classed('d1', !two_d_slide)
 				.classed('d2', two_d_slide);
-			elem.select('.open-spec-legend').call(spec.menu.spectra());
-			elem.select('.open-slides').call(spec.menu.slides());
+			elem.select('.open-spec-legend').call(spectra());
+			elem.select('.open-slides').call(slides());
 		});
 		app_dispatcher.on('slideContentChange.menu', function () {
-			elem.select('.open-spec-legend').call(spec.menu.spectra());
+			elem.select('.open-spec-legend').call(spectra());
 		});
 		
-		pro.read_menu(app.node(), spec.menu.menu_data); //read menu from server.
+		pro.read_menu(app.node(), menu_data); //read menu from server.
 		return elem;									
 	}
 	return _main;
 };
 
-spec.menu.main_menu = function () {
+var main_menu = function () {
 	function add_li(sel) {
 		sel.enter()
 			.append("li")
@@ -108,14 +109,14 @@ spec.menu.main_menu = function () {
 					.classed('nav',true);
 		
 		nav.selectAll("li")
-			.data(spec.menu.menu_data)
+			.data(menu_data)
 			.call(add_li)
 			.call(recursive_add);
 			
     nav.selectAll('li')
       .on("click", function(d){
         if(d.fun){
-          fireEvent(div.node(), 'click'); //close the menu.
+          require('./utils').fireEvent(div.node(), 'click'); //close the menu.
           d.fun();
         }else{
         	this.focus();
@@ -125,7 +126,7 @@ spec.menu.main_menu = function () {
 	}
 	return _main;
 };
-spec.menu.spectra = function () {
+var spectra = function () {
 	function _main(div) {
 		div.select('.menu-container').remove();
 		
@@ -148,7 +149,7 @@ spec.menu.spectra = function () {
 	}
 	return _main;
 };
-spec.menu.slides = function () {
+var slides = function () {
 	function _main(div) {
 		var app = div.selectP('.spec-app');
 		
@@ -177,7 +178,7 @@ spec.menu.slides = function () {
 	return _main;
 };
 
-spec.menu.menu_data = 
+var menu_data = 
 [	
   {
 		label:"Processing",
@@ -222,7 +223,7 @@ spec.menu.menu_data =
 			{label:"Scale",fun:modals.scaleLine},
 		]
 	},
-	{
+/*	{
 		label:"Export",
 		children:[
 			{label:"As PNG",fun:function(){
@@ -236,5 +237,7 @@ spec.menu.menu_data =
 			{label:"Peak table",fun:function(){}},
 			{label:"JCAMP-DX",fun:function(){}},
 		],
-	},
+	},*/
 ];
+
+module.exports = create_menu;

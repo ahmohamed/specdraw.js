@@ -1,3 +1,4 @@
+require('nanoModal');
 var app;
 var modals = {
 	crosshair:true,
@@ -8,7 +9,7 @@ var modals = {
 
 modals.init = function(current_app){
 	app = current_app;
-}
+};
 
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -201,7 +202,7 @@ modals.methods = function (fun ,args, title, specSelector, has_preview) {
 	
 	var ok_fun = function (modal) {
 		preview = false;
-		fireEvent(el.node(), 'input');
+		require('./utils').fireEvent(el.node(), 'input');
 		modal.hide();
 	};
 	

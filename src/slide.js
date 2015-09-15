@@ -64,7 +64,7 @@ spec.slide = function(){
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		
 		
-		spec_slide.node().clip_id = guid();
+		spec_slide.node().clip_id = require('./src/utils').guid();
     var defs = spec_slide.append("defs");
 		defs.append("clipPath")
 		.attr("id", spec_slide.node().clip_id)

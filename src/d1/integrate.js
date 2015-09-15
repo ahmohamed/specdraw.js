@@ -110,7 +110,7 @@ spec.d1.integrate = function(){
 	}
 	
 	function getIntegral(data){
-		var _cumsum = cumsum(data.map(function(d) { return d.y; }));
+		var _cumsum = data.map(function(d) { return d.y; }).cumsum();
 		
 		var ret = data.map(function(d,i){
 			return {x:d.x, y:_cumsum[i]};

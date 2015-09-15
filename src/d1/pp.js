@@ -22,7 +22,7 @@ spec.d1.pp = function(){
 		
 		svg_elem
 			.on("_click", function(e){
-				if(!events.crosshair)
+				if(!require('./src/events').crosshair)
 					d3.selectAll(".crosshair").each(function(){
 						d3.select(this).on("_mousemove")(e);
 					});

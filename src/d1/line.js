@@ -1,5 +1,6 @@
 spec.d1.line = function () {
 	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
+	var utils = require('./src/utils');
 	
 	function _main(svg) {
 		var _crosshair, dataResample, data_slice, segments = [], scale_factor = 1;
@@ -61,12 +62,12 @@ spec.d1.line = function () {
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					var new_slice = sliceDataIdx(data, x.domain(), range.x);
+					var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
 
 					data_slice = new_slice;
 					//TODO: resample factors both x and y dimensions.
 					// Both dimension need to have the same unit, i.e. pixels.
-					dataResample = resample(data.slice(data_slice.start, data_slice.end), x.domain(), width);
+					dataResample = utils.simplify(data.slice(data_slice.start, data_slice.end), x.domain(), width);
 					path_elem.datum(dataResample);
 											
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
@@ -89,7 +90,7 @@ spec.d1.line = function () {
 				}
 			})
 			.on("_integrate", function(e){
-				var sliced_data = getSlicedData(data, e.xdomain, range.x);
+				var sliced_data = utils.sliceData(data, e.xdomain, range.x);
 
 				_integrate.node().addIntegral (sliced_data);
 				svg_elem.node().addSegment([sliced_data[0].x, sliced_data[sliced_data.length-1].x]);
