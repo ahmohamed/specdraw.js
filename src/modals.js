@@ -235,7 +235,7 @@ modals.methods = function (fun ,args, title, specSelector, has_preview) {
 		}
 	});
 	
-	var inp = require('./elem');
+	var inp = require('./input_elem');
 	el.append(inp.spectrumSelector());
 	el.append(inp.div(args));
 	el.append(inp.preview(true));

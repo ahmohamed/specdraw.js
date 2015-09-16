@@ -1,6 +1,6 @@
-var modals = require('./modals');
-var inp = require('./elem');
+var inp = require('./input_elem');
 var events = require('./events');
+var utils = require('./utils');
 
 var create_menu = function(){	
 	function toggle(e){
@@ -41,17 +41,17 @@ var create_menu = function(){
 		// Full screen manipulation
 		elem.select('.open-fullscreen')
 			.on('click', function (e) {
-				toggleFullScreen(app.node());
+				utils.fullScreen.toggle(app.node());
 				toggle.apply(this);
 			});
 		
 		d3.select(window).on('resize.fullscreenbutton', function () {
-			elem.select('.open-fullscreen').classed('opened', isFullScreen());
+			elem.select('.open-fullscreen').classed('opened', utils.fullScreen.isFull() );
 		});
 		/**************************/
 		
 		app_dispatcher.on('menuUpdate.menu', function () {
-			elem.select('.open-menu').call(main_menu());
+			elem.select('.open-menu').call( main_menu().data(menu_data) );
 		});
 		app_dispatcher.on('slideChange.menu', function () {
 			//TODO: hide parent menu-item when all children are hidden
@@ -97,6 +97,7 @@ var main_menu = function () {
 		}
 	}
 	
+	var menu_data;
 	function _main(div) {
 		div.select('.menu-container').remove();
 		
@@ -116,13 +117,17 @@ var main_menu = function () {
     nav.selectAll('li')
       .on("click", function(d){
         if(d.fun){
-          require('./utils').fireEvent(div.node(), 'click'); //close the menu.
+          utils.fireEvent(div.node(), 'click'); //close the menu.
           d.fun();
         }else{
         	this.focus();
         }
       });
 
+	}
+	_main.data = function (_) {
+		if (!arguments.length) return menu_data;
+		menu_data = _;
 	}
 	return _main;
 };
@@ -178,66 +183,69 @@ var slides = function () {
 	return _main;
 };
 
-var menu_data = 
-[	
-  {
-		label:"Processing",
-	},
-  {
-    label:"Analysis",
-    children:[
-      {
-				label:"Peak Picking",
-				children:[
-					{label:"Manual peak picking",fun:events.peakpickToggle},
-		  		{label:"View/manage peak table",fun:null},
-					{label:"Delete peaks",fun:events.peakdelToggle},
-				]
-			},	
-		]
-  },
-	{
-		label:"View",
-		children:[
-			{
-				label:"Change region",
-				children:[
-					{label:"Set X region",fun:modals.xRegion},
-					{label:"Set Y region",fun:modals.yRegion},
-					{label:"Full spectrum",fun:null,//dispatcher.regionfull,
-						children:[{label:"Error",fun:function(){modals.error('error message')}},]
-					},
-					{label:"Reverse Spectrum",fun:null},
-					{label:"Invert Phases",fun:null},
-				]
-			},
-		],
-	},
-  {
-		label:"Integration",
-		fun:events.integrateToggle,
-	},
-  {label:"crosshair",fun:events.crosshairToggle},
-  {label:"Selected",fun:function(){},
-		children:[
-			{label:"Scale",fun:modals.scaleLine},
-		]
-	},
-/*	{
-		label:"Export",
-		children:[
-			{label:"As PNG",fun:function(){
-				setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
-			}},
-			{label:"As SVG",fun:function(){
-				setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
-			}},
-			{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
-			{label:"CSV",fun: function(){}},
-			{label:"Peak table",fun:function(){}},
-			{label:"JCAMP-DX",fun:function(){}},
-		],
-	},*/
-];
+var get_menu_data = function (app) {
+	var modals = app.modals;
+	return [	
+	  {
+			label:"Processing",
+		},
+	  {
+	    label:"Analysis",
+	    children:[
+	      {
+					label:"Peak Picking",
+					children:[
+						{label:"Manual peak picking",fun:events.peakpickToggle},
+			  		{label:"View/manage peak table",fun:null},
+						{label:"Delete peaks",fun:events.peakdelToggle},
+					]
+				},	
+			]
+	  },
+		{
+			label:"View",
+			children:[
+				{
+					label:"Change region",
+					children:[
+						{label:"Set X region",fun:modals.xRegion},
+						{label:"Set Y region",fun:modals.yRegion},
+						{label:"Full spectrum",fun:null,//dispatcher.regionfull,
+							children:[{label:"Error",fun:function(){modals.error('error message')}},]
+						},
+						{label:"Reverse Spectrum",fun:null},
+						{label:"Invert Phases",fun:null},
+					]
+				},
+			],
+		},
+	  {
+			label:"Integration",
+			fun:events.integrateToggle,
+		},
+	  {label:"crosshair",fun:events.crosshairToggle},
+	  {label:"Selected",fun:function(){},
+			children:[
+				{label:"Scale",fun:modals.scaleLine},
+			]
+		},
+	/*	{
+			label:"Export",
+			children:[
+				{label:"As PNG",fun:function(){
+					setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
+				}},
+				{label:"As SVG",fun:function(){
+					setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
+				}},
+				{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
+				{label:"CSV",fun: function(){}},
+				{label:"Peak table",fun:function(){}},
+				{label:"JCAMP-DX",fun:function(){}},
+			],
+		},*/
+	];	
+}
+
 
 module.exports = create_menu;
