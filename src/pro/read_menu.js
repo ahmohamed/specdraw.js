@@ -1,6 +1,5 @@
 pro.read_menu = function (app, menu_data) {
-	var plugins = pro.plugins(app);
-	var modals = require('./src/modals');
+	var plugins = pro.plugins(app.node());
 	//var plugins = require('./pro/plugins');
 	
 	var find_menu_item = function (menu, item) {
@@ -17,7 +16,7 @@ pro.read_menu = function (app, menu_data) {
 	var plugin_functor = function (c) {
 		if(c["args"]){
 			return function() {
-				modals.methods(c["fun"], c["args"], c["title"])();
+				app.modals.methods(c["fun"], c["args"], c["title"])();
 			};
 		}else{
 			return function () { plugins.request (c["fun"]) };
@@ -41,7 +40,7 @@ pro.read_menu = function (app, menu_data) {
 	
 		}		
 		console.log(menu_data)
-		app.dispatcher.menuUpdate();
+		app.node().dispatcher.menuUpdate();
 
 	});
 };

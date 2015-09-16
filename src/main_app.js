@@ -7,6 +7,9 @@ spec.app = function(){
   var slides = [], elem, svg_width, svg_height;
 
   function _main(div){
+		svg_width = _main.width();
+		svg_height = _main.height();
+		
     /* * Check size definitions**/
 		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
 			|| isNaN(svg_width) || isNaN(svg_height)){
@@ -33,8 +36,8 @@ spec.app = function(){
 			});
 		
 		elem.node().dispatcher = app_dispatcher;
-		require('./src/modals').init(elem.node());
-		elem.call(require('./src/menu')());
+		elem.modals = require('./src/modals')(elem);
+		elem.call(require('./src/menu/menu')());
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		

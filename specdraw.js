@@ -1935,8 +1935,8 @@ spec.app = function(){
 			});
 		
 		elem.node().dispatcher = app_dispatcher;
-		require('./src/modals').init(elem.node());
-		elem.call(require('./src/menu')());
+		elem.modals = require('./src/modals')(elem);
+		elem.call(require('./src/menu/menu')());
 		// TODO: decide whether to inject CSS styles.
 		//applyCSS2();
 		
@@ -2305,8 +2305,7 @@ spec.slideChanger = function () {
 };
 
 pro.read_menu = function (app, menu_data) {
-	var plugins = pro.plugins(app);
-	var modals = require('./src/modals');
+	var plugins = pro.plugins(app.node());
 	//var plugins = require('./pro/plugins');
 	
 	var find_menu_item = function (menu, item) {
@@ -2323,7 +2322,7 @@ pro.read_menu = function (app, menu_data) {
 	var plugin_functor = function (c) {
 		if(c["args"]){
 			return function() {
-				modals.methods(c["fun"], c["args"], c["title"])();
+				app.modals.methods(c["fun"], c["args"], c["title"])();
 			};
 		}else{
 			return function () { plugins.request (c["fun"]) };
@@ -2347,7 +2346,7 @@ pro.read_menu = function (app, menu_data) {
 	
 		}		
 		console.log(menu_data)
-		app.dispatcher.menuUpdate();
+		app.node().dispatcher.menuUpdate();
 
 	});
 };
@@ -2505,7 +2504,7 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/events":4,"./src/menu":6,"./src/modals":7,"./src/pro/ajax":8,"./src/pro/process_data":9,"./src/utils":11}],4:[function(require,module,exports){
+},{"./src/events":4,"./src/menu/menu":7,"./src/modals":11,"./src/pro/ajax":12,"./src/pro/process_data":13,"./src/utils":15}],4:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2905,12 +2904,77 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./utils":11}],6:[function(require,module,exports){
-var modals = require('./modals');
-var inp = require('./input_elem');
-var events = require('./events');
+},{"./utils":15}],6:[function(require,module,exports){
+var inp = require('../input_elem');
+var utils = require('../utils');
 
-var create_menu = function(){	
+function add_li(sel) {
+	sel.enter()
+		.append("li")
+		.text(function(d){return d.label;})
+		.classed('menu-item', true)
+		.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0 })
+		.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0 });
+  
+	return sel;		
+}
+
+function recursive_add(sel){
+	var new_sel = sel.filter(function(d){return d.children;})
+		.classed('openable', true)
+		//.attr('tabindex', 1)
+		.append("div").append("ul")
+		.selectAll("li")
+			.data(function(d){return d.children})
+			.call(add_li);
+	
+	if(new_sel.filter(function(d){return d.children;}).size() > 0){
+		recursive_add(new_sel);
+	}
+}
+
+function main_menu (app) {
+	var menu_data;
+	function _main(div) {
+		div.select('.menu-container').remove();
+		
+		var nav = div.append(inp.popover('Menu'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+				.append('div')
+				.classed('main-menu', true)
+					.append("ul")
+					.classed('nav',true);
+		
+		nav.selectAll("li")
+			.data(menu_data)
+			.call(add_li)
+			.call(recursive_add);
+			
+    nav.selectAll('li')
+      .on("click", function(d){
+        if(d.fun){
+          utils.fireEvent(div.node(), 'click'); //close the menu.
+          d.fun();
+        }else{
+        	this.focus();
+        }
+      });
+
+	}
+	_main.data = function (_) {
+		if (!arguments.length) return menu_data;
+		menu_data = _;
+		return _main;
+	}
+	return _main;
+}
+
+module.exports = main_menu;
+},{"../input_elem":5,"../utils":15}],7:[function(require,module,exports){
+var utils = require('../utils');
+
+function create_menu (){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
   
@@ -2919,6 +2983,12 @@ var create_menu = function(){
 	    .style('display', button.classed('opened')? 'none': null);
 	}
 	function _main(app) {
+		// Import needed modules for sub-menus
+		var main_menu = require('./main_menu')(app),
+			spectra = require('./spectra')(app),
+			slides = require('./slides')(app),
+			menu_data = require('./menu_data')(app);
+		
 		var column_menu_buttons = [
 		  ['open-menu', 'Menu'],
 		  ['open-spec-legend', 'Spectra'],
@@ -2940,7 +3010,7 @@ var create_menu = function(){
 		  .call(bootstrap.tooltip().placement('right'))
 		  .on('click', toggle);
 		
-		elem.select('.open-menu').call(main_menu()); 
+		elem.select('.open-menu').call( main_menu.data(menu_data) ); 
 		
 		
 		var app_dispatcher = app.node().dispatcher;
@@ -2949,17 +3019,17 @@ var create_menu = function(){
 		// Full screen manipulation
 		elem.select('.open-fullscreen')
 			.on('click', function (e) {
-				toggleFullScreen(app.node());
+				utils.fullScreen.toggle(app.node());
 				toggle.apply(this);
 			});
 		
 		d3.select(window).on('resize.fullscreenbutton', function () {
-			elem.select('.open-fullscreen').classed('opened', isFullScreen());
+			elem.select('.open-fullscreen').classed('opened', utils.fullScreen.isFull() );
 		});
 		/**************************/
 		
 		app_dispatcher.on('menuUpdate.menu', function () {
-			elem.select('.open-menu').call(main_menu());
+			elem.select('.open-menu').call( main_menu );
 		});
 		app_dispatcher.on('slideChange.menu', function () {
 			//TODO: hide parent menu-item when all children are hidden
@@ -2967,100 +3037,94 @@ var create_menu = function(){
 			elem.select('.open-menu')
 				.classed('d1', !two_d_slide)
 				.classed('d2', two_d_slide);
-			elem.select('.open-spec-legend').call(spectra());
-			elem.select('.open-slides').call(slides());
+			elem.select('.open-spec-legend').call( spectra );
+			elem.select('.open-slides').call( slides );
 		});
 		app_dispatcher.on('slideContentChange.menu', function () {
-			elem.select('.open-spec-legend').call(spectra());
+			elem.select('.open-spec-legend').call( spectra );
 		});
 		
-		pro.read_menu(app.node(), menu_data); //read menu from server.
+		pro.read_menu(app, menu_data); //read menu from server.
 		return elem;									
 	}
 	return _main;
-};
+}
 
-var main_menu = function () {
-	function add_li(sel) {
-		sel.enter()
-			.append("li")
-			.text(function(d){return d.label;})
-			.classed('menu-item', true)
-			.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0 })
-			.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0 });
-    
-		return sel;		
-	}
-	function recursive_add(sel){
- 		var new_sel = sel.filter(function(d){return d.children;})
-			.classed('openable', true)
-			//.attr('tabindex', 1)
-			.append("div").append("ul")
-			.selectAll("li")
-				.data(function(d){return d.children})
-				.call(add_li);
-		
-		if(new_sel.filter(function(d){return d.children;}).size() > 0){
-			recursive_add(new_sel);
-		}
-	}
-	
-	function _main(div) {
-		div.select('.menu-container').remove();
-		
-		var nav = div.append(inp.popover('Menu'))
-			.classed('menu-container', true)
-			.select('.popover-content')
-				.append('div')
-				.classed('main-menu', true)
-					.append("ul")
-					.classed('nav',true);
-		
-		nav.selectAll("li")
-			.data(menu_data)
-			.call(add_li)
-			.call(recursive_add);
-			
-    nav.selectAll('li')
-      .on("click", function(d){
-        if(d.fun){
-          require('./utils').fireEvent(div.node(), 'click'); //close the menu.
-          d.fun();
-        }else{
-        	this.focus();
-        }
-      });
+module.exports = create_menu;
+},{"../utils":15,"./main_menu":6,"./menu_data":8,"./slides":9,"./spectra":10}],8:[function(require,module,exports){
+var events = require('../events');
 
-	}
-	return _main;
-};
-var spectra = function () {
-	function _main(div) {
-		div.select('.menu-container').remove();
-		
-		var nav = div.append(inp.popover('Spectra'))
-			.classed('menu-container', true)
-			.select('.popover-content')
-		
-		var spec_list = d3.select(inp.spectrumSelector()())
-			.select('ul');
-		
-		if(spec_list.size() === 0){
-			nav.append(inp.spectrumSelector());
-		}else{
-			nav.append(function () {
-				return spec_list.node();
-			}).classed('block-list spec-list no-checkbox', true);
-		}					
-		
-		return div;
-	}
-	return _main;
-};
-var slides = function () {
-	function _main(div) {
-		var app = div.selectP('.spec-app');
-		
+function get_menu_data (app) {
+	var modals = app.modals;
+	return [	
+	  {
+			label:"Processing",
+		},
+	  {
+	    label:"Analysis",
+	    children:[
+	      {
+					label:"Peak Picking",
+					children:[
+						{label:"Manual peak picking",fun:events.peakpickToggle},
+			  		{label:"View/manage peak table",fun:null},
+						{label:"Delete peaks",fun:events.peakdelToggle},
+					]
+				},	
+			]
+	  },
+		{
+			label:"View",
+			children:[
+				{
+					label:"Change region",
+					children:[
+						{label:"Set X region",fun:modals.xRegion},
+						{label:"Set Y region",fun:modals.yRegion},
+						{label:"Full spectrum",fun:null,//dispatcher.regionfull,
+							children:[{label:"Error",fun:function(){modals.error('error message')}},]
+						},
+						{label:"Reverse Spectrum",fun:null},
+						{label:"Invert Phases",fun:null},
+					]
+				},
+			],
+		},
+	  {
+			label:"Integration",
+			fun:events.integrateToggle,
+		},
+	  {label:"crosshair",fun:events.crosshairToggle},
+	  {label:"Selected",fun:function(){},
+			children:[
+				{label:"Scale",fun:modals.scaleLine},
+			]
+		},
+	/*	{
+			label:"Export",
+			children:[
+				{label:"As PNG",fun:function(){
+					setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
+				}},
+				{label:"As SVG",fun:function(){
+					setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
+				}},
+				{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
+				{label:"CSV",fun: function(){}},
+				{label:"Peak table",fun:function(){}},
+				{label:"JCAMP-DX",fun:function(){}},
+			],
+		},*/
+	];	
+}
+
+
+module.exports = get_menu_data;
+},{"../events":4}],9:[function(require,module,exports){
+var inp = require('../input_elem');
+
+function slides (app) {
+	function _main(div) {		
 		div.select('.menu-container').remove();
 		
 		var slides = app.selectAll('.spec-slide');
@@ -3086,316 +3150,277 @@ var slides = function () {
 	return _main;
 };
 
-var menu_data = 
-[	
-  {
-		label:"Processing",
-	},
-  {
-    label:"Analysis",
-    children:[
-      {
-				label:"Peak Picking",
-				children:[
-					{label:"Manual peak picking",fun:events.peakpickToggle},
-		  		{label:"View/manage peak table",fun:null},
-					{label:"Delete peaks",fun:events.peakdelToggle},
-				]
-			},	
-		]
-  },
-	{
-		label:"View",
-		children:[
-			{
-				label:"Change region",
-				children:[
-					{label:"Set X region",fun:modals.xRegion},
-					{label:"Set Y region",fun:modals.yRegion},
-					{label:"Full spectrum",fun:null,//dispatcher.regionfull,
-						children:[{label:"Error",fun:function(){modals.error('error message')}},]
-					},
-					{label:"Reverse Spectrum",fun:null},
-					{label:"Invert Phases",fun:null},
-				]
-			},
-		],
-	},
-  {
-		label:"Integration",
-		fun:events.integrateToggle,
-	},
-  {label:"crosshair",fun:events.crosshairToggle},
-  {label:"Selected",fun:function(){},
-		children:[
-			{label:"Scale",fun:modals.scaleLine},
-		]
-	},
-/*	{
-		label:"Export",
-		children:[
-			{label:"As PNG",fun:function(){
-				setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
-			}},
-			{label:"As SVG",fun:function(){
-				setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
-			}},
-			{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
-			{label:"CSV",fun: function(){}},
-			{label:"Peak table",fun:function(){}},
-			{label:"JCAMP-DX",fun:function(){}},
-		],
-	},*/
-];
+module.exports = slides;
+},{"../input_elem":5}],10:[function(require,module,exports){
+var inp = require('../input_elem');
 
-module.exports = create_menu;
-},{"./events":4,"./input_elem":5,"./modals":7,"./utils":11}],7:[function(require,module,exports){
-require('nanoModal');
-var app;
-var modals = {
-	crosshair:true,
-	peakpick:false,
-	peakdel:false,
-	integrate:false,	
+function spectra (app) {
+	function _main(div) {
+		div.select('.menu-container').remove();
+		
+		var nav = div.append(inp.popover('Spectra'))
+			.classed('menu-container', true)
+			.select('.popover-content')
+		
+		//TODO: SpectrumSelector takes an App
+		var spec_list = d3.select(inp.spectrumSelector()())
+			.select('ul');
+		
+		if(spec_list.size() === 0){
+			nav.append(inp.spectrumSelector());
+		}else{
+			nav.append(function () {
+				return spec_list.node();
+			}).classed('block-list spec-list no-checkbox', true);
+		}					
+		
+		return div;
+	}
+	return _main;
 }
 
-modals.init = function(current_app){
-	app = current_app;
-};
-
+module.exports = spectra;
+},{"../input_elem":5}],11:[function(require,module,exports){
+require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
 	defaultHide();
 };
-	
-modals.proto = function (title, content, ok_fun, cancel_fun) {	
-	var nano = nanoModal(
-		content,
-		{
-		overlayClose: false,
-		autoRemove:true,
-		buttons: [
-			{
-		    text: "OK",
-		    handler: ok_fun,
-		    primary: true
-			}, 
-			{
-		    text: "Cancel",
-		    handler: cancel_fun? cancel_fun : "hide",
-				classes:"cancelBtn"
-			}
-		]}
-	);
-	
-	if(!app){
-		console.log('App is not defined. Initialize the modal module first.');
-		return;
-	}
-	//TODO: define spec-app;
-	d3.select(app).append(function () {return nano.overlay.el});
-	d3.select(app).append(function () {return nano.modal.el});
-	
-	var el = d3.select(nano.modal.el);
-	
-	el.insert("div", ":first-child")
-		.classed('title', true)
-		.text( title? title : "Dialogue" );
-	
-	el.on("keydown", function() {
-		if (d3.event.keyCode===13) { // Enter
-			d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
-		}
-		if (d3.event.keyCode===27) { // Escape
-			d3.select(nano.modal.el).select(".cancelBtn").node().click();
-		}
-	});
-	
-	nano.onShow(function () {
-		el.style({
-			'display': 'flex',
-			'flex-direction': 'column',
-			'margin-left': -el.node().clientWidth /2,
-			'max-width': 0.8 * el.node().parentNode.clientWidth,
-			'max-height': 0.8 * el.node().parentNode.clientHeight
-		});
-		var drag = d3.behavior.drag()
-			.on("drag", function () {
-		    el.style("top", d3.event.sourceEvent.pageY+"px")
-		      .style("left", d3.event.sourceEvent.pageX+"px")				
-			});
-		d3.select(nano.modal.el).select(".title").call(drag)
-		d3.select(nano.modal.el).select(".cancelBtn").node().focus();
-		
-		//{display: flex,flex-direction: column}
-	});
-	return nano;
-}
 
-modals.error = function (title, message) {
-	var nano = modals.proto('Error: ' + title, message);
-	d3.select(nano.modal.el)
-		.classed('errorModal', true)
-		.select('.cancelBtn').text('Dismiss');
-	nano.show();
-};
-
-modals.range = function (text, _range, callback, _curr_val){
-	var range;
-	if(_range[0]>_range[1])
-		range = [_range[1], _range[0]];
-	else{
-		range = _range;
-	}
-	range = [d3.round(range[0],3), d3.round(range[1],3)];
+function app_modals(app){
+	var modals = {}
 	
-	if(typeof _curr_val === 'undefined'){
-		_curr_val = range;
-	}else{
-		if(_curr_val[0]>_curr_val[1])
-			_curr_val = [_curr_val[1], _curr_val[0]];
-		
-		_curr_val = [d3.round(_curr_val[0],3), d3.round(_curr_val[1],3)];
-	}
-	
-	var content = text +
-		'<input type="number" id="range0" step="0.001" value='+_curr_val[0]+ ' min='+ range[0] + ' max='+ range[1] +'>' +
-		' - ' +
-		'<input type="number" id="range1" step="0.001" value='+_curr_val[1]+ ' min='+ range[0] + ' max='+ range[1] +'>';
-		
-	var nano = modals.proto("Range", content,
-		function(modal) {
-			modal.hide();
-      var input_range = d3.select(modal.modal.el)
-				.selectAll("input")[0].map(function(e){ return +e.value; });
-			
-			if (input_range[0] < range[0] || input_range[0] > range[1]
-				|| input_range[1] < range[0] || input_range[1] > range[1]
-				|| input_range[0] > input_range[1])
-				nanoModal("Invalid input."+input_range).show();
-			else{
-				if(_range[0]>_range[1])
-					callback(input_range.reverse());
-				else{
-					callback(input_range);
+	modals.proto = function (title, content, ok_fun, cancel_fun) {	
+		var nano = nanoModal(
+			content,
+			{
+			overlayClose: false,
+			autoRemove:true,
+			buttons: [
+				{
+			    text: "OK",
+			    handler: ok_fun,
+			    primary: true
+				}, 
+				{
+			    text: "Cancel",
+			    handler: cancel_fun? cancel_fun : "hide",
+					classes:"cancelBtn"
 				}
+			]}
+		);
+	
+		if(!app){
+			console.log('App is not defined. Initialize the modal module first.');
+			return;
+		}
+		//TODO: define spec-app;
+		app.append(function () {return nano.overlay.el});
+		app.append(function () {return nano.modal.el});
+	
+		var el = d3.select(nano.modal.el);
+	
+		el.insert("div", ":first-child")
+			.classed('title', true)
+			.text( title? title : "Dialogue" );
+	
+		el.on("keydown", function() {
+			if (d3.event.keyCode===13) { // Enter
+				d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
 			}
-    });
-	
-	return nano.show;	
-};
-
-modals.input = function (text, value,callback){	
-	var content = text +
-		'<input type="number" id="input0" step="0.001" value='+value+'>';
-		
-	var nano = modals.proto("Numeric", content,
-		function(modal) {
-			modal.hide();
-      var input = d3.select(modal.modal.el)
-				.select("input").node().value;
-			callback(input);
-    });
-	
-	return nano.show;	
-};
-
-modals.xRegion = function () {
-	modals.range(
-		"Set x region to:\n",
-		d3.select('.spec-slide.active').select(".main-focus").node().range.x,
-		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-		d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
-	)();
-};
-
-modals.yRegion = function () {
-	modals.range(
-		"Set y region to:\n",
-		d3.select('.spec-slide.active').select(".main-focus").node().range.y,
-		function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-		d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
-	)();
-};
-
-modals.slider = function (text, value, callback){	
-	var content = text +
-		'<input id="slider" type="range" min="-5" max="5" value="0" step="0.001"/>';
-		
-	var nano = modals.proto("Slider", content,
-		function(modal) {
-			modal.hide();
-    },
-		function (modal) {
-			callback(0);
+			if (d3.event.keyCode===27) { // Escape
+				d3.select(nano.modal.el).select(".cancelBtn").node().click();
+			}
 		});
 	
-	d3.select(nano.modal.el).select("#slider")
-		.on("input", function(){
-	    callback(+this.value);
+		nano.onShow(function () {
+			el.style({
+				'display': 'flex',
+				'flex-direction': 'column',
+				'margin-left': -el.node().clientWidth /2,
+				'max-width': 0.8 * el.node().parentNode.clientWidth,
+				'max-height': 0.8 * el.node().parentNode.clientHeight
+			});
+			var drag = d3.behavior.drag()
+				.on("drag", function () {
+			    el.style("top", d3.event.sourceEvent.pageY+"px")
+			      .style("left", d3.event.sourceEvent.pageX+"px")				
+				});
+			d3.select(nano.modal.el).select(".title").call(drag)
+			d3.select(nano.modal.el).select(".cancelBtn").node().focus();
+		
+			//{display: flex,flex-direction: column}
+		});
+		return nano;
+	}
+
+	modals.error = function (title, message) {
+		var nano = modals.proto('Error: ' + title, message);
+		d3.select(nano.modal.el)
+			.classed('errorModal', true)
+			.select('.cancelBtn').text('Dismiss');
+		nano.show();
+	};
+
+	modals.range = function (text, _range, callback, _curr_val){
+		var range;
+		if(_range[0]>_range[1])
+			range = [_range[1], _range[0]];
+		else{
+			range = _range;
+		}
+		range = [d3.round(range[0],3), d3.round(range[1],3)];
+	
+		if(typeof _curr_val === 'undefined'){
+			_curr_val = range;
+		}else{
+			if(_curr_val[0]>_curr_val[1])
+				_curr_val = [_curr_val[1], _curr_val[0]];
+		
+			_curr_val = [d3.round(_curr_val[0],3), d3.round(_curr_val[1],3)];
+		}
+	
+		var content = text +
+			'<input type="number" id="range0" step="0.001" value='+_curr_val[0]+ ' min='+ range[0] + ' max='+ range[1] +'>' +
+			' - ' +
+			'<input type="number" id="range1" step="0.001" value='+_curr_val[1]+ ' min='+ range[0] + ' max='+ range[1] +'>';
+		
+		var nano = modals.proto("Range", content,
+			function(modal) {
+				modal.hide();
+	      var input_range = d3.select(modal.modal.el)
+					.selectAll("input")[0].map(function(e){ return +e.value; });
+			
+				if (input_range[0] < range[0] || input_range[0] > range[1]
+					|| input_range[1] < range[0] || input_range[1] > range[1]
+					|| input_range[0] > input_range[1])
+					nanoModal("Invalid input."+input_range).show();
+				else{
+					if(_range[0]>_range[1])
+						callback(input_range.reverse());
+					else{
+						callback(input_range);
+					}
+				}
+	    });
+	
+		return nano.show;	
+	};
+
+	modals.input = function (text, value,callback){	
+		var content = text +
+			'<input type="number" id="input0" step="0.001" value='+value+'>';
+		
+		var nano = modals.proto("Numeric", content,
+			function(modal) {
+				modal.hide();
+	      var input = d3.select(modal.modal.el)
+					.select("input").node().value;
+				callback(input);
+	    });
+	
+		return nano.show;	
+	};
+
+	modals.xRegion = function () {
+		modals.range(
+			"Set x region to:\n",
+			d3.select('.spec-slide.active').select(".main-focus").node().range.x,
+			function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
+			d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
+		)();
+	};
+
+	modals.yRegion = function () {
+		modals.range(
+			"Set y region to:\n",
+			d3.select('.spec-slide.active').select(".main-focus").node().range.y,
+			function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
+			d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
+		)();
+	};
+
+	modals.slider = function (text, value, callback){	
+		var content = text +
+			'<input id="slider" type="range" min="-5" max="5" value="0" step="0.001"/>';
+		
+		var nano = modals.proto("Slider", content,
+			function(modal) {
+				modal.hide();
+	    },
+			function (modal) {
+				callback(0);
+			});
+	
+		d3.select(nano.modal.el).select("#slider")
+			.on("input", function(){
+		    callback(+this.value);
+			});
+	
+		return nano.show;	
+	};
+
+	modals.scaleLine = function () {
+		modals.slider(
+			"Scale spectrum by a factor:",
+			0,function (value) {
+				d3.select(".selected").node().setScaleFactor(Math.pow(2,value));
+			}	
+		)();
+	};
+
+	modals.methods = function (fun ,args, title, specSelector, has_preview) {
+		var el;
+		var preview = true;
+		var plugins = pro.plugins(app.node());
+	
+		var ok_fun = function (modal) {
+			preview = false;
+			require('./utils').fireEvent(el.node(), 'input');
+			modal.hide();
+		};
+	
+		var nano = modals.proto(title, '',	ok_fun);
+		el = d3.select(nano.modal.el).select(".nanoModalContent");
+	
+	
+		var timer = null;
+		el.on('input', function () {
+			var form_data = {};
+	    el.selectAll('.param')
+	      .filter(function () {
+	        return this.id !== '';
+	      })
+	      .each(function (e) {
+	        form_data[this.id] = this.getValue();
+	      });
+		
+			if(timer)
+				clearTimeout(timer);		
+		
+			if(preview === false || 
+				d3.event.target === el ||
+				form_data['prev_btn'] === true){
+				plugins.request(fun, form_data, form_data['s_id'], preview);
+			}else	if(form_data['prev_auto'] === true){
+				timer = setTimeout(function () {
+					plugins.request(fun, form_data, form_data['s_id'], true);
+				}, 300);
+			}
 		});
 	
-	return nano.show;	
-};
-
-modals.scaleLine = function () {
-	modals.slider(
-		"Scale spectrum by a factor:",
-		0,function (value) {
-			d3.select(".selected").node().setScaleFactor(Math.pow(2,value));
-		}	
-	)();
-};
-
-modals.methods = function (fun ,args, title, specSelector, has_preview) {
-	var el;
-	var preview = true;
-	var plugins = pro.plugins(app);
-	
-	var ok_fun = function (modal) {
-		preview = false;
-		require('./utils').fireEvent(el.node(), 'input');
-		modal.hide();
+		var inp = require('./input_elem');
+		el.append(inp.spectrumSelector());
+		el.append(inp.div(args));
+		el.append(inp.preview(true));
+		return nano.show;
 	};
 	
-	var nano = modals.proto(title, '',	ok_fun);
-	el = d3.select(nano.modal.el).select(".nanoModalContent");
-	
-	
-	var timer = null;
-	el.on('input', function () {
-		var form_data = {};
-    el.selectAll('.param')
-      .filter(function () {
-        return this.id !== '';
-      })
-      .each(function (e) {
-        form_data[this.id] = this.getValue();
-      });
-		
-		if(timer)
-			clearTimeout(timer);		
-		
-		if(preview === false || 
-			d3.event.target === el ||
-			form_data['prev_btn'] === true){
-			plugins.request(fun, form_data, form_data['s_id'], preview);
-		}else	if(form_data['prev_auto'] === true){
-			timer = setTimeout(function () {
-				plugins.request(fun, form_data, form_data['s_id'], true);
-			}, 300);
-		}
-	});
-	
-	var inp = require('./input_elem');
-	el.append(inp.spectrumSelector());
-	el.append(inp.div(args));
-	el.append(inp.preview(true));
-	return nano.show;
-};
+	return modals;
+}
 //spec.modals = modals;
-module.exports = modals;
-},{"./input_elem":5,"./utils":11,"nanoModal":1}],8:[function(require,module,exports){
+module.exports = app_modals;
+},{"./input_elem":5,"./utils":15,"nanoModal":1}],12:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3469,7 +3494,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":7}],9:[function(require,module,exports){
+},{"../modals":11}],13:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3687,7 +3712,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":8,"./worker":10}],10:[function(require,module,exports){
+},{"./ajax":12,"./worker":14}],14:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3773,7 +3798,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],11:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4046,4 +4071,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":2}]},{},[3,8,7,6,4,11,10,9]);
+},{"simplify":2}]},{},[3,12,11,4,15,14,13]);
