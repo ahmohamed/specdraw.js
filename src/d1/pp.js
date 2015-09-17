@@ -11,8 +11,8 @@ spec.d1.pp = function(){
 			}
 		];
 		
-		var width = svg.attr("width"),
-				height = svg.attr("height");
+		var width = svg.width(),
+				height = svg.height();
 		
 		var _peaks = [], _peaks_vis = [], 
 				cls = [], cls_vis = [];

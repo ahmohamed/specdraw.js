@@ -1,5 +1,5 @@
 spec.slide = function(){
-	var core = require('./src/elem')
+	var core = require('./src/elem');
 	var source = core.Elem('svg').class('spec-slide');
 	var data, slide_selection, svg_width, svg_height;
 	var clip_id = require('./src/utils').guid();
@@ -20,7 +20,7 @@ spec.slide = function(){
 	
 	function Slide(app){
 		if(!data){
-			create_empty_slide();//TODO
+			//create_empty_slide();//TODO
 			return ;
 		}
 		
@@ -38,7 +38,7 @@ spec.slide = function(){
 		var width = svg_width - margin.left - margin.right,
         height = svg_height - margin.top - margin.bottom;
 		
-		console.log('slide w,h ', svg_width, svg_height)
+		console.log('slide w,h ', svg_width, svg_height);
     var x = d3.scale.linear().range([0, width]),
     y = d3.scale.linear().range([height, 0]);
   
@@ -56,7 +56,7 @@ spec.slide = function(){
 		var two_d = (data["nd"] && data["nd"] === 2);
 		dispatcher.idx = 0;
 		
-		var slide_selection = source(app)
+		slide_selection = source(app)
 			.style({
 				width:svg_width,
 				height:svg_height,
@@ -93,30 +93,30 @@ spec.slide = function(){
 				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
 	
 			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
+				.attr("color-interpolation-filters","sRGB");
 	
 			fe_component_transfer.append("feFuncR")
-									.attr("type","linear")
-									.attr("slope","-1")
-									.attr("intercept","0.5");
-							
+				.attr("type","linear")
+				.attr("slope","-1")
+				.attr("intercept","0.5");
+				
 			fe_component_transfer.append("feFuncB")
-									.attr("type","linear")
-									.attr("slope","1")
-									.attr("intercept","-0.5");
+				.attr("type","linear")
+				.attr("slope","1")
+				.attr("intercept","-0.5");
 	
-			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
+			fe_component_transfer = svg_filter.append("feComponentTransfer")
+				.attr("color-interpolation-filters","sRGB");
 
 			fe_component_transfer.append("feFuncR")
-									.attr("id","rfunc")
-									.attr("type","linear")
-									.attr("slope","1");
+				.attr("id","rfunc")
+				.attr("type","linear")
+				.attr("slope","1");
 					
 			fe_component_transfer.append("feFuncB")
-									.attr("id","bfunc")
-									.attr("type","linear")
-									.attr("slope","1");
+				.attr("id","bfunc")
+				.attr("type","linear")
+				.attr("slope","1");
 											
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
@@ -133,7 +133,7 @@ spec.slide = function(){
 
 		slide_selection.append("g")
 			.attr("class", "y axis")
-			.attr("transform", "translate(" + width + ",0)");;
+			.attr("transform", "translate(" + width + ",0)");
 		
 		slide_selection.append("g").classed('x grid', true);
 		slide_selection.append("g").classed('y grid', true);
@@ -157,18 +157,19 @@ spec.slide = function(){
 		dispatcher.on("redraw.slide", function (e) {
 			if(e.x){
 				slide_selection.select(".x.axis").call(xAxis);
-				if(app.options.grid.x)
+				if(app.options.grid.x){
 					slide_selection.select(".x.grid").call(xGrid);
+				}
 			}
 			if(e.y){
 				slide_selection.select(".y.axis").call(yAxis);
-				if(app.options.grid.y)
+				if(app.options.grid.y){
 					slide_selection.select(".y.grid").call(yGrid);
-				
+				}
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus : spec.d1.main_focus
+		spec_container = two_d ? spec.d2.main_focus : spec.d1.main_focus;
 		//Spec-Container
 		spec_container()
 			.datum(data)
@@ -189,6 +190,8 @@ spec.slide = function(){
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(Slide);
+		
+		d3.rebind(Slide, spec_container, 'spectra', 'addSpec');
 	}
 	
 	Slide.nd = function(){
@@ -197,21 +200,20 @@ spec.slide = function(){
 		}
 		return (data["nd"] && data["nd"] === 2) ? 2 : 1;
 	};
-	Slide.addSpec = function (_) {
-		spec_container.addSpec(_);
-	};
 	Slide.clipId = function(){
 		return clip_id;
 	};
 	Slide.slideDispatcher = function(){
 		return dispatcher;
 	};
+	Slide.specContainer = function(){
+		return spec_container;
+	};
   Slide.datum = function(_){
-    if (!arguments.length) return data;
+    if (!arguments.length) {return data;}
     data = _;
     return Slide;
   };
-	//d3.rebind(Slide, spec_container, 'spectra', 'addSpec')
 	core.inherit(Slide, source);
 	return Slide;
 };

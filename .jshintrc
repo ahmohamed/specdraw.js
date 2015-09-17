@@ -1,0 +1,30 @@
+{
+    "bitwise": true,
+    "eqeqeq": true,
+    "curly": true,
+    "strict": false,
+    "trailing": true,
+    "white": true,
+    "maxlen": 210,
+    "undef": true,
+    "unused": true,
+    "indent": 4,
+    "sub":true,
+    
+    "eqnull": true,
+    "expr": true,
+    "newcap": false,
+    "loopfunc": true,
+    "bitwise": false,
+
+    "browser": true,
+
+    "globals": {
+        "spec": true,
+        "require": false,
+        "d3": false,
+        "console":false,
+        "module":true
+    }
+
+}

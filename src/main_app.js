@@ -1,5 +1,5 @@
 spec.app = function(){
-	var core = require('./src/elem')
+	var core = require('./src/elem');
 	var source = core.Elem().class('spec-app');
   var selection, svg_width, svg_height;
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
@@ -11,15 +11,17 @@ spec.app = function(){
 		svg_height = App.height();
 		
     /* * Check size definitions**/
-		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
-			|| isNaN(svg_width) || isNaN(svg_height)){
+		if (typeof svg_width === 'undefined' ||
+			typeof svg_height === 'undefined' ||
+			isNaN(svg_width) || isNaN(svg_height)
+		){
 				var parent_svg = div.node();
 				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
 					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
 				
 				svg_width = dimensions[0]; //deduct 50px for column menu.
 				svg_height = dimensions[1];
-		};
+		}
 		
     if (svg_width < 400 || svg_height < 400){
       throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
@@ -84,14 +86,15 @@ spec.app = function(){
 		return app_dispatcher;
 	};
 	App.slideDispatcher = function () {
-		return current_slide.slideDispatcher;
+		return current_slide.slideDispatcher();
 	};
 	App.modals = function () {
 		return modals;
 	};
 	App.appendSlide = function(data){
-		if (!arguments.length) 
+		if (!arguments.length){
 			throw new Error("appendSlide: No data provided.");
+		} 
 		
 		var s = spec.slide().datum(data);
 		slides.push(s);
@@ -99,15 +102,16 @@ spec.app = function(){
 		return App;
 	};
 	App.appendToCurrentSlide = function(data){
-		if (!arguments.length) 
+		if (!arguments.length){
 			throw new Error("appendToCurrentSlide: No data provided.");
+		} 
 		
 		if (selection){
 			selection.node().appendToCurrentSlide(data);
 		} else{
-			if(slides.length === 0) //No slides available; create a new one
+			if(slides.length === 0){ //No slides available; create a new one
 				return App.appendSlide(data);
-			
+			}
 			//Otherwise, append data to last slide.
 			var current_slide = slides[slides.length-1].slide;
 			//TODO: BUG

@@ -1,8 +1,7 @@
 spec.d1.main_focus = function () {
 	var focus, x, y, dispatcher, data, range = {};
-	var core = require('./src/elem')
+	var core = require('./src/elem');
 	var source = core.SVGElem().class('main-focus');
-	var data, slide_selection;
 	var specs = core.ElemArray();
 	
 	/*var zoomTimer;
@@ -19,10 +18,10 @@ spec.d1.main_focus = function () {
 		.on("zoom", function () {
 			/* * When a y brush is applied, the scaled region should go both up and down.*/
 			var new_range = range.y[1]/zoomer.scale() - range.y[0];
-			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2
+			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2;
 		
 			var new_region = [];
-			if(y.domain()[0] == range.y[0]) new_region[0] = range.y[0];
+			if(y.domain()[0] === range.y[0]) { new_region[0] = range.y[0]; }
 			else{new_region[0] = Math.max(y.domain()[0]-addition, range.y[0]);}
 			new_region[1] = new_region[0] + new_range;
 			
@@ -78,12 +77,13 @@ spec.d1.main_focus = function () {
 							
 				if(e.ydomain){
 					y.domain(e.ydomain);
-					if(!e.zoom) //If y domain is changed by brush, adjust zoom scale
-						zoomer.scale((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]));
+					if(!e.zoom){//If y domain is changed by brush, adjust zoom scale
+						zoomer.scale((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]));						
+					} 
 				}else{
 					//modify range.y  and reset the zoom scale
-					var y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
+					var y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
+						y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
 					var y_limits = (y1-y0);
 					y0 = y0 - (0.05 * y_limits);
 					y1 = y1 + (0.05 * y_limits);
@@ -99,26 +99,25 @@ spec.d1.main_focus = function () {
 				focus.on("_redraw")({x:e.xdomain, y:true});
 			})
 			.on("_rangechange", function(e){
-				if(e.x)
-					range.x = e.x;
-				if(e.y)
-					range.y = e.y;
+				if(e.x) { range.x = e.x; }	
+				if(e.y) { range.y = e.y; }
 			
 				dispatcher.rangechange(e);
 				
-				if(!e.norender)
+				if(!e.norender){
 					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
+				} 
 			})
 			.on("mouseenter", dispatcher.mouseenter)
 			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(e){
+			.on("mousemove", function(){
 				var new_e = d3.event;
 				new_e.xcoor = d3.mouse(this)[0];
 				new_e.ycoor = d3.mouse(this)[1];
 			
 				dispatcher.mousemove(new_e);
 			})
-			.on("mousedown", function (e) {	// Why?! because no brush when cursor on path?
+			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
 			  var new_click_event = new Event('mousedown');
 			  new_click_event.pageX = d3.event.pageX;
 			  new_click_event.clientX = d3.event.clientX;
@@ -127,12 +126,12 @@ spec.d1.main_focus = function () {
 			  focus.select(".main-brush").node()
 					.dispatchEvent(new_click_event);
 			})
-			.on("click", function(e){
+			.on("click", function(){
 				var new_e = d3.event;
 				new_e.xcoor = d3.mouse(this)[0];
 				new_e.ycoor = d3.mouse(this)[1];
 		
-				dispatcher.click(new_e)
+				dispatcher.click(new_e);
 			})
 			.on("dblclick", dispatcher.regionfull);
 
@@ -147,11 +146,11 @@ spec.d1.main_focus = function () {
 			.style("fill", "none");
 
 		//brushes
-		focus.call(
-			spec.d1.mainBrush()
-				.xScale(x)
-				.dispatcher(dispatcher)
-		);
+		spec.d1.mainBrush()
+			.xScale(x)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+		
 
 		//spectral lines
 		for (var i = 0; i < specs.length; i++) {
@@ -159,31 +158,30 @@ spec.d1.main_focus = function () {
 		}
 		
 		//peak picker	
-		focus.call(
-			spec.d1.pp()
-				.xScale(x)
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);
+		spec.d1.pp()
+			.xScale(x)
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
 	}
 	function update_range() {
-		var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
-			x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
-			y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-			y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
+		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
 
-			
 		// Add 5% margin to top and bottom (easier visualization).
 		var y_limits = (y1-y0);
 		y0 = y0 - (0.05 * y_limits);
 		y1 = y1 + (0.05 * y_limits);
 
-		var xdomain = x.domain(), ydomain = y.domain();
+		var xdomain = x.domain();
 
 		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
 
-		if(specs.length > 1)
+		if(specs.length > 1){
 			focus.on("_regionchange")({xdomain:xdomain});	
+		}
 	}
 	
 	function render_spec(s) {
@@ -198,8 +196,9 @@ spec.d1.main_focus = function () {
 	
 	core.inherit(SpecContainer, source);
 	SpecContainer.addSpec = function(spec_data, crosshair){
-		if (!arguments.length) 
+		if (!arguments.length) {
 			throw new Error("appendSlide: No data provided.");
+		} 
 		
 		if(typeof crosshair === 'undefined'){
 			crosshair = true;
@@ -208,25 +207,26 @@ spec.d1.main_focus = function () {
 		// TODO: s_id is only present in 'connected' mode.
 		var s_id = null;
 		var spec_label = 'spec'+specs.length;
-		console.log(spec_data['label'])
+		console.log(spec_data['label']);
 
-		if(typeof spec_data["s_id"] !== 'undefined') s_id = spec_data["s_id"];
-		if(typeof spec_data['label'] !== 'undefined') spec_label = spec_data["label"];
-		spec_data = spec_data["data"]
+		if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
+		if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
+		spec_data = spec_data["data"];
 		
 		// Find the spectrum with the same s_id.
 		// If it is present, overwrite it.
 		// Otherwise, create a new spectrum.
 		var s = specs.filter(function (e) {
-			return e.s_id() === s_id
+			return e.s_id() === s_id;
 		}	);
 		
 		if ( s.length === 0 ){
 		 	s = spec.d1.line()
 				.datum(spec_data)
 				.crosshair(crosshair)
-				.s_id(s_id);
-				
+				.s_id(s_id)
+				.label(spec_label);
+			
 			specs.push(s);
 		}else{
 			s = s[0];
@@ -244,15 +244,15 @@ spec.d1.main_focus = function () {
 	};
 	SpecContainer.nd = function(){
 		return 1;
-	}
+	};
 	SpecContainer.spectra = function () {
 		return specs;
 	};
-  SpecContainer.range = function(_){
+  SpecContainer.range = function(){
 		return range;
   };
   SpecContainer.datum = function(_){
-    if (!arguments.length) return data;
+    if (!arguments.length) {return data;}
     data = _;
 		
 		//TODO: Clear all spectra first.

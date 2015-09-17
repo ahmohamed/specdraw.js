@@ -18,9 +18,10 @@ function ElemArray(arr){
 }
 
 function Elem(tag){
-  var selection, width, height, cls;
+  var selection, parentElem, width, height, cls;
   function _main (container){
     selection = container.append(tag || 'div');
+		parentElem = container;
     if(cls){
       selection.classed(cls, true);
     }
@@ -29,10 +30,13 @@ function Elem(tag){
 	
   _main.sel = function(){
     return selection;
-  }
+  };
   _main.node = function(){
     return selection ? selection.node() : undefined;
-  }
+  };
+  _main.parent = function(){
+    return parentElem ;
+  };
   _main.width = function(_){
     if (!arguments.length) return width;
     width = _;
@@ -66,6 +70,15 @@ function Elem(tag){
 		}
 		return selection.selectAll(_)
 	};
+	_main.remove = function () {
+		if( selection ){
+			if ( selection.on('remove') ){
+				selection.on('remove')()
+			}
+			selection.remove();
+		}
+	};
+	
   return _main;
 }
 

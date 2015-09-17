@@ -43,8 +43,8 @@ spec.d1.mainBrush = function(){
 			svg_elem.call(_brush);
 		};
 
-		var width = svg.attr("width"),
-				height = svg.attr("height");
+		var width = svg.width(),
+				height = svg.height();
 		
 	  var _brush = d3.svg.brush()
 			.x(x)
