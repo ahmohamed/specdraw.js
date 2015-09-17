@@ -1,6 +1,10 @@
 spec.d1.threshold = function () {
 	var svg_elem, x, y, dispatcher, callback;
-	function _main(svg) {
+	function _main(spec_container) {
+		x = _main.xScale() || spec_container.xScale();
+		y = _main.yScale() || spec_container.yScale();
+		dispatcher = _main.dispatcher() || spec_container.dispatcher();
+		
 		svg_elem = svg.append("path")
 			.attr("class", "threshold line x")
 			.on("_mousemove", function(e) {

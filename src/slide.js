@@ -1,6 +1,8 @@
 spec.slide = function(){
 	var core = require('./src/elem');
 	var source = core.Elem('svg').class('spec-slide');
+	core.inherit(Slide, source);
+	
 	var data, slide_selection, svg_width, svg_height;
 	var clip_id = require('./src/utils').guid();
 	var spec_container;
@@ -169,9 +171,9 @@ spec.slide = function(){
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus : spec.d1.main_focus;
+		spec_container = two_d ? spec.d2.main_focus() : spec.d1.main_focus();
 		//Spec-Container
-		spec_container()
+		spec_container
 			.datum(data)
 			.xScale(x)
 			.yScale(y)
@@ -181,17 +183,17 @@ spec.slide = function(){
 			(Slide);
 		
 		//Scale brushes
-		spec.d1.scaleBrush()
+		require('./src/d1/scale-brush')()
 			.xScale(x)
 			.dispatcher(dispatcher)
 			(Slide);
 				
-		spec.d1.scaleBrush()
+		require('./src/d1/scale-brush')()
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(Slide);
 		
-		d3.rebind(Slide, spec_container, 'spectra', 'addSpec');
+		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
 	
 	Slide.nd = function(){
@@ -214,6 +216,5 @@ spec.slide = function(){
     data = _;
     return Slide;
   };
-	core.inherit(Slide, source);
 	return Slide;
 };

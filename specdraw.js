@@ -184,7 +184,11 @@ spec.d1 = {};
 
 spec.d1.threshold = function () {
 	var svg_elem, x, y, dispatcher, callback;
-	function _main(svg) {
+	function _main(spec_container) {
+		x = _main.xScale() || spec_container.xScale();
+		y = _main.yScale() || spec_container.yScale();
+		dispatcher = _main.dispatcher() || spec_container.dispatcher();
+		
 		svg_elem = svg.append("path")
 			.attr("class", "threshold line x")
 			.on("_mousemove", function(e) {
@@ -619,232 +623,6 @@ spec.d1.line = function () {
 	return SpecLine;
 };
 
-spec.d1.mainBrush = function(){
-	var svg_elem, x, y, dispatcher;
-	
-	function _main(svg) {
-		function makeBrushEvent() {
-			if (_brush.empty()){
-				if(x && y) _brush.extent([[0,0],[0,0]]);
-				else{ _brush.extent([0,0]); }
-				
-				svg_elem.call(_brush);
-				return null;
-    	}
-			var e = {}
-			if(x && y){
-				e.xdomain = [_brush.extent()[1][0], _brush.extent()[0][0]];
-				e.ydomain = [_brush.extent()[1][1], _brush.extent()[0][1]];				
-			}else{
-				e.xdomain = x? _brush.extent().reverse():null;
-				e.ydomain = y? _brush.extent():null;
-			}		
-			
-			_brush.clear();				
-			svg_elem.call(_brush);
-			return e;
-		};
-		function changeRegion () {			
-			var e = makeBrushEvent();
-			if(e)
-				svg.on("_regionchange")(e);
-    };		
-		function peakdel () {
-			var e = makeBrushEvent();
-			if(e)
-				dispatcher.peakdel(e);
-    };
-		function integrate () {
-			var e = makeBrushEvent();
-			if(e)
-				dispatcher.integrate(e);
-    };
-		function peakpick() {
-			_brush.clear()
-			svg_elem.call(_brush);
-		};
-
-		var width = svg.width(),
-				height = svg.height();
-		
-	  var _brush = d3.svg.brush()
-			.x(x)
-			.y(y)
-	    .on("brushend", changeRegion);
-		
-		svg_elem = svg.append("g")
-			.attr("class", "main-brush")
-			.call(_brush);
-				
-		svg_elem.selectAll("rect")
-			.attr("height", height);
-		
-		svg_elem.select(".background")
-			.style('cursor', null)
-			.style('pointer-events', 'all');
-		
-		svg_elem.node().peakpickEnable = function (_) {
-			svg_elem.classed("peakpick-brush", _);
-			svg.classed("peakpick-brush", _);
-			
-			_brush.on("brushend", _? peakpick : changeRegion);
-		};
-		svg_elem.node().peakdelEnable = function (_) {
-			svg_elem.classed("peakdel-brush", _);
-			svg.classed("peakdel-brush", _);
-			
-			_brush.on("brushend", _? peakdel : changeRegion);
-		};
-		svg_elem.node().integrateEnable = function (_) {
-			svg_elem.classed("integrate-brush", _);
-			svg.classed("integrate-brush", _);
-			
-			_brush.on("brushend", _? integrate : changeRegion);
-		};
-	
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;		
-		dispatcher.on("peakpickEnable.brush."+dispatch_idx, svg_elem.node().peakpickEnable);
-		dispatcher.on("peakdelEnable.brush."+dispatch_idx, svg_elem.node().peakdelEnable);
-		dispatcher.on("integrateEnable.brush."+dispatch_idx, svg_elem.node().integrateEnable);
-		
-		return svg_elem;									
-	}
-
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
-    return _main;
-  }
-	
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  }
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  }
-	
-	return _main;
-};
-
-spec.d1.scaleBrush = function(){
-	var svg_elem, axisorient, x, y, dispatcher,brushscale;
-	
-	function _main(svg) {
-		var mainscale = x? x : y;
-		brushscale = x? x.copy() : y.copy();
-		axisorient = x? "bottom": "top";
-		
-    var axis = d3.svg.axis().scale(brushscale).orient(axisorient)
-			.tickFormat(d3.format("s"));;
-    
-    var _brush = d3.svg.brush()
-      .x(brushscale)
-			.on("brushstart",function(){d3.event.sourceEvent.stopPropagation();})
-			.on("brushend", function () {//test x or y domain?
-				var extent = _brush.empty()? brushscale.domain() : _brush.extent().reverse();
-				extent = extent.sort(brushscale.domain()[0] > brushscale.domain()[1]?
-					d3.descending : d3.ascending );
-				
-				svg.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
-			})
-		
-		svg_elem = svg.append("g")
-			.attr("class", (x? "x":"y") + " scale-brush")
-			.attr("transform", x? "translate(0," + -20 + ")"
-				: "translate(-20," + 0 + ")rotate("+90+")"
-			);
-
-    svg_elem.append("g")
-	    .call(axis)
-			.attr("class", "brush-axis")
-    
-        
-		svg_elem.append("g")
-      .attr("class", "brush")
-      .call(_brush)
-      .selectAll("rect")
-        .attr("y", -5)
-        .attr("height", 10);
-		
-						
-		svg_elem.select(".background")
-			.style('pointer-events', 'all');
-	
-		
-		svg_elem
-			.on("_rangechange", function(e){
-				if(e.x || (e.y && y)){
-					brushscale.domain( x? e.x : e.y);					
-					
-					svg_elem.select(".brush-axis").call(axis);
-					svg_elem.select(".brush").call(_brush);					
-				}
-			})
-			.on("_regionchange", function(e){
-				if(e.xdomain || (e.ydomain && y)){
-					var domain = process_domains(mainscale.domain(), brushscale.domain())
-					_brush.extent(domain);
-				}
-			})
-			.on("_redraw", function(e){
-				if(e.x || (e.y && y))
-					svg_elem.select(".brush").call(_brush);				
-			});
-		
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("rangechange.scalebrush."+dispatch_idx, svg_elem.on("_rangechange"));
-		dispatcher.on("regionchange.scalebrush."+dispatch_idx, svg_elem.on("_regionchange"));
-		dispatcher.on("redraw.scalebrush."+dispatch_idx, svg_elem.on("_redraw"));		
-
-		
-		
-		return svg_elem;									
-	}
-	
-	function process_domains(main, brush) {
-		var domain = [0,0];
-		if(main[0]>main[1]){
-			domain[0] = Math.min(main[0], brush[0]);
-			domain[1] = Math.max(main[1], brush[1]);
-		}else{
-			domain[0] = Math.max(main[0], brush[0]);
-			domain[1] = Math.min(main[1], brush[1]);
-		}
-		
-		if(domain.join()==brush.join())
-			domain = [0,0];
-		
-		return domain;
-	}
-	
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
-    return _main;
-  }
-	
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  }
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  }
-	
-	return _main;
-};
-
 spec.d1.pp = function(){
 	var svg_elem, x, y, dispatcher;
 	
@@ -1046,6 +824,7 @@ spec.d1.main_focus = function () {
 	var focus, x, y, dispatcher, data, range = {};
 	var core = require('./src/elem');
 	var source = core.SVGElem().class('main-focus');
+	core.inherit(SpecContainer, source);
 	var specs = core.ElemArray();
 	
 	/*var zoomTimer;
@@ -1190,7 +969,7 @@ spec.d1.main_focus = function () {
 			.style("fill", "none");
 
 		//brushes
-		spec.d1.mainBrush()
+		require('./src/d1/main-brush')()
 			.xScale(x)
 			.dispatcher(dispatcher)
 			(SpecContainer);
@@ -1238,7 +1017,11 @@ spec.d1.main_focus = function () {
 		update_range();
 	}
 	
-	core.inherit(SpecContainer, source);
+	SpecContainer.changeRegion = function (_) {
+		if( focus ){
+			focus.on('_regionchange')(_);
+		}
+	};
 	SpecContainer.addSpec = function(spec_data, crosshair){
 		if (!arguments.length) {
 			throw new Error("appendSlide: No data provided.");
@@ -1916,6 +1699,8 @@ spec.app = function(){
 spec.slide = function(){
 	var core = require('./src/elem');
 	var source = core.Elem('svg').class('spec-slide');
+	core.inherit(Slide, source);
+	
 	var data, slide_selection, svg_width, svg_height;
 	var clip_id = require('./src/utils').guid();
 	var spec_container;
@@ -2084,9 +1869,9 @@ spec.slide = function(){
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus : spec.d1.main_focus;
+		spec_container = two_d ? spec.d2.main_focus() : spec.d1.main_focus();
 		//Spec-Container
-		spec_container()
+		spec_container
 			.datum(data)
 			.xScale(x)
 			.yScale(y)
@@ -2096,17 +1881,17 @@ spec.slide = function(){
 			(Slide);
 		
 		//Scale brushes
-		spec.d1.scaleBrush()
+		require('./src/d1/scale-brush')()
 			.xScale(x)
 			.dispatcher(dispatcher)
 			(Slide);
 				
-		spec.d1.scaleBrush()
+		require('./src/d1/scale-brush')()
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(Slide);
 		
-		d3.rebind(Slide, spec_container, 'spectra', 'addSpec');
+		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
 	
 	Slide.nd = function(){
@@ -2129,7 +1914,6 @@ spec.slide = function(){
     data = _;
     return Slide;
   };
-	core.inherit(Slide, source);
 	return Slide;
 };
 
@@ -2333,8 +2117,8 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/crosshair":4,"./src/elem":5,"./src/events":6,"./src/menu/menu":9,"./src/modals":13,"./src/pro/ajax":14,"./src/pro/process_data":15,"./src/utils":17}],4:[function(require,module,exports){
-function crosshair(){
+},{"./src/d1/crosshair":4,"./src/d1/main-brush":5,"./src/d1/scale-brush":6,"./src/elem":7,"./src/events":8,"./src/menu/menu":11,"./src/modals":15,"./src/pro/ajax":16,"./src/pro/process_data":17,"./src/utils":19}],4:[function(require,module,exports){
+module.exports = function (){
 	function getDataPoint (x_point, i_scale, local_max) {
 		var i;
     if(local_max){
@@ -2475,14 +2259,216 @@ function crosshair(){
     return _main;
   };
 	return _main;
-}
+};
 
-module.exports = crosshair;
-},{"../elem":5}],5:[function(require,module,exports){
+},{"../elem":7}],5:[function(require,module,exports){
+module.exports = function (){
+	var x, y, dispatcher;
+	var svg_elem, _brush;
+	var core = require('../elem');
+	var source = core.SVGElem().class('main-brush');
+	core.inherit(MainBrush, source);
+	
+	function makeBrushEvent() {
+		if (_brush.empty()){
+			if(x && y) {_brush.extent([[0,0],[0,0]]);}
+			else{ _brush.extent([0,0]); }
+			
+			svg_elem.call(_brush);
+			return null;
+  	}
+		var e = {};
+		if(x && y){
+			e.xdomain = [_brush.extent()[1][0], _brush.extent()[0][0]];
+			e.ydomain = [_brush.extent()[1][1], _brush.extent()[0][1]];				
+		}else{
+			e.xdomain = x? _brush.extent().reverse():null;
+			e.ydomain = y? _brush.extent():null;
+		}		
+		
+		_brush.clear();				
+		svg_elem.call(_brush);
+		return e;
+	}
+	function changeRegion () {			
+		var e = makeBrushEvent();
+		if(e)
+			{MainBrush.parent().changeRegion(e);}
+  }		
+	function peakdel () {
+		var e = makeBrushEvent();
+		if(e)
+			{dispatcher.peakdel(e);}
+  }
+	function integrate () {
+		var e = makeBrushEvent();
+		if(e)
+			{dispatcher.integrate(e);}
+  }
+	function peakpick() {
+		_brush.clear();
+		svg_elem.call(_brush);
+	}
+	
+	function MainBrush(spec_container) {		
+		x = MainBrush.xScale();
+		y = MainBrush.yScale();
+		dispatcher = MainBrush.dispatcher();
+		
+		
+	  _brush = d3.svg.brush()
+			.x(x)
+			.y(y)
+	    .on("brushend", changeRegion);
+		
+		svg_elem = source(spec_container)
+			.call(_brush);
+
+		svg_elem.selectAll("rect")
+			.attr("height", spec_container.height());
+		
+		svg_elem.select(".background")
+			.style('cursor', null)
+			.style('pointer-events', 'all');
+		
+		svg_elem.on('peakpickEnable', function (_) {
+			svg_elem.classed("peakpick-brush", _);
+			MainBrush.parent().sel().classed("peakpick-brush", _);
+			
+			_brush.on("brushend", _? peakpick : changeRegion);
+		})
+		.on('peakdelEnable', function (_) {
+			svg_elem.classed("peakdel-brush", _);
+			MainBrush.parent().sel().classed("peakdel-brush", _);
+			
+			_brush.on("brushend", _? peakdel : changeRegion);
+		})
+		.on('integrateEnable', function (_) {
+			svg_elem.classed("integrate-brush", _);
+			MainBrush.parent().sel().classed("integrate-brush", _);
+			
+			_brush.on("brushend", _? integrate : changeRegion);
+		});
+	
+		// Register event listeners
+		var dispatch_idx = ++dispatcher.idx;		
+		dispatcher.on("peakpickEnable.brush."+dispatch_idx, svg_elem.on('peakpickEnable'));
+		dispatcher.on("peakdelEnable.brush."+dispatch_idx, svg_elem.on('peakdelEnable'));
+		dispatcher.on("integrateEnable.brush."+dispatch_idx, svg_elem.on('integrateEnable'));
+		
+		return svg_elem;									
+	}
+
+	return MainBrush;
+};
+
+},{"../elem":7}],6:[function(require,module,exports){
+module.exports = function(){
+	var svg_elem, x, y, dispatcher,brushscale;
+	
+	var core = require('../elem');
+	var source = core.SVGElem().class('scale-brush');
+	core.inherit(_main, source);
+	
+	function _main(slide) {
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
+		
+		var mainscale = x? x : y;
+		brushscale = x? x.copy() : y.copy();
+		
+    var axis = d3.svg.axis()
+			.scale(brushscale)
+			.orient(x? "bottom": "top")
+			.tickFormat(d3.format("s"));
+    
+    var _brush = d3.svg.brush()
+      .x(brushscale)
+			.on("brushstart",function(){d3.event.sourceEvent.stopPropagation();})
+			.on("brushend", function () {//test x or y domain?
+				var extent = _brush.empty()? brushscale.domain() : _brush.extent().reverse();
+				extent = extent.sort(brushscale.domain()[0] > brushscale.domain()[1]?
+					d3.descending : d3.ascending );
+				
+				slide.changeRegion( x ? {xdomain:extent}	: {ydomain:extent} );
+			});
+		
+		svg_elem = source(slide)
+			.classed( x ?  "x" : "y", true)
+			.attr("transform", x? "translate(0," + -20 + ")"
+				: "translate(-20," + 0 + ")rotate("+90+")"
+			);
+
+    svg_elem.append("g")
+	    .call(axis)
+			.attr("class", "brush-axis");
+    
+        
+		svg_elem.append("g")
+      .attr("class", "brush")
+      .call(_brush)
+      .selectAll("rect")
+        .attr("y", -5)
+        .attr("height", 10);
+		
+						
+		svg_elem.select(".background")
+			.style('pointer-events', 'all');
+	
+		
+		svg_elem
+			.on("_rangechange", function(e){
+				if(e.x || (e.y && y)){
+					brushscale.domain( x? e.x : e.y);					
+					
+					svg_elem.select(".brush-axis").call(axis);
+					svg_elem.select(".brush").call(_brush);					
+				}
+			})
+			.on("_regionchange", function(e){
+				if(e.xdomain || (e.ydomain && y)){
+					var domain = process_domains(mainscale.domain(), brushscale.domain());
+					_brush.extent(domain);
+				}
+			})
+			.on("_redraw", function(e){
+				if(e.x || (e.y && y))
+					{svg_elem.select(".brush").call(_brush);}
+			});
+		
+		// Register event listeners
+		var dispatch_idx = ++dispatcher.idx;
+		dispatcher.on("rangechange.scalebrush."+dispatch_idx, svg_elem.on("_rangechange"));
+		dispatcher.on("regionchange.scalebrush."+dispatch_idx, svg_elem.on("_regionchange"));
+		dispatcher.on("redraw.scalebrush."+dispatch_idx, svg_elem.on("_redraw"));		
+
+		return svg_elem;									
+	}
+	
+	function process_domains(main, brush) {
+		var domain = [0,0];
+		if(main[0]>main[1]){
+			domain[0] = Math.min(main[0], brush[0]);
+			domain[1] = Math.max(main[1], brush[1]);
+		}else{
+			domain[0] = Math.max(main[0], brush[0]);
+			domain[1] = Math.min(main[1], brush[1]);
+		}
+		
+		if(domain.join() === brush.join())
+			{domain = [0,0];}
+		
+		return domain;
+	}
+	return _main;
+};
+
+},{"../elem":7}],7:[function(require,module,exports){
 function inherit(target, source){
-  for (f in source){
+  for (var f in source){
     if (typeof source[f] === 'function'){
-      d3.rebind(target, source, f)
+      d3.rebind(target, source, f);
     }
   }
 }
@@ -2492,7 +2478,7 @@ function ElemArray(arr){
 		arr = [];
 	}
   arr.__proto__.nodes = function(){
-	  return this.map(function(e){return e.node()});
+	  return this.map(function(e){return e.node();});
 	}
 	
   return arr;
@@ -2563,8 +2549,8 @@ function Elem(tag){
   return _main;
 }
 
-function SVGElem(){
-	var source = Elem('g');
+function ResponsiveElem(tag){
+	var source = Elem(tag);
   var x, y, data, dispatcher;
   function _main (container){
     var selection = source(container);
@@ -2594,12 +2580,22 @@ function SVGElem(){
   return _main;
 }
 
+function SVGElem(){
+	var source = ResponsiveElem('g');
+  function _main (container){
+    var selection = source(container);
+    return selection;
+  }
+	inherit(_main, source);
+  return _main;
+}
+
 module.exports.inherit = inherit;
 module.exports.ElemArray = ElemArray;
 module.exports.Elem = Elem;
 module.exports.SVGElem = SVGElem;
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2708,7 +2704,7 @@ function editText(evt){
 }*/
 
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -2999,7 +2995,7 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./utils":17}],8:[function(require,module,exports){
+},{"./utils":19}],10:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -3066,7 +3062,7 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":7,"../utils":17}],9:[function(require,module,exports){
+},{"../input_elem":9,"../utils":19}],11:[function(require,module,exports){
 var utils = require('../utils');
 
 function create_menu (app){	
@@ -3143,7 +3139,7 @@ function create_menu (app){
 }
 
 module.exports = create_menu;
-},{"../utils":17,"./main_menu":8,"./menu_data":10,"./slides":11,"./spectra":12}],10:[function(require,module,exports){
+},{"../utils":19,"./main_menu":10,"./menu_data":12,"./slides":13,"./spectra":14}],12:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3212,7 +3208,7 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":6}],11:[function(require,module,exports){
+},{"../events":8}],13:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function slides (app) {
@@ -3241,7 +3237,7 @@ function slides (app) {
 };
 
 module.exports = slides;
-},{"../input_elem":7}],12:[function(require,module,exports){
+},{"../input_elem":9}],14:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3270,7 +3266,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":7}],13:[function(require,module,exports){
+},{"../input_elem":9}],15:[function(require,module,exports){
 require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -3510,7 +3506,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":7,"./utils":17,"nanoModal":1}],14:[function(require,module,exports){
+},{"./input_elem":9,"./utils":19,"nanoModal":1}],16:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3584,7 +3580,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":13}],15:[function(require,module,exports){
+},{"../modals":15}],17:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3802,7 +3798,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":14,"./worker":16}],16:[function(require,module,exports){
+},{"./ajax":16,"./worker":18}],18:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3888,7 +3884,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4161,4 +4157,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":2}]},{},[3,14,13,5,6,17,16,15,4]);
+},{"simplify":2}]},{},[3,16,15,7,8,19,18,17,4,5,6]);

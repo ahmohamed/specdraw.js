@@ -1,4 +1,4 @@
-function crosshair(){
+module.exports = function (){
 	function getDataPoint (x_point, i_scale, local_max) {
 		var i;
     if(local_max){
@@ -139,6 +139,4 @@ function crosshair(){
     return _main;
   };
 	return _main;
-}
-
-module.exports = crosshair;
+};

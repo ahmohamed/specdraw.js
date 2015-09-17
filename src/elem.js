@@ -1,7 +1,7 @@
 function inherit(target, source){
-  for (f in source){
+  for (var f in source){
     if (typeof source[f] === 'function'){
-      d3.rebind(target, source, f)
+      d3.rebind(target, source, f);
     }
   }
 }
@@ -11,7 +11,7 @@ function ElemArray(arr){
 		arr = [];
 	}
   arr.__proto__.nodes = function(){
-	  return this.map(function(e){return e.node()});
+	  return this.map(function(e){return e.node();});
 	}
 	
   return arr;
@@ -82,8 +82,8 @@ function Elem(tag){
   return _main;
 }
 
-function SVGElem(){
-	var source = Elem('g');
+function ResponsiveElem(tag){
+	var source = Elem(tag);
   var x, y, data, dispatcher;
   function _main (container){
     var selection = source(container);
@@ -109,6 +109,16 @@ function SVGElem(){
   	dispatcher = _;
   	return _main;
   };	
+	inherit(_main, source);
+  return _main;
+}
+
+function SVGElem(){
+	var source = ResponsiveElem('g');
+  function _main (container){
+    var selection = source(container);
+    return selection;
+  }
 	inherit(_main, source);
   return _main;
 }

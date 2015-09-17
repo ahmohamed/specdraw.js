@@ -2,6 +2,7 @@ spec.d1.main_focus = function () {
 	var focus, x, y, dispatcher, data, range = {};
 	var core = require('./src/elem');
 	var source = core.SVGElem().class('main-focus');
+	core.inherit(SpecContainer, source);
 	var specs = core.ElemArray();
 	
 	/*var zoomTimer;
@@ -146,7 +147,7 @@ spec.d1.main_focus = function () {
 			.style("fill", "none");
 
 		//brushes
-		spec.d1.mainBrush()
+		require('./src/d1/main-brush')()
 			.xScale(x)
 			.dispatcher(dispatcher)
 			(SpecContainer);
@@ -194,7 +195,11 @@ spec.d1.main_focus = function () {
 		update_range();
 	}
 	
-	core.inherit(SpecContainer, source);
+	SpecContainer.changeRegion = function (_) {
+		if( focus ){
+			focus.on('_regionchange')(_);
+		}
+	};
 	SpecContainer.addSpec = function(spec_data, crosshair){
 		if (!arguments.length) {
 			throw new Error("appendSlide: No data provided.");
