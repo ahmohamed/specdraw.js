@@ -10,15 +10,15 @@ spec.d1.line = function () {
 			.x(function(d) { return x(d.x); })
 			.y(function(d) { return y(d.y * scale_factor); });
 		
-		var width = svg.attr("width")
+		var width = svg.width()
 		
 		svg_elem = svg.append("g")
 			.attr("class", "spec-line");
-		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
+		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
 		
 		svg_elem.node().range = range;
 			
-		var line_idx = svg.node().nSpecs;
+		var line_idx = svg.spectra().indexOf(_main);
 		svg_elem.node().line_idx = line_idx;
 		
 		var path_elem = svg_elem.append("path")

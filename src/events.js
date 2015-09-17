@@ -8,7 +8,7 @@ var events = {
 
 events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
-	app.slideDispatcher.crosshairEnable(events.crosshair);
+	app.slideDispatcher().crosshairEnable(events.crosshair);
 }
 
 events.peakpickToggle = function (app) {
@@ -18,7 +18,7 @@ events.peakpickToggle = function (app) {
 	
 	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
-	app.slideDispatcher.peakpickEnable(events.peakpick);
+	app.slideDispatcher().peakpickEnable(events.peakpick);
 }
 
 events.peakdelToggle = function (app) {
@@ -27,7 +27,7 @@ events.peakdelToggle = function (app) {
 	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.peakdel = !events.peakdel;
-	app.slideDispatcher.peakdelEnable(events.peakdel);	
+	app.slideDispatcher().peakdelEnable(events.peakdel);	
 }
 
 events.integrateToggle = function (app) {
@@ -36,7 +36,7 @@ events.integrateToggle = function (app) {
 	if(events.peakdel !== false) events.peakdelToggle(app);
 
 	events.integrate = !events.integrate;
-	app.slideDispatcher.integrateEnable(events.integrate);	
+	app.slideDispatcher().integrateEnable(events.integrate);	
 }
 
 events.zoomToggle = function (app) {
@@ -70,7 +70,7 @@ events.registerKeyboard = function(app){
           .style("fill-opacity",".1")
 	        .remove();
 			*/
-			app.slideDispatcher.log("keyCode: " + d3.event.keyCode);
+			app.slideDispatcher().log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
 				events.peakpickToggle(app);
@@ -87,7 +87,7 @@ events.registerKeyboard = function(app){
 			}
 			
 			
-			app.slideDispatcher.keyboard(d3.event);
+			app.slideDispatcher().keyboard(d3.event);
 	  });
 };
 module.exports = events;

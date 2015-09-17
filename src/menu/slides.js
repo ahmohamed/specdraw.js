@@ -13,13 +13,11 @@ function slides (app) {
 		nav.append('ul')
 			.classed('block-list slide-list', true)
 			.selectAll('li')
-			.data(slides[0]).enter()
+			.data(app.slides).enter()
 			.append('li')
 				.text(function(d,i){return 'Slide ' + (i+1);})
 				.on('click', function (d) {
-					slides.classed('active', false);
-					d3.select(d).classed('active', true);
-					app.node().dispatcher.slideChange();
+					app.dispatcher().slideChange(d);
 				});
 				
 		return div;

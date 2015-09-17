@@ -19,12 +19,11 @@ function ElemArray(arr){
 
 function Elem(tag){
   var selection, width, height, cls;
-  function _main (parent){
-    selection = parent.append(tag || 'div');
+  function _main (container){
+    selection = container.append(tag || 'div');
     if(cls){
       selection.classed(cls, true);
     }
-		d3.rebind(_main, selection, 'appened', 'select');
     return selection;
   }
 	
@@ -49,6 +48,24 @@ function Elem(tag){
     cls = _;
     return _main;
   };
+	_main.append = function(_){ 
+		if(!selection){
+			throw new Error('Elem is not in DOM')
+		}
+		return selection.append(_);
+	};
+	_main.select = function(_){
+		if(!selection){
+			throw new Error('Elem is not in DOM')
+		}
+		return selection.select(_);
+	};
+	_main.selectAll = function(_){
+		if(!selection){
+			throw new Error('Elem is not in DOM')
+		}
+		return selection.selectAll(_)
+	};
   return _main;
 }
 
@@ -83,6 +100,7 @@ function SVGElem(){
   return _main;
 }
 
+module.exports.inherit = inherit;
 module.exports.ElemArray = ElemArray;
 module.exports.Elem = Elem;
 module.exports.SVGElem = SVGElem;

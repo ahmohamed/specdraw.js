@@ -537,15 +537,15 @@ spec.d1.line = function () {
 			.x(function(d) { return x(d.x); })
 			.y(function(d) { return y(d.y * scale_factor); });
 		
-		var width = svg.attr("width")
+		var width = svg.width()
 		
 		svg_elem = svg.append("g")
 			.attr("class", "spec-line");
-		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
+		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")")
 		
 		svg_elem.node().range = range;
 			
-		var line_idx = svg.node().nSpecs;
+		var line_idx = svg.spectra().indexOf(_main);
 		svg_elem.node().line_idx = line_idx;
 		
 		var path_elem = svg_elem.append("path")
@@ -1172,7 +1172,12 @@ spec.d1.pp = function(){
 };
 
 spec.d1.main_focus = function () {
-	var focus, width, height, x, y, dispatcher, data, range = {};
+	var focus, x, y, dispatcher, data, range = {};
+	var core = require('./src/elem')
+	var source = core.SVGElem().class('main-focus');
+	var data, slide_selection;
+	var specs = core.ElemArray();
+	
 	/*var zoomTimer;
 	var new_region;
 	var stepzoom = function () {
@@ -1200,86 +1205,28 @@ spec.d1.main_focus = function () {
 		});
 
 	
-	function _main(all_panels) {
-		focus = all_panels.append("g")
-		    .attr("class", "main-focus")
-		    .attr("pointer-events", "all")
-				.attr("width", width)
-				.attr("height", height)
-				.call(zoomer)
-				.on("dblclick.zoom", null)
-				.on("mousedown.zoom", null);
+	function SpecContainer(slide) {
+		x = SpecContainer.xScale();
+		y = SpecContainer.yScale();
+		dispatcher = SpecContainer.dispatcher();
+		
+		focus = source(slide)
+	    .attr("pointer-events", "all")
+			.attr('clip-path', "url(#" + slide.clipId() + ")")
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
+			.call(zoomer)
+			.on("dblclick.zoom", null)
+			.on("mousedown.zoom", null);
 		
 		
 		/****** Attach functions on svg node ********/
-		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther events.
-		focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
-		focus.node().xScale = x;
-		focus.node().yScale = y;
-		focus.node().range = range;
-		focus.node().addPeaks = function (idx) { //TODO:move peaks to line
-			focus.select(".peaks").node().addpeaks(data.subset(idx));			
-			focus.select(".peaks").on("_regionchange")({xdomain:true});
-			focus.select(".peaks").on("_redraw")({x:true});			
-		};
-		focus.node().addSpecLine = function(spec_data, crosshair, overwrite){
-			if(!crosshair)
-				crosshair = true;
-			
-		  
-			var s_id = null;
-			var spec_label = 'spec'+focus.node().nSpecs;
-			console.log(spec_data['label'])
-			if(!(spec_data.constructor === Array)){
-				if(typeof spec_data["s_id"] != 'undefined') s_id = spec_data["s_id"];
-				if(typeof spec_data['label'] != 'undefined') spec_label = spec_data["label"];
-				spec_data = spec_data["data"]
-			}
-			
-			var elem;
-			//if(overwrite) console.log("overwrite size:", overwrite.size());
-			
-			if(!overwrite || overwrite.size() == 0){
-				elem = spec.d1.line()
-					.datum(spec_data)
-					.xScale(x)
-					.yScale(y)
-					.s_id(s_id)
-					.crosshair(crosshair)
-					.dispatcher(dispatcher)
-					(focus);
-				
-				elem.node().label = spec_label;
-			}else{
-				console.log("overwriting spec");
-				elem = overwrite;
-				elem.node().setData(spec_data);
-				if(s_id) elem.node().s_id(s_id);
-			}
-
-			if(spec.globals.render){
-				var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
-					x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
-					y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
-					y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
-			
-				var y_limits = (y1-y0);
-				y0 = y0 - (0.05 * y_limits);
-				y1 = y1 + (0.05 * y_limits);
-				
-				var xdomain = x.domain(), ydomain = y.domain();
-			
-				focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: focus.node().nSpecs > 0});
-			
-				if(focus.node().nSpecs > 0)
-					focus.on("_regionchange")({xdomain:xdomain});				
-			}
-			
-			focus.node().nSpecs++;
-			return elem;
-		}
-		focus.node().addSpec = focus.node().addSpecLine;
-		focus.node().nd = 1;
+		//focus.node().dispatch_idx =  0; // an index as a namespace for dispacther events.
+		//focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
+		//focus.node().xScale = x;
+		//focus.node().yScale = y;
+		//focus.node().range = range;
+		//focus.node().addPeaks
 		focus.node().getThreshold = function (callback) {
 			focus.call(
 				spec.d1.threshold()
@@ -1368,8 +1315,8 @@ spec.d1.main_focus = function () {
 			
 		// overlay rectangle for mouse events to be dispatched.
 		focus.append("rect")
-			.attr("width", width)
-			.attr("height", height)
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
 			.style("fill", "none");
 
 		//brushes
@@ -1380,12 +1327,9 @@ spec.d1.main_focus = function () {
 		);
 
 		//spectral lines
-		/*for (var i = 0; i < 3; i++) {
-			pro.bl(function (data) {
-				focus.node().addSpecLine(data).node().remove();
-			}, {a:"cbf", prev:0});
-		}*/
-		focus.node().addSpecLine(data);
+		for (var i = 0; i < specs.length; i++) {
+			render_spec(specs[i]);
+		}
 		
 		//peak picker	
 		focus.call(
@@ -1395,38 +1339,102 @@ spec.d1.main_focus = function () {
 				.dispatcher(dispatcher)
 		);
 	}
+	function update_range() {
+		var x0 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[0]})),
+			x1 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.x[1]})),
+			y0 = d3.min(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[0]})),
+			y1 = d3.max(focus.selectAll(".spec-line")[0].map(function(s){return s.range.y[1]}));
+
+			
+		// Add 5% margin to top and bottom (easier visualization).
+		var y_limits = (y1-y0);
+		y0 = y0 - (0.05 * y_limits);
+		y1 = y1 + (0.05 * y_limits);
+
+		var xdomain = x.domain(), ydomain = y.domain();
+
+		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
+
+		if(specs.length > 1)
+			focus.on("_regionchange")({xdomain:xdomain});	
+	}
 	
-  _main.datum = function(_){
+	function render_spec(s) {
+		if(!focus){return;}
+		
+		s.xScale(x).yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+				
+		update_range();
+	}
+	
+	core.inherit(SpecContainer, source);
+	SpecContainer.addSpec = function(spec_data, crosshair){
+		if (!arguments.length) 
+			throw new Error("appendSlide: No data provided.");
+		
+		if(typeof crosshair === 'undefined'){
+			crosshair = true;
+		}
+		
+		// TODO: s_id is only present in 'connected' mode.
+		var s_id = null;
+		var spec_label = 'spec'+specs.length;
+		console.log(spec_data['label'])
+
+		if(typeof spec_data["s_id"] !== 'undefined') s_id = spec_data["s_id"];
+		if(typeof spec_data['label'] !== 'undefined') spec_label = spec_data["label"];
+		spec_data = spec_data["data"]
+		
+		// Find the spectrum with the same s_id.
+		// If it is present, overwrite it.
+		// Otherwise, create a new spectrum.
+		var s = specs.filter(function (e) {
+			return e.s_id() === s_id
+		}	);
+		
+		if ( s.length === 0 ){
+		 	s = spec.d1.line()
+				.datum(spec_data)
+				.crosshair(crosshair)
+				.s_id(s_id);
+				
+			specs.push(s);
+		}else{
+			s = s[0];
+			s.datum(spec_data);//TODO: setData!!
+		}
+		
+		render_spec(s);
+		return s;
+	};
+	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
+		if(!focus){return;}
+		focus.select(".peaks").node().addpeaks(data.subset(idx));			
+		focus.select(".peaks").on("_regionchange")({xdomain:true});
+		focus.select(".peaks").on("_redraw")({x:true});			
+	};
+	SpecContainer.nd = function(){
+		return 1;
+	}
+	SpecContainer.spectra = function () {
+		return specs;
+	};
+  SpecContainer.range = function(_){
+		return range;
+  };
+  SpecContainer.datum = function(_){
     if (!arguments.length) return data;
     data = _;
-    return _main;
+		
+		//TODO: Clear all spectra first.
+		SpecContainer.addSpec(_);
+    return SpecContainer;
   };
-  _main.dispatcher = function(_) {
-  	if (!arguments.length) return dispatcher;
-  	dispatcher = _;
-  	return _main;
-  };
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  };
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-  _main.width = function(_){
-    if (!arguments.length) return width;
-    width = _;
-    return _main;
-  };
-  _main.height = function(_){
-    if (!arguments.length) return height;
-    height = _;
-    return _main;
-  };
-	return _main;	
+	
+	
+	return SpecContainer;
 };
 spec.d2 = {};
 
@@ -1900,15 +1908,18 @@ spec.d2.spec2d = function () {
 	return _main;
 };
 
-/*
-	import 'event';
-	import 'menu';
-	import 'slide';
-*/
 spec.app = function(){
-  var slides = [], elem, svg_width, svg_height;
-
-  function _main(div){
+	var core = require('./src/elem')
+	var source = core.Elem().class('spec-app');
+  var selection, svg_width, svg_height;
+	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
+	var modals;
+	var slides = core.ElemArray(), current_slide;
+	
+  function App(div){
+		svg_width = App.width();
+		svg_height = App.height();
+		
     /* * Check size definitions**/
 		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
 			|| isNaN(svg_width) || isNaN(svg_height)){
@@ -1916,7 +1927,7 @@ spec.app = function(){
 				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
 					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
 				
-				svg_width = dimensions[0] - 50; //deduct 50px for column menu.
+				svg_width = dimensions[0]; //deduct 50px for column menu.
 				svg_height = dimensions[1];
 		};
 		
@@ -1924,84 +1935,88 @@ spec.app = function(){
       throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
     }
 		
-		
-		var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
-		
-		elem = div.append('div')
-			.classed('spec-app', true)
-			.attr({
+		selection = source(div)
+			.style({
 				width:svg_width,
 				height:svg_height				
 			});
 		
-		elem.node().dispatcher = app_dispatcher;
-		elem.modals = require('./src/modals')(elem);
-		elem.call(require('./src/menu/menu')());
-		// TODO: decide whether to inject CSS styles.
-		//applyCSS2();
+		svg_width -= 50; //deduct 50px for column menu.
 		
-		
-		/*var svg_elem = elem.append('svg')
-			.attr({
-				width:svg_width,
-				height:svg_height				
-			}).append('g');
-		*/
-		//elem.call(spec.slideChanger());
+		modals = require('./src/modals')(selection);
+		require('./src/menu/menu')(App);
+
 		/**** Keyboard events and logger ****/
-		require('./src/events').registerKeyboard(elem.node());
+		require('./src/events').registerKeyboard(App);
 		
-		elem.node().appendSlide = function (data) {
-			elem.selectAll('.spec-slide').classed('active', false);
-			elem.call(
-				spec.slide()
-					.datum(data)
-					.width(svg_width)
-					.height(svg_height)
-			);
-			app_dispatcher.slideChange();
-			//elem.call(spec.slideChanger());
-		};
-		elem.node().appendToCurrentSlide = function (data) {
-			var current_slide = elem.select('.spec-slide.active').node();
+		selection.node().appendToCurrentSlide = function (data) {
+			var current_slide = selection.select('.spec-slide.active').node();
 			if(!current_slide){
-				elem.node().appendSlide(data);
+				selection.node().appendSlide(data);
 			}	else{
 				current_slide.addSpec(data);
 				app_dispatcher.slideContentChange();
 			}
 		};
 		
-		elem.node().options = _main.options;
-		app_dispatcher.on('slideChange.app', function () {
-			elem.node().slideDispatcher = elem.select('.spec-slide.active').node().slideDispatcher;
+		//selection.node().options = App.options;
+		app_dispatcher.on('slideChange.app', function (s) {
+			if (current_slide) { // When the first slide is added, no current_slide.
+				current_slide.sel().classed('active', false);
+			}
+			s.sel().classed('active', true);
+			current_slide = s;
+			//slide_dispatcher = selection.select('.spec-slide.active').node().slideDispatcher;
 		});
 		
 		for (var i = 0; i < slides.length; i++) {
-			elem.node().appendSlide(slides[i].slide);
-		}		
+			render_slide(slides[i]);
+		}
+	}
+	function render_slide(s) {
+		if(! selection){ return; }
+		s.width(svg_width).height(svg_height)
+			(App);
+		
+		app_dispatcher.slideChange(s);
 	}
 	
-	_main.appendSlide = function(data){
+	App.slides = function () {
+		return slides;
+	};
+	App.currentSlide = function (_) {
+		if (!arguments.length){
+			app_dispatcher.slideChange(_);
+		}
+		return current_slide;
+	};
+	App.dispatcher = function () {
+		return app_dispatcher;
+	};
+	App.slideDispatcher = function () {
+		return current_slide.slideDispatcher;
+	};
+	App.modals = function () {
+		return modals;
+	};
+	App.appendSlide = function(data){
 		if (!arguments.length) 
 			throw new Error("appendSlide: No data provided.");
 		
-		if (elem){
-			elem.node().appendSlide(data);
-		} else{
-			slides.push({'slide':data});
-		}
-		return _main;
+		var s = spec.slide().datum(data);
+		slides.push(s);
+		render_slide(s);
+		return App;
 	};
-	_main.appendToCurrentSlide = function(data){
+	App.appendToCurrentSlide = function(data){
 		if (!arguments.length) 
 			throw new Error("appendToCurrentSlide: No data provided.");
 		
-		if (elem){
-			elem.node().appendToCurrentSlide(data);
+		if (selection){
+			selection.node().appendToCurrentSlide(data);
 		} else{
 			if(slides.length === 0) //No slides available; create a new one
-				return _main.appendSlide(data);
+				return App.appendSlide(data);
 			
 			//Otherwise, append data to last slide.
 			var current_slide = slides[slides.length-1].slide;
@@ -2010,43 +2025,49 @@ spec.app = function(){
 			// or an array of data arrays (i.e dataset)
 			current_slide.push(data);
 			
-			return _main;
+			return App;
 		}
 	};
-	
-  _main.width = function(x){
-    if (!arguments.length) return svg_width;
-    svg_width = x;
-    return _main;
-  };
-
-  _main.height = function(x){
-    if (!arguments.length) return svg_height;
-    svg_height = x;
-    return _main;
-  };
-	_main.options = {
+	App.options = {
 		grid:{x:false, y:false}
 	};
-	return _main;
+	
+	core.inherit(App, source);
+	return App;
 };
 
-/*
-	import 'event';
-	import 'd1/main-focus';
-	import 'd2/main-focus';
-	import 'd1/scale-brush';
-*/
+//TODO: remove Elements
+
 spec.slide = function(){
-	var data, elem, svg_width, svg_height;
-	function _main(app){
+	var core = require('./src/elem')
+	var source = core.Elem('svg').class('spec-slide');
+	var data, slide_selection, svg_width, svg_height;
+	var clip_id = require('./src/utils').guid();
+	var spec_container;
+	
+	// Event dispatcher to group all listeners in one place.
+	var dispatcher = d3.dispatch(
+		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
+		"keyboard",																//Keyboard
+		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
+		"integrateEnable", "integrate", "integ_refactor",						//Integration events
+		"crosshairEnable",
+		"blindregion",
+		"log"
+	);
+	
+	
+	function Slide(app){
 		if(!data){
 			create_empty_slide();//TODO
 			return ;
 		}
 		
+		svg_width = Slide.width();
+		svg_height = Slide.height();
+		
 		var brush_margin = 20;
-
     var margin = {
         top: 10 + brush_margin,
         right: 40,
@@ -2057,6 +2078,7 @@ spec.slide = function(){
 		var width = svg_width - margin.left - margin.right,
         height = svg_height - margin.top - margin.bottom;
 		
+		console.log('slide w,h ', svg_width, svg_height)
     var x = d3.scale.linear().range([0, width]),
     y = d3.scale.linear().range([height, 0]);
   
@@ -2065,42 +2087,31 @@ spec.slide = function(){
           .tickFormat(d3.format("s"));
 		
     var xGrid = d3.svg.axis().scale(x)
-					.orient("bottom").innerTickSize(height)
-					.tickFormat(''),
-        yGrid = d3.svg.axis().scale(y)
-					.orient("right").innerTickSize(width)
-					.tickFormat('');
+				.orient("bottom").innerTickSize(height)
+				.tickFormat(''),
+	    yGrid = d3.svg.axis().scale(y)
+				.orient("right").innerTickSize(width)
+				.tickFormat('');
   	
 		var two_d = (data["nd"] && data["nd"] === 2);
-		
-		// Event dispatcher to group all listeners in one place.
-		var dispatcher = d3.dispatch(
-			"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
-			"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
-			"keyboard",																//Keyboard
-			"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-			"integrateEnable", "integrate", "integ_refactor",						//Integration events
-			"crosshairEnable",
-			"blindregion",
-			"log"
-		);
 		dispatcher.idx = 0;
 		
-		var spec_slide = app.append("svg")
-			.attr({
+		var slide_selection = source(app)
+			.style({
 				width:svg_width,
-				height:svg_height				
-			}).classed("spec-slide", true)
-			.classed("active", true)
+				height:svg_height,
+		    transform: 'translate(30px,30px)',
+		    overflow: 'visible'
+			});
+			
 		
-		var contents = spec_slide.append('g')
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		//var contents = slide_selection
+			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		
 		
-		spec_slide.node().clip_id = require('./src/utils').guid();
-    var defs = spec_slide.append("defs");
+    var defs = slide_selection.append("defs");
 		defs.append("clipPath")
-		.attr("id", spec_slide.node().clip_id)
+		.attr("id", clip_id)
 		  .append("rect")
 		    .attr("width", width)
 		    .attr("height", height);
@@ -2155,19 +2166,19 @@ spec.slide = function(){
 		/**********************************/				
 		
 		//axes	and their labels
-		contents.append("g")
+		slide_selection.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")");
 			
 
-		contents.append("g")
+		slide_selection.append("g")
 			.attr("class", "y axis")
 			.attr("transform", "translate(" + width + ",0)");;
 		
-		contents.append("g").classed('x grid', true);
-		contents.append("g").classed('y grid', true);
+		slide_selection.append("g").classed('x grid', true);
+		slide_selection.append("g").classed('y grid', true);
 		
-		contents.append("text")
+		slide_selection.append("text")
 	    .attr("class", "x label")
 	    .attr("text-anchor", "middle")
 	    .attr("x", width/2)
@@ -2175,7 +2186,7 @@ spec.slide = function(){
 			.attr("dy", "2.8em")
 	    .text("Chemical shift (ppm)");
 		
-		contents.append("text")
+		slide_selection.append("text")
 	    .attr("class", "y label")
 	    .attr("text-anchor", "end")
 	    .attr("y", width)
@@ -2185,123 +2196,64 @@ spec.slide = function(){
 		
 		dispatcher.on("redraw.slide", function (e) {
 			if(e.x){
-				contents.select(".x.axis").call(xAxis);
-				if(app.node().options.grid.x)
-					contents.select(".x.grid").call(xGrid);
+				slide_selection.select(".x.axis").call(xAxis);
+				if(app.options.grid.x)
+					slide_selection.select(".x.grid").call(xGrid);
 			}
 			if(e.y){
-				contents.select(".y.axis").call(yAxis);
-				if(app.node().options.grid.y)
-					contents.select(".y.grid").call(yGrid);
+				slide_selection.select(".y.axis").call(yAxis);
+				if(app.options.grid.y)
+					slide_selection.select(".y.grid").call(yGrid);
 				
 			}
 		});
 		
-		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
-		//Main focus
-		contents.call(
-			main_focus()
-				.datum(data)
-				.xScale(x)
-				.yScale(y)
-				.width(width)
-				.height(height)
-				.dispatcher(dispatcher)
-		);
+		spec_container = two_d ? spec.d2.main_focus : spec.d1.main_focus
+		//Spec-Container
+		spec_container()
+			.datum(data)
+			.xScale(x)
+			.yScale(y)
+			.width(width)
+			.height(height)
+			.dispatcher(dispatcher)
+			(Slide);
 		
 		//Scale brushes
-		contents.call(
-			spec.d1.scaleBrush()
-				.xScale(x)
-				.dispatcher(dispatcher)
-		);
-	
-		contents.call(
-			spec.d1.scaleBrush()
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);
-		
-		spec_slide.node().nd = two_d ? 2 : 1;
-		spec_slide.node().addSpec = function (_) {
-			contents.select('.main-focus').node().addSpec(_);
-		};
-		spec_slide.node().slideDispatcher = dispatcher;
+		spec.d1.scaleBrush()
+			.xScale(x)
+			.dispatcher(dispatcher)
+			(Slide);
+				
+		spec.d1.scaleBrush()
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(Slide);
 	}
 	
-  _main.datum = function(_){
+	Slide.nd = function(){
+		if (!data){ //TODO: empty slide?
+			return 0;
+		}
+		return (data["nd"] && data["nd"] === 2) ? 2 : 1;
+	};
+	Slide.addSpec = function (_) {
+		spec_container.addSpec(_);
+	};
+	Slide.clipId = function(){
+		return clip_id;
+	};
+	Slide.slideDispatcher = function(){
+		return dispatcher;
+	};
+  Slide.datum = function(_){
     if (!arguments.length) return data;
     data = _;
-    return _main;
+    return Slide;
   };
-  _main.width = function(x){
-    if (!arguments.length) return svg_width;
-    svg_width = x;
-    return _main;
-  };
-
-  _main.height = function(x){
-    if (!arguments.length) return svg_height;
-    svg_height = x;
-    return _main;
-  };
-	return _main;
-};
-
-spec.slideChanger = function () {
-	function _main (svg) {
-		var inner;
-		if(svg.select('.slide-changer').size() === 0){
-			var elem = svg.append("g")
-				.attr("class", "slide-changer");
-		
-			var width = svg.attr("width"),
-					height = svg.attr("height");
-		
-			var slideout = elem.append("svg:foreignObject")
-				.attr("width", width)
-				.attr("height", height)
-				.style('pointer-events', 'all')
-				.append("xhtml:div")
-				.classed("slideout", true)
-				.on('click', function () {
-					slideout.toggleClass('active');
-				})
-		
-			slideout.append('xhtml:p').text('Slides');
-			inner = slideout.append('xhtml:div')
-				.classed('slideout_inner', true)
-				.text('Switch Slide');			
-		}else{
-			inner = svg.select('.slideout_inner');
-		}
-		
-		var slides = svg.selectAll('.spec-slide');
-		/*slides.each(function (d,i) {
-			var this_slide = this;
-			inner.append('xhtml:div').text('slide ' + i)
-				.on('click', function () {
-					slides.classed('active', false);
-					d3.select(this_slide).classed('active', true);
-					console.log(this_slide)
-					svg.node().dispatcher = this_slide.slideDispatcher;
-				});
-		});*/
-		
-		inner.selectAll('div')
-			.data(slides[0]).enter()
-			.append('xhtml:div')
-				.text(function(d,i){return 'slide ' + (i+1);})
-			
-		inner.selectAll('div')
-			.on('click', function (d) {
-				slides.classed('active', false);
-				d3.select(d).classed('active', true);
-				svg.node().dispatcher = d.slideDispatcher;
-			});
-	}
-	
-	return _main;
+	//d3.rebind(Slide, spec_container, 'spectra', 'addSpec')
+	core.inherit(Slide, source);
+	return Slide;
 };
 
 pro.read_menu = function (app, menu_data) {
@@ -2322,7 +2274,7 @@ pro.read_menu = function (app, menu_data) {
 	var plugin_functor = function (c) {
 		if(c["args"]){
 			return function() {
-				app.modals.methods(c["fun"], c["args"], c["title"])();
+				app.modals().methods(c["fun"], c["args"], c["title"])();
 			};
 		}else{
 			return function () { plugins.request (c["fun"]) };
@@ -2346,7 +2298,7 @@ pro.read_menu = function (app, menu_data) {
 	
 		}		
 		console.log(menu_data)
-		app.node().dispatcher.menuUpdate();
+		app.dispatcher().menuUpdate();
 
 	});
 };
@@ -2504,7 +2456,115 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/events":4,"./src/menu/menu":7,"./src/modals":11,"./src/pro/ajax":12,"./src/pro/process_data":13,"./src/utils":15}],4:[function(require,module,exports){
+},{"./src/elem":4,"./src/events":5,"./src/menu/menu":8,"./src/modals":12,"./src/pro/ajax":13,"./src/pro/process_data":14,"./src/utils":16}],4:[function(require,module,exports){
+function inherit(target, source){
+  for (f in source){
+    if (typeof source[f] === 'function'){
+      d3.rebind(target, source, f)
+    }
+  }
+}
+
+function ElemArray(arr){
+	if(!arr){
+		arr = [];
+	}
+  arr.__proto__.nodes = function(){
+	  return this.map(function(e){return e.node()});
+	}
+	
+  return arr;
+}
+
+function Elem(tag){
+  var selection, width, height, cls;
+  function _main (container){
+    selection = container.append(tag || 'div');
+    if(cls){
+      selection.classed(cls, true);
+    }
+    return selection;
+  }
+	
+  _main.sel = function(){
+    return selection;
+  }
+  _main.node = function(){
+    return selection ? selection.node() : undefined;
+  }
+  _main.width = function(_){
+    if (!arguments.length) return width;
+    width = _;
+    return _main;
+  };
+  _main.height = function(_){
+    if (!arguments.length) return height;
+    height = _;
+    return _main;
+  };
+	_main.class = function(_){
+    if (!arguments.length) return cls;
+    cls = _;
+    return _main;
+  };
+	_main.append = function(_){ 
+		if(!selection){
+			throw new Error('Elem is not in DOM')
+		}
+		return selection.append(_);
+	};
+	_main.select = function(_){
+		if(!selection){
+			throw new Error('Elem is not in DOM')
+		}
+		return selection.select(_);
+	};
+	_main.selectAll = function(_){
+		if(!selection){
+			throw new Error('Elem is not in DOM')
+		}
+		return selection.selectAll(_)
+	};
+  return _main;
+}
+
+function SVGElem(){
+	var source = Elem('g');
+  var x, y, data, dispatcher;
+  function _main (container){
+    var selection = source(container);
+    return selection;
+  }
+  _main.xScale = function(_){
+    if (!arguments.length) return x;
+    x = _;
+    return _main;
+  };
+  _main.yScale = function(_){
+    if (!arguments.length) return y;
+    y = _;
+    return _main;
+  };
+  _main.datum = function(_){
+    if (!arguments.length) return data;
+    data = _;
+    return _main;
+  };
+  _main.dispatcher = function(_) {
+  	if (!arguments.length) return dispatcher;
+  	dispatcher = _;
+  	return _main;
+  };	
+	inherit(_main, source);
+  return _main;
+}
+
+module.exports.inherit = inherit;
+module.exports.ElemArray = ElemArray;
+module.exports.Elem = Elem;
+module.exports.SVGElem = SVGElem;
+
+},{}],5:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2515,7 +2575,7 @@ var events = {
 
 events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
-	app.slideDispatcher.crosshairEnable(events.crosshair);
+	app.slideDispatcher().crosshairEnable(events.crosshair);
 }
 
 events.peakpickToggle = function (app) {
@@ -2525,7 +2585,7 @@ events.peakpickToggle = function (app) {
 	
 	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
-	app.slideDispatcher.peakpickEnable(events.peakpick);
+	app.slideDispatcher().peakpickEnable(events.peakpick);
 }
 
 events.peakdelToggle = function (app) {
@@ -2534,7 +2594,7 @@ events.peakdelToggle = function (app) {
 	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.peakdel = !events.peakdel;
-	app.slideDispatcher.peakdelEnable(events.peakdel);	
+	app.slideDispatcher().peakdelEnable(events.peakdel);	
 }
 
 events.integrateToggle = function (app) {
@@ -2543,7 +2603,7 @@ events.integrateToggle = function (app) {
 	if(events.peakdel !== false) events.peakdelToggle(app);
 
 	events.integrate = !events.integrate;
-	app.slideDispatcher.integrateEnable(events.integrate);	
+	app.slideDispatcher().integrateEnable(events.integrate);	
 }
 
 events.zoomToggle = function (app) {
@@ -2577,7 +2637,7 @@ events.registerKeyboard = function(app){
           .style("fill-opacity",".1")
 	        .remove();
 			*/
-			app.slideDispatcher.log("keyCode: " + d3.event.keyCode);
+			app.slideDispatcher().log("keyCode: " + d3.event.keyCode);
 			
 			if (d3.event.keyCode===80) { // p
 				events.peakpickToggle(app);
@@ -2594,7 +2654,7 @@ events.registerKeyboard = function(app){
 			}
 			
 			
-			app.slideDispatcher.keyboard(d3.event);
+			app.slideDispatcher().keyboard(d3.event);
 	  });
 };
 module.exports = events;
@@ -2613,7 +2673,7 @@ function editText(evt){
 }*/
 
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -2904,7 +2964,7 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./utils":15}],6:[function(require,module,exports){
+},{"./utils":16}],7:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -2971,10 +3031,10 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":5,"../utils":15}],7:[function(require,module,exports){
+},{"../input_elem":6,"../utils":16}],8:[function(require,module,exports){
 var utils = require('../utils');
 
-function create_menu (){	
+function create_menu (app){	
 	function toggle(e){
 	  if(d3.event.target !== this) return;
   
@@ -2982,80 +3042,77 @@ function create_menu (){
 	  button.select('.tooltip')
 	    .style('display', button.classed('opened')? 'none': null);
 	}
-	function _main(app) {
-		// Import needed modules for sub-menus
-		var main_menu = require('./main_menu')(app),
-			spectra = require('./spectra')(app),
-			slides = require('./slides')(app),
-			menu_data = require('./menu_data')(app);
+	// Import needed modules for sub-menus
+	var main_menu = require('./main_menu')(app),
+		spectra = require('./spectra')(app),
+		slides = require('./slides')(app),
+		menu_data = require('./menu_data')(app);
+	
+	var column_menu_buttons = [
+	  ['open-menu', 'Menu'],
+	  ['open-spec-legend', 'Spectra'],
+	  ['open-slides', 'Slides'],
+	  ['open-settings', 'Settings'],
+	  ['open-download', 'Download Spectra'],
+	  ['open-fullscreen', 'Fullscreen App'],
+	  ['connection-status', 'Connection Status'],
+	];
+	
+	var elem = app.append('div')
+		.classed('column-menu', true);
 		
-		var column_menu_buttons = [
-		  ['open-menu', 'Menu'],
-		  ['open-spec-legend', 'Spectra'],
-		  ['open-slides', 'Slides'],
-		  ['open-settings', 'Settings'],
-		  ['open-download', 'Download Spectra'],
-		  ['open-fullscreen', 'Fullscreen App'],
-		  ['connection-status', 'Connection Status'],
-		];
-		
-		var elem = app.append('div')
-			.classed('column-menu', true);
-			
-		elem.selectAll('div')
-		  .data(column_menu_buttons).enter()
-		  .append('div')
-		  .attr('class', function(d){return d[0]})
-		  .attr('title', function(d){return d[1]})
-		  .call(bootstrap.tooltip().placement('right'))
-		  .on('click', toggle);
-		
-		elem.select('.open-menu').call( main_menu.data(menu_data) ); 
-		
-		
-		var app_dispatcher = app.node().dispatcher;
-		
-		
-		// Full screen manipulation
-		elem.select('.open-fullscreen')
-			.on('click', function (e) {
-				utils.fullScreen.toggle(app.node());
-				toggle.apply(this);
-			});
-		
-		d3.select(window).on('resize.fullscreenbutton', function () {
-			elem.select('.open-fullscreen').classed('opened', utils.fullScreen.isFull() );
+	elem.selectAll('div')
+	  .data(column_menu_buttons).enter()
+	  .append('div')
+	  .attr('class', function(d){return d[0]})
+	  .attr('title', function(d){return d[1]})
+	  .call(bootstrap.tooltip().placement('right'))
+	  .on('click', toggle);
+	
+	elem.select('.open-menu').call( main_menu.data(menu_data) ); 
+	
+	
+	var app_dispatcher = app.dispatcher();
+	
+	
+	// Full screen manipulation
+	elem.select('.open-fullscreen')
+		.on('click', function (e) {
+			utils.fullScreen.toggle(app.node());
+			toggle.apply(this);
 		});
-		/**************************/
-		
-		app_dispatcher.on('menuUpdate.menu', function () {
-			elem.select('.open-menu').call( main_menu );
-		});
-		app_dispatcher.on('slideChange.menu', function () {
-			//TODO: hide parent menu-item when all children are hidden
-			var two_d_slide = app.select('.spec-slide.active').node().nd == 2;
-			elem.select('.open-menu')
-				.classed('d1', !two_d_slide)
-				.classed('d2', two_d_slide);
-			elem.select('.open-spec-legend').call( spectra );
-			elem.select('.open-slides').call( slides );
-		});
-		app_dispatcher.on('slideContentChange.menu', function () {
-			elem.select('.open-spec-legend').call( spectra );
-		});
-		
-		pro.read_menu(app, menu_data); //read menu from server.
-		return elem;									
-	}
-	return _main;
+	
+	d3.select(window).on('resize.fullscreenbutton', function () {
+		elem.select('.open-fullscreen').classed('opened', utils.fullScreen.isFull() );
+	});
+	/**************************/
+	
+	app_dispatcher.on('menuUpdate.menu', function () {
+		elem.select('.open-menu').call( main_menu );
+	});
+	app_dispatcher.on('slideChange.menu', function (s) {
+		//TODO: hide parent menu-item when all children are hidden
+		var two_d_slide = s.nd == 2;
+		elem.select('.open-menu')
+			.classed('d1', !two_d_slide)
+			.classed('d2', two_d_slide);
+		elem.select('.open-spec-legend').call( spectra );
+		elem.select('.open-slides').call( slides );
+	});
+	app_dispatcher.on('slideContentChange.menu', function () {
+		elem.select('.open-spec-legend').call( spectra );
+	});
+	
+	pro.read_menu(app, menu_data); //read menu from server.
+	return elem;									
 }
 
 module.exports = create_menu;
-},{"../utils":15,"./main_menu":6,"./menu_data":8,"./slides":9,"./spectra":10}],8:[function(require,module,exports){
+},{"../utils":16,"./main_menu":7,"./menu_data":9,"./slides":10,"./spectra":11}],9:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
-	var modals = app.modals;
+	var modals = app.modals();
 	return [	
 	  {
 			label:"Processing",
@@ -3120,7 +3177,7 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":4}],9:[function(require,module,exports){
+},{"../events":5}],10:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function slides (app) {
@@ -3136,13 +3193,11 @@ function slides (app) {
 		nav.append('ul')
 			.classed('block-list slide-list', true)
 			.selectAll('li')
-			.data(slides[0]).enter()
+			.data(app.slides).enter()
 			.append('li')
 				.text(function(d,i){return 'Slide ' + (i+1);})
 				.on('click', function (d) {
-					slides.classed('active', false);
-					d3.select(d).classed('active', true);
-					app.node().dispatcher.slideChange();
+					app.dispatcher().slideChange(d);
 				});
 				
 		return div;
@@ -3151,7 +3206,7 @@ function slides (app) {
 };
 
 module.exports = slides;
-},{"../input_elem":5}],10:[function(require,module,exports){
+},{"../input_elem":6}],11:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3180,7 +3235,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":5}],11:[function(require,module,exports){
+},{"../input_elem":6}],12:[function(require,module,exports){
 require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -3420,7 +3475,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":5,"./utils":15,"nanoModal":1}],12:[function(require,module,exports){
+},{"./input_elem":6,"./utils":16,"nanoModal":1}],13:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3494,7 +3549,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":11}],13:[function(require,module,exports){
+},{"../modals":12}],14:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3712,7 +3767,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":12,"./worker":14}],14:[function(require,module,exports){
+},{"./ajax":13,"./worker":15}],15:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3798,7 +3853,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4071,4 +4126,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":2}]},{},[3,12,11,4,15,14,13]);
+},{"simplify":2}]},{},[3,13,12,4,5,16,15,14]);

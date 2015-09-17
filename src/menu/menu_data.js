@@ -1,7 +1,7 @@
 var events = require('../events');
 
 function get_menu_data (app) {
-	var modals = app.modals;
+	var modals = app.modals();
 	return [	
 	  {
 			label:"Processing",

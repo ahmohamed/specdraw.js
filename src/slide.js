@@ -1,19 +1,33 @@
-/*
-	import 'event';
-	import 'd1/main-focus';
-	import 'd2/main-focus';
-	import 'd1/scale-brush';
-*/
 spec.slide = function(){
-	var data, elem, svg_width, svg_height;
-	function _main(app){
+	var core = require('./src/elem')
+	var source = core.Elem('svg').class('spec-slide');
+	var data, slide_selection, svg_width, svg_height;
+	var clip_id = require('./src/utils').guid();
+	var spec_container;
+	
+	// Event dispatcher to group all listeners in one place.
+	var dispatcher = d3.dispatch(
+		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
+		"keyboard",																//Keyboard
+		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
+		"integrateEnable", "integrate", "integ_refactor",						//Integration events
+		"crosshairEnable",
+		"blindregion",
+		"log"
+	);
+	
+	
+	function Slide(app){
 		if(!data){
 			create_empty_slide();//TODO
 			return ;
 		}
 		
+		svg_width = Slide.width();
+		svg_height = Slide.height();
+		
 		var brush_margin = 20;
-
     var margin = {
         top: 10 + brush_margin,
         right: 40,
@@ -24,6 +38,7 @@ spec.slide = function(){
 		var width = svg_width - margin.left - margin.right,
         height = svg_height - margin.top - margin.bottom;
 		
+		console.log('slide w,h ', svg_width, svg_height)
     var x = d3.scale.linear().range([0, width]),
     y = d3.scale.linear().range([height, 0]);
   
@@ -32,42 +47,31 @@ spec.slide = function(){
           .tickFormat(d3.format("s"));
 		
     var xGrid = d3.svg.axis().scale(x)
-					.orient("bottom").innerTickSize(height)
-					.tickFormat(''),
-        yGrid = d3.svg.axis().scale(y)
-					.orient("right").innerTickSize(width)
-					.tickFormat('');
+				.orient("bottom").innerTickSize(height)
+				.tickFormat(''),
+	    yGrid = d3.svg.axis().scale(y)
+				.orient("right").innerTickSize(width)
+				.tickFormat('');
   	
 		var two_d = (data["nd"] && data["nd"] === 2);
-		
-		// Event dispatcher to group all listeners in one place.
-		var dispatcher = d3.dispatch(
-			"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
-			"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
-			"keyboard",																//Keyboard
-			"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-			"integrateEnable", "integrate", "integ_refactor",						//Integration events
-			"crosshairEnable",
-			"blindregion",
-			"log"
-		);
 		dispatcher.idx = 0;
 		
-		var spec_slide = app.append("svg")
-			.attr({
+		var slide_selection = source(app)
+			.style({
 				width:svg_width,
-				height:svg_height				
-			}).classed("spec-slide", true)
-			.classed("active", true)
+				height:svg_height,
+		    transform: 'translate(30px,30px)',
+		    overflow: 'visible'
+			});
+			
 		
-		var contents = spec_slide.append('g')
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		//var contents = slide_selection
+			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		
 		
-		spec_slide.node().clip_id = require('./src/utils').guid();
-    var defs = spec_slide.append("defs");
+    var defs = slide_selection.append("defs");
 		defs.append("clipPath")
-		.attr("id", spec_slide.node().clip_id)
+		.attr("id", clip_id)
 		  .append("rect")
 		    .attr("width", width)
 		    .attr("height", height);
@@ -122,19 +126,19 @@ spec.slide = function(){
 		/**********************************/				
 		
 		//axes	and their labels
-		contents.append("g")
+		slide_selection.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")");
 			
 
-		contents.append("g")
+		slide_selection.append("g")
 			.attr("class", "y axis")
 			.attr("transform", "translate(" + width + ",0)");;
 		
-		contents.append("g").classed('x grid', true);
-		contents.append("g").classed('y grid', true);
+		slide_selection.append("g").classed('x grid', true);
+		slide_selection.append("g").classed('y grid', true);
 		
-		contents.append("text")
+		slide_selection.append("text")
 	    .attr("class", "x label")
 	    .attr("text-anchor", "middle")
 	    .attr("x", width/2)
@@ -142,7 +146,7 @@ spec.slide = function(){
 			.attr("dy", "2.8em")
 	    .text("Chemical shift (ppm)");
 		
-		contents.append("text")
+		slide_selection.append("text")
 	    .attr("class", "y label")
 	    .attr("text-anchor", "end")
 	    .attr("y", width)
@@ -152,65 +156,62 @@ spec.slide = function(){
 		
 		dispatcher.on("redraw.slide", function (e) {
 			if(e.x){
-				contents.select(".x.axis").call(xAxis);
-				if(app.node().options.grid.x)
-					contents.select(".x.grid").call(xGrid);
+				slide_selection.select(".x.axis").call(xAxis);
+				if(app.options.grid.x)
+					slide_selection.select(".x.grid").call(xGrid);
 			}
 			if(e.y){
-				contents.select(".y.axis").call(yAxis);
-				if(app.node().options.grid.y)
-					contents.select(".y.grid").call(yGrid);
+				slide_selection.select(".y.axis").call(yAxis);
+				if(app.options.grid.y)
+					slide_selection.select(".y.grid").call(yGrid);
 				
 			}
 		});
 		
-		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
-		//Main focus
-		contents.call(
-			main_focus()
-				.datum(data)
-				.xScale(x)
-				.yScale(y)
-				.width(width)
-				.height(height)
-				.dispatcher(dispatcher)
-		);
+		spec_container = two_d ? spec.d2.main_focus : spec.d1.main_focus
+		//Spec-Container
+		spec_container()
+			.datum(data)
+			.xScale(x)
+			.yScale(y)
+			.width(width)
+			.height(height)
+			.dispatcher(dispatcher)
+			(Slide);
 		
 		//Scale brushes
-		contents.call(
-			spec.d1.scaleBrush()
-				.xScale(x)
-				.dispatcher(dispatcher)
-		);
-	
-		contents.call(
-			spec.d1.scaleBrush()
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);
-		
-		spec_slide.node().nd = two_d ? 2 : 1;
-		spec_slide.node().addSpec = function (_) {
-			contents.select('.main-focus').node().addSpec(_);
-		};
-		spec_slide.node().slideDispatcher = dispatcher;
+		spec.d1.scaleBrush()
+			.xScale(x)
+			.dispatcher(dispatcher)
+			(Slide);
+				
+		spec.d1.scaleBrush()
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(Slide);
 	}
 	
-  _main.datum = function(_){
+	Slide.nd = function(){
+		if (!data){ //TODO: empty slide?
+			return 0;
+		}
+		return (data["nd"] && data["nd"] === 2) ? 2 : 1;
+	};
+	Slide.addSpec = function (_) {
+		spec_container.addSpec(_);
+	};
+	Slide.clipId = function(){
+		return clip_id;
+	};
+	Slide.slideDispatcher = function(){
+		return dispatcher;
+	};
+  Slide.datum = function(_){
     if (!arguments.length) return data;
     data = _;
-    return _main;
+    return Slide;
   };
-  _main.width = function(x){
-    if (!arguments.length) return svg_width;
-    svg_width = x;
-    return _main;
-  };
-
-  _main.height = function(x){
-    if (!arguments.length) return svg_height;
-    svg_height = x;
-    return _main;
-  };
-	return _main;
+	//d3.rebind(Slide, spec_container, 'spectra', 'addSpec')
+	core.inherit(Slide, source);
+	return Slide;
 };

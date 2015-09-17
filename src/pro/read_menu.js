@@ -16,7 +16,7 @@ pro.read_menu = function (app, menu_data) {
 	var plugin_functor = function (c) {
 		if(c["args"]){
 			return function() {
-				app.modals.methods(c["fun"], c["args"], c["title"])();
+				app.modals().methods(c["fun"], c["args"], c["title"])();
 			};
 		}else{
 			return function () { plugins.request (c["fun"]) };
@@ -40,7 +40,7 @@ pro.read_menu = function (app, menu_data) {
 	
 		}		
 		console.log(menu_data)
-		app.node().dispatcher.menuUpdate();
+		app.dispatcher().menuUpdate();
 
 	});
 };
