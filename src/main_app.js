@@ -35,7 +35,7 @@ spec.app = function(){
 		
 		svg_width -= 50; //deduct 50px for column menu.
 		
-		modals = require('./src/modals')(selection);
+		modals = require('./src/modals')(App);
 		require('./src/menu/menu')(App);
 
 		/**** Keyboard events and logger ****/
@@ -77,10 +77,8 @@ spec.app = function(){
 		return slides;
 	};
 	App.currentSlide = function (_) {
-		if (!arguments.length){
-			app_dispatcher.slideChange(_);
-		}
-		return current_slide;
+		if (!arguments.length) { return current_slide; }
+		app_dispatcher.slideChange(_);
 	};
 	App.dispatcher = function () {
 		return app_dispatcher;

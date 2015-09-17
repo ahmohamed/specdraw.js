@@ -182,53 +182,6 @@ function simplify(points, tolerance, highestQuality) {
 	
 spec.d1 = {};
 
-spec.d1.threshold = function () {
-	var svg_elem, x, y, dispatcher, callback;
-	function _main(spec_container) {
-		x = _main.xScale() || spec_container.xScale();
-		y = _main.yScale() || spec_container.yScale();
-		dispatcher = _main.dispatcher() || spec_container.dispatcher();
-		
-		svg_elem = svg.append("path")
-			.attr("class", "threshold line x")
-			.on("_mousemove", function(e) {
-				svg_elem.attr("d", d3.svg.line()([[x.range()[0], e.ycoor], [x.range()[1], e.ycoor]]));
-			})
-			.on("_click", function (e) {
-				callback(y.invert(e.ycoor));
-				svg_elem.remove();
-				dispatcher.on("mousemove.thresh."+dispatch_idx, null);	
-				dispatcher.on("click.thresh."+dispatch_idx, null);
-			});
-		
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("mousemove.thresh."+dispatch_idx, svg_elem.on("_mousemove"));	
-		dispatcher.on("click.thresh."+dispatch_idx, svg_elem.on("_click"));
-	}
-
-  _main.callback = function(_) {
-  	if (!arguments.length) return callback;
-  	callback = _;
-  	return _main;
-  };
-  _main.dispatcher = function(_) {
-  	if (!arguments.length) return dispatcher;
-  	dispatcher = _;
-  	return _main;
-  };
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  };
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-	
-	return _main;	
-};
 spec.d1.integrate = function(){
 	var integ_container, x, y, dispatcher;
 	
@@ -1599,7 +1552,7 @@ spec.app = function(){
 		
 		svg_width -= 50; //deduct 50px for column menu.
 		
-		modals = require('./src/modals')(selection);
+		modals = require('./src/modals')(App);
 		require('./src/menu/menu')(App);
 
 		/**** Keyboard events and logger ****/
@@ -1641,10 +1594,8 @@ spec.app = function(){
 		return slides;
 	};
 	App.currentSlide = function (_) {
-		if (!arguments.length){
-			app_dispatcher.slideChange(_);
-		}
-		return current_slide;
+		if (!arguments.length) { return current_slide; }
+		app_dispatcher.slideChange(_);
 	};
 	App.dispatcher = function () {
 		return app_dispatcher;
@@ -2117,7 +2068,7 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/crosshair":4,"./src/d1/main-brush":5,"./src/d1/scale-brush":6,"./src/elem":7,"./src/events":8,"./src/menu/menu":11,"./src/modals":15,"./src/pro/ajax":16,"./src/pro/process_data":17,"./src/utils":19}],4:[function(require,module,exports){
+},{"./src/d1/crosshair":4,"./src/d1/main-brush":5,"./src/d1/scale-brush":6,"./src/elem":8,"./src/events":9,"./src/menu/menu":12,"./src/modals":16,"./src/pro/ajax":17,"./src/pro/process_data":18,"./src/utils":20}],4:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, i_scale, local_max) {
 		var i;
@@ -2261,7 +2212,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":7}],5:[function(require,module,exports){
+},{"../elem":8}],5:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -2362,7 +2313,7 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":7}],6:[function(require,module,exports){
+},{"../elem":8}],6:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -2464,7 +2415,37 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":7}],7:[function(require,module,exports){
+},{"../elem":8}],7:[function(require,module,exports){
+module.exports = function () {
+	var svg_elem, x, y, dispatcher;
+	var core = require('../elem');
+	var source = core.ResponsiveElem('path').class('threshold line x');
+	core.inherit(_main, source);
+		
+	function _main(spec_container, callback) {
+		x = _main.xScale() || spec_container.xScale();
+		y = _main.yScale() || spec_container.yScale();
+		dispatcher = _main.dispatcher() || spec_container.dispatcher();
+		
+		svg_elem = source(spec_container)
+			.on("_mousemove", function(e) {
+				svg_elem.attr("d", d3.svg.line()([[x.range()[0], e.ycoor], [x.range()[1], e.ycoor]]));
+			})
+			.on("_click", function (e) {
+				callback(y.invert(e.ycoor));
+				svg_elem.remove();
+				dispatcher.on("mousemove.thresh."+dispatch_idx, null);	
+				dispatcher.on("click.thresh."+dispatch_idx, null);
+			});
+		
+		var dispatch_idx = ++dispatcher.idx;
+		dispatcher.on("mousemove.thresh."+dispatch_idx, svg_elem.on("_mousemove"));	
+		dispatcher.on("click.thresh."+dispatch_idx, svg_elem.on("_click"));
+	}
+
+	return _main;	
+};
+},{"../elem":8}],8:[function(require,module,exports){
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
@@ -2593,9 +2574,10 @@ function SVGElem(){
 module.exports.inherit = inherit;
 module.exports.ElemArray = ElemArray;
 module.exports.Elem = Elem;
+module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2704,7 +2686,7 @@ function editText(evt){
 }*/
 
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -2876,7 +2858,8 @@ inp.button = function (label) {
 	};	
 	return function(){return elem.node();};
 };
-inp.threshold = function (label) {
+inp.threshold = function (label, axis, app) {
+	console.log('app: ',app);
 	var elem = d3.select(document.createElement('div'))
 	.classed('param threshold', true);
 	
@@ -2891,13 +2874,15 @@ inp.threshold = function (label) {
 			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
 				.style('display', 'none');
 			
-				//TODO: app-specific.
-			d3.select('.spec-slide.active').select('.main-focus').node()
-				.getThreshold(function (t) {
-					val.attr('value', t.toExponential(2));
-					input.attr('value', t);
-					modal.style('display', 'block');
-				});
+			//TODO: app-specific.
+			th_fun = require('./d1/threshold')();
+			
+			th_fun(app.currentSlide().specContainer(), function (t) {
+				val.attr('value', t.toExponential(2));
+				input.attr('value', t);
+				modal.style('display', 'block');
+			});
+				
 		});
 	
 	elem.node().getValue = function () {
@@ -2914,24 +2899,27 @@ inp.threshold = function (label) {
 			0:number 1:checkbox 2:text 3:select_toggle 4:checkbox_toggle
 			5:button 6:threshold
 */
-inp.div = function (div_data) {
+inp.div = function (div_data, app) {
 	var div = d3.select(document.createElement('div'));
   for (var key in div_data){
 		var p = div_data[key];
 		if(typeof p == 'function') continue; //Exclude Array prototype functions.
-    div.append(parseInputElem.apply(null, p))
+		div.append(parseInputElem.apply(null, p.concat(app)))
 			.node().id = key;
   }
 	
 	return function() {return div.node();};
 };
 
-var parseInputElem = function (label, type, details) {
+var parseInputElem = function (label, type, details, app) {
 	var f = [
 		inp.num, inp.checkbox, inp.text, inp.select_toggle,
 		inp.checkbox_toggle, inp.button, inp.threshold
 	][type];
-	return f.apply(null, [label].concat(details));
+	
+	var args = [label].concat(details)
+	args = type === 6 ? args.concat(app) : args;
+	return f.apply(null, args);
 };
 
 inp.spectrumSelector = function () {
@@ -2995,7 +2983,7 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./utils":19}],10:[function(require,module,exports){
+},{"./d1/threshold":7,"./utils":20}],11:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -3062,7 +3050,7 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":9,"../utils":19}],11:[function(require,module,exports){
+},{"../input_elem":10,"../utils":20}],12:[function(require,module,exports){
 var utils = require('../utils');
 
 function create_menu (app){	
@@ -3139,7 +3127,7 @@ function create_menu (app){
 }
 
 module.exports = create_menu;
-},{"../utils":19,"./main_menu":10,"./menu_data":12,"./slides":13,"./spectra":14}],12:[function(require,module,exports){
+},{"../utils":20,"./main_menu":11,"./menu_data":13,"./slides":14,"./spectra":15}],13:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3208,7 +3196,7 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":8}],13:[function(require,module,exports){
+},{"../events":9}],14:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function slides (app) {
@@ -3237,7 +3225,7 @@ function slides (app) {
 };
 
 module.exports = slides;
-},{"../input_elem":9}],14:[function(require,module,exports){
+},{"../input_elem":10}],15:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3266,7 +3254,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":9}],15:[function(require,module,exports){
+},{"../input_elem":10}],16:[function(require,module,exports){
 require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -3497,7 +3485,7 @@ function app_modals(app){
 	
 		var inp = require('./input_elem');
 		el.append(inp.spectrumSelector());
-		el.append(inp.div(args));
+		el.append(inp.div(args, app));
 		el.append(inp.preview(true));
 		return nano.show;
 	};
@@ -3506,7 +3494,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":9,"./utils":19,"nanoModal":1}],16:[function(require,module,exports){
+},{"./input_elem":10,"./utils":20,"nanoModal":1}],17:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3580,7 +3568,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":15}],17:[function(require,module,exports){
+},{"../modals":16}],18:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3798,7 +3786,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":16,"./worker":18}],18:[function(require,module,exports){
+},{"./ajax":17,"./worker":19}],19:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3884,7 +3872,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4157,4 +4145,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":2}]},{},[3,16,15,7,8,19,18,17,4,5,6]);
+},{"simplify":2}]},{},[3,17,16,8,9,20,19,18,4,5,6,7]);

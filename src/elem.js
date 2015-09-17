@@ -126,4 +126,5 @@ function SVGElem(){
 module.exports.inherit = inherit;
 module.exports.ElemArray = ElemArray;
 module.exports.Elem = Elem;
+module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;

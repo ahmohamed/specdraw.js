@@ -169,7 +169,8 @@ inp.button = function (label) {
 	};	
 	return function(){return elem.node();};
 };
-inp.threshold = function (label) {
+inp.threshold = function (label, axis, app) {
+	console.log('app: ',app);
 	var elem = d3.select(document.createElement('div'))
 	.classed('param threshold', true);
 	
@@ -184,13 +185,15 @@ inp.threshold = function (label) {
 			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
 				.style('display', 'none');
 			
-				//TODO: app-specific.
-			d3.select('.spec-slide.active').select('.main-focus').node()
-				.getThreshold(function (t) {
-					val.attr('value', t.toExponential(2));
-					input.attr('value', t);
-					modal.style('display', 'block');
-				});
+			//TODO: app-specific.
+			th_fun = require('./d1/threshold')();
+			
+			th_fun(app.currentSlide().specContainer(), function (t) {
+				val.attr('value', t.toExponential(2));
+				input.attr('value', t);
+				modal.style('display', 'block');
+			});
+				
 		});
 	
 	elem.node().getValue = function () {
@@ -207,24 +210,27 @@ inp.threshold = function (label) {
 			0:number 1:checkbox 2:text 3:select_toggle 4:checkbox_toggle
 			5:button 6:threshold
 */
-inp.div = function (div_data) {
+inp.div = function (div_data, app) {
 	var div = d3.select(document.createElement('div'));
   for (var key in div_data){
 		var p = div_data[key];
 		if(typeof p == 'function') continue; //Exclude Array prototype functions.
-    div.append(parseInputElem.apply(null, p))
+		div.append(parseInputElem.apply(null, p.concat(app)))
 			.node().id = key;
   }
 	
 	return function() {return div.node();};
 };
 
-var parseInputElem = function (label, type, details) {
+var parseInputElem = function (label, type, details, app) {
 	var f = [
 		inp.num, inp.checkbox, inp.text, inp.select_toggle,
 		inp.checkbox_toggle, inp.button, inp.threshold
 	][type];
-	return f.apply(null, [label].concat(details));
+	
+	var args = [label].concat(details)
+	args = type === 6 ? args.concat(app) : args;
+	return f.apply(null, args);
 };
 
 inp.spectrumSelector = function () {

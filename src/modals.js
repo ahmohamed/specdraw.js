@@ -228,7 +228,7 @@ function app_modals(app){
 	
 		var inp = require('./input_elem');
 		el.append(inp.spectrumSelector());
-		el.append(inp.div(args));
+		el.append(inp.div(args, app));
 		el.append(inp.preview(true));
 		return nano.show;
 	};
