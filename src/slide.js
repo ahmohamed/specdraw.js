@@ -1,9 +1,9 @@
 spec.slide = function(){
 	var core = require('./src/elem');
-	var source = core.Elem('svg').class('spec-slide');
+	var source = core.Elem('g');
 	core.inherit(Slide, source);
 	
-	var data, slide_selection, svg_width, svg_height;
+	var data, slide_selection, svg_selection, svg_width, svg_height;
 	var clip_id = require('./src/utils').guid();
 	var spec_container;
 	
@@ -25,7 +25,6 @@ spec.slide = function(){
 			//create_empty_slide();//TODO
 			return ;
 		}
-		
 		svg_width = Slide.width();
 		svg_height = Slide.height();
 		
@@ -58,14 +57,20 @@ spec.slide = function(){
 		var two_d = (data["nd"] && data["nd"] === 2);
 		dispatcher.idx = 0;
 		
-		slide_selection = source(app)
-			.style({
+		console.log(app);
+		svg_selection = app.append('svg')
+			.classed('spec-slide', true)
+			.attr({
 				width:svg_width,
-				height:svg_height,
-		    transform: 'translate(30px,30px)',
-		    overflow: 'visible'
+				height:svg_height
 			});
 			
+		slide_selection = source(svg_selection)
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.attr({
+				width:svg_width,
+				height:svg_height
+			});
 		
 		//var contents = slide_selection
 			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -195,7 +200,9 @@ spec.slide = function(){
 		
 		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
-	
+	Slide.show = function (_) {
+		svg_selection.classed('active', _);
+	};
 	Slide.nd = function(){
 		if (!data){ //TODO: empty slide?
 			return 0;

@@ -54,15 +54,6 @@ spec.d1.main_focus = function () {
 		//focus.node().yScale = y;
 		//focus.node().range = range;
 		//focus.node().addPeaks
-		focus.node().getThreshold = function (callback) {
-			focus.call(
-				spec.d1.threshold()
-					.xScale(x).yScale(y)
-					.dispatcher(dispatcher)
-					.callback(callback)
-			);	
-		};
-		//focus.node().getThreshold(null);
 		
 		/*********** Handling Events **************/
 		focus
@@ -159,7 +150,7 @@ spec.d1.main_focus = function () {
 		}
 		
 		//peak picker	
-		spec.d1.pp()
+		require('./src/d1/peak-picker')()
 			.xScale(x)
 			.yScale(y)
 			.dispatcher(dispatcher)

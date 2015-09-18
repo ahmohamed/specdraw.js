@@ -1,10 +1,14 @@
 spec.d1.line = function () {
 	var utils = require('./src/utils');
 	var core = require('./src/elem');
+	var peakElem;
 	
 	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
 	var x, y, dispatcher;								//initiailized by parent at rendering
 	var line_idx, range={}, svg_elem;		//initialized by self at rendering
+	var i_to_pixel; 										//a scale to convert data point to pixel position
+	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
+	
 	var data_slice, scale_factor = 1;
 	var source = core.SVGElem().class('spec-line');
 	var peaks = [];
@@ -14,6 +18,7 @@ spec.d1.line = function () {
 		x = SpecLine.xScale();
 		y = SpecLine.yScale();
 		dispatcher = SpecLine.dispatcher();
+		i_to_pixel = x.copy();
 		
 		var dataResample, segments = [];
 		
@@ -25,6 +30,11 @@ spec.d1.line = function () {
 		var width = spec_container.width();
 		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
+		peakElem = require('./src/d1/peak')()
+			.xScale(x)
+			.yScale(y)
+			.dispatcher(dispatcher)
+			.clrIdx(line_idx);
 		
 		var path_elem = svg_elem.append("path")
       .datum(data)
@@ -92,9 +102,10 @@ spec.d1.line = function () {
 							.attr("class", "segment");				
 					});
 					
-					if(_crosshair){
-						_crosshair.dataSlice([data_slice.start, data_slice.end]);						
-					}
+					//if(_crosshair){
+					//	_crosshair.dataSlice([data_slice.start, data_slice.end]);						
+					//}
+					i_to_pixel.domain( [data_slice.start, data_slice.end] );
 				}
 			})
 			.on("_integrate", function(e){
@@ -123,8 +134,6 @@ spec.d1.line = function () {
 			}
 		});
 		
-		//svg_elem.node().dataSlice = function () { return data_slice;	};
-		//svg_elem.node().specRange = function () { return range;	};
 		svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){
 				for (var i = seg.length - 1; i >= 0; i--){
@@ -152,6 +161,7 @@ spec.d1.line = function () {
 			}
 		};
 		
+		//SpecLine.addPeaks([100,1000,2000]);
 		return svg_elem;									
 	}
 	core.inherit(SpecLine, source);
@@ -167,11 +177,15 @@ spec.d1.line = function () {
 	}
 	
 	SpecLine.addPeaks = function (idx) {
-		peaks.concat(idx);
-		//TODO: update from pp.js
-		SpecLine.parent().select(".peaks").node().addpeaks(data.subset(idx), line_idx);
-		SpecLine.parent().select(".peaks").on("_regionchange")({xdomain:true});
-		SpecLine.parent().select(".peaks").on("_redraw")({x:true});			
+		peaks = peaks.concat(idx);
+	};
+	SpecLine.delPeaks = function (between) {
+		between = between.map(SpecLine.ppmToi).sort(d3.ascending);	
+		console.log(between, peaks);	
+		peaks = peaks.filter(function (e) {
+			//retain all peaks NOT within the region.
+			return !(e >= between[0] && e <= between[1]);
+		});
 	};
 	SpecLine.peaks = function (visible) {
 		var idx = peaks;
@@ -180,8 +194,34 @@ spec.d1.line = function () {
 				return e > data_slice.start && e < data_slice.end;
 			});
 		}
-		
 		return data.subset(idx);
+	};
+	SpecLine.peakPositions = function (_) {
+		if (!arguments.length) {
+			return SpecLine.peaks().map(function (e) { return x(e.x); });
+		}
+		var peak_sel = svg_elem.selectAll('.peak').data(SpecLine.peaks());
+		peakElem(peak_sel.enter());
+		peak_sel.exit().remove();
+		
+		peak_sel
+			.attr('peak_position', function (d,i) { return _[i];	});
+		
+	};
+	SpecLine.iToPixel = function (_) {
+		return i_to_pixel(_);
+	};
+	SpecLine.pixelToi = function (_) {
+		return Math.round( i_to_pixel.invert(_) );
+	};
+	SpecLine.ppmToi = function (_) {
+		var i = Math.round( ppm_to_i(_) );
+		if ( Math.abs(_ - data[i].x) > Math.abs(_ - data[i-1].x) ){
+			i--;
+		}else if( Math.abs(_ - data[i].x) > Math.abs(_ - data[i+1].x) ){
+			i++;
+		}
+		return i;
 	};
   SpecLine.range = function () {
   	return range;
@@ -212,6 +252,9 @@ spec.d1.line = function () {
 		if(_crosshair){
 			_crosshair.datum(data);
 		}
+		ppm_to_i = d3.scale.linear()
+			.range([0, data.length])
+			.domain([ data[0].x, data[data.length-1].x ]);
 		
 		render_data();
     return SpecLine;
@@ -222,7 +265,7 @@ spec.d1.line = function () {
     return SpecLine;
   };
   SpecLine.crosshair = function(_){
-    if (!arguments.length) {return typeof _crosshair === 'undefined';}
+    if (!arguments.length) {return _crosshair;}
 		
 		if(_){
 			_crosshair = require('./src/d1/crosshair')().datum(data);

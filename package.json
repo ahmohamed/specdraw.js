@@ -15,6 +15,7 @@
     "grunt-contrib-uglify": "^0.9.2"
   },
   "dependencies": {
+    "d3-context-menu": "0.0.1",
     "nanomodal": "^5.1.1",
     "simplify": "^1.0.0"
   }

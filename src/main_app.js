@@ -1,6 +1,8 @@
 spec.app = function(){
 	var core = require('./src/elem');
 	var source = core.Elem().class('spec-app');
+	core.inherit(App, source);
+	
   var selection, svg_width, svg_height;
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
 	var modals;
@@ -54,9 +56,9 @@ spec.app = function(){
 		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
 			if (current_slide) { // When the first slide is added, no current_slide.
-				current_slide.sel().classed('active', false);
+				current_slide.show(false);
 			}
-			s.sel().classed('active', true);
+			s.show(true);
 			current_slide = s;
 			//slide_dispatcher = selection.select('.spec-slide.active').node().slideDispatcher;
 		});
@@ -123,8 +125,6 @@ spec.app = function(){
 	App.options = {
 		grid:{x:false, y:false}
 	};
-	
-	core.inherit(App, source);
 	return App;
 };
 

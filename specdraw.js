@@ -326,10 +326,14 @@ spec.d1.integrate = function(){
 spec.d1.line = function () {
 	var utils = require('./src/utils');
 	var core = require('./src/elem');
+	var peakElem;
 	
 	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
 	var x, y, dispatcher;								//initiailized by parent at rendering
 	var line_idx, range={}, svg_elem;		//initialized by self at rendering
+	var i_to_pixel; 										//a scale to convert data point to pixel position
+	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
+	
 	var data_slice, scale_factor = 1;
 	var source = core.SVGElem().class('spec-line');
 	var peaks = [];
@@ -339,6 +343,7 @@ spec.d1.line = function () {
 		x = SpecLine.xScale();
 		y = SpecLine.yScale();
 		dispatcher = SpecLine.dispatcher();
+		i_to_pixel = x.copy();
 		
 		var dataResample, segments = [];
 		
@@ -350,6 +355,11 @@ spec.d1.line = function () {
 		var width = spec_container.width();
 		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
+		peakElem = require('./src/d1/peak')()
+			.xScale(x)
+			.yScale(y)
+			.dispatcher(dispatcher)
+			.clrIdx(line_idx);
 		
 		var path_elem = svg_elem.append("path")
       .datum(data)
@@ -417,9 +427,10 @@ spec.d1.line = function () {
 							.attr("class", "segment");				
 					});
 					
-					if(_crosshair){
-						_crosshair.dataSlice([data_slice.start, data_slice.end]);						
-					}
+					//if(_crosshair){
+					//	_crosshair.dataSlice([data_slice.start, data_slice.end]);						
+					//}
+					i_to_pixel.domain( [data_slice.start, data_slice.end] );
 				}
 			})
 			.on("_integrate", function(e){
@@ -448,8 +459,6 @@ spec.d1.line = function () {
 			}
 		});
 		
-		//svg_elem.node().dataSlice = function () { return data_slice;	};
-		//svg_elem.node().specRange = function () { return range;	};
 		svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){
 				for (var i = seg.length - 1; i >= 0; i--){
@@ -477,6 +486,7 @@ spec.d1.line = function () {
 			}
 		};
 		
+		//SpecLine.addPeaks([100,1000,2000]);
 		return svg_elem;									
 	}
 	core.inherit(SpecLine, source);
@@ -492,11 +502,15 @@ spec.d1.line = function () {
 	}
 	
 	SpecLine.addPeaks = function (idx) {
-		peaks.concat(idx);
-		//TODO: update from pp.js
-		SpecLine.parent().select(".peaks").node().addpeaks(data.subset(idx), line_idx);
-		SpecLine.parent().select(".peaks").on("_regionchange")({xdomain:true});
-		SpecLine.parent().select(".peaks").on("_redraw")({x:true});			
+		peaks = peaks.concat(idx);
+	};
+	SpecLine.delPeaks = function (between) {
+		between = between.map(SpecLine.ppmToi).sort(d3.ascending);	
+		console.log(between, peaks);	
+		peaks = peaks.filter(function (e) {
+			//retain all peaks NOT within the region.
+			return !(e >= between[0] && e <= between[1]);
+		});
 	};
 	SpecLine.peaks = function (visible) {
 		var idx = peaks;
@@ -505,8 +519,34 @@ spec.d1.line = function () {
 				return e > data_slice.start && e < data_slice.end;
 			});
 		}
-		
 		return data.subset(idx);
+	};
+	SpecLine.peakPositions = function (_) {
+		if (!arguments.length) {
+			return SpecLine.peaks().map(function (e) { return x(e.x); });
+		}
+		var peak_sel = svg_elem.selectAll('.peak').data(SpecLine.peaks());
+		peakElem(peak_sel.enter());
+		peak_sel.exit().remove();
+		
+		peak_sel
+			.attr('peak_position', function (d,i) { return _[i];	});
+		
+	};
+	SpecLine.iToPixel = function (_) {
+		return i_to_pixel(_);
+	};
+	SpecLine.pixelToi = function (_) {
+		return Math.round( i_to_pixel.invert(_) );
+	};
+	SpecLine.ppmToi = function (_) {
+		var i = Math.round( ppm_to_i(_) );
+		if ( Math.abs(_ - data[i].x) > Math.abs(_ - data[i-1].x) ){
+			i--;
+		}else if( Math.abs(_ - data[i].x) > Math.abs(_ - data[i+1].x) ){
+			i++;
+		}
+		return i;
 	};
   SpecLine.range = function () {
   	return range;
@@ -537,6 +577,9 @@ spec.d1.line = function () {
 		if(_crosshair){
 			_crosshair.datum(data);
 		}
+		ppm_to_i = d3.scale.linear()
+			.range([0, data.length])
+			.domain([ data[0].x, data[data.length-1].x ]);
 		
 		render_data();
     return SpecLine;
@@ -547,7 +590,7 @@ spec.d1.line = function () {
     return SpecLine;
   };
   SpecLine.crosshair = function(_){
-    if (!arguments.length) {return typeof _crosshair === 'undefined';}
+    if (!arguments.length) {return _crosshair;}
 		
 		if(_){
 			_crosshair = require('./src/d1/crosshair')().datum(data);
@@ -574,203 +617,6 @@ spec.d1.line = function () {
 	};
 	
 	return SpecLine;
-};
-
-spec.d1.pp = function(){
-	var svg_elem, x, y, dispatcher;
-	
-	function _main(svg) {
-		var menu = [
-			{
-				title: '\uf1f8 Delete peak',
-				action: function(elm, d, i) {
-					dispatcher.peakdel({xdomain:[d[0], d[0]]});
-				}
-			}
-		];
-		
-		var width = svg.width(),
-				height = svg.height();
-		
-		var _peaks = [], _peaks_vis = [], 
-				cls = [], cls_vis = [];
-		
-		svg_elem = svg.append("g")
-			.attr("class", "peaks")
-		
-		svg_elem
-			.on("_click", function(e){
-				if(!require('./src/events').crosshair)
-					d3.selectAll(".crosshair").each(function(){
-						d3.select(this).on("_mousemove")(e);
-					});
-				
-				// In case of manual peak picking on multiple spectra,
-				// A only the highest peak is added. 
-				/*var clicked_peaks = d3.selectAll(".crosshair").data()
-					.sort(function(a,b){return d3.descending(a.y, b.y)});
-				
-				dispatcher.peakpick(clicked_peaks[0]);*/
-				svg.selectAll(".crosshair").each(function(){
-					svg_elem.node().addpeaks(this.__data__, this.parentNode.line_idx);
-					svg_elem.on("_regionchange")({xdomain:true});
-					svg_elem.on("_redraw")({x:true, y:true});
-				});	
-				
-			})
-			.on("_regionchange", function (e) {
-				if(e.xdomain){
-					var domain = (x.domain()).sort(d3.descending)
-					_peaks_vis = _peaks.filter(function(el){
-						return el[0] < domain[0] && el[0] > domain[1];
-					});
-				}
-			})
-			.on("_redraw", function(e){ // TODO: redraw on x only!!				
-				var peak_text = svg_elem.selectAll("text")
-					.data(_peaks_vis);
-				
-				peak_text.enter()
-					.append("text")
-						.text(function(d){return d3.round(d[0] ,3);})
-						.attr("dy", "0.35em")
-						.attr("focusable", true)
-						.on("focus", function(){})
-						.on("keydown", function(d) {
-							if(d3.event.keyCode===68){
-								dispatcher.peakdel({xdomain:[d[0], d[0]]});
-							}
-						})
-						.on("contextmenu", d3.contextMenu(menu));
-						
-				
-				
-				peak_text.exit().remove();
-				
-				var peak_line = svg_elem.selectAll(".peak-line")
-					.data(_peaks_vis)
-				
-				peak_line.enter()
-					.append("path")
-					//.style("stroke", "black")
-					.style("fill", "none");	
-				
-				peak_line.exit().remove();
-				
-				if(_peaks_vis.length === 0)
-					return;
-				
-				// visualize the rest of the peaks
-				var current_x;
-				var labels_x = [];
-				var text_width = svg_elem.select("text")
-					.node().getBBox().height; //prevent overlap of peak labels.
-		
-				svg_elem.selectAll("text")
-					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
-					.text(function(d){return d3.round(d[0] ,3);})
-					.attr("class", function(d){return 'peak-text clr'+d[2];})
-					.attr("transform",function(d,i){
-						
-						var this_x = x(d[0]);
-						if(this_x > current_x - text_width) //prevent overlap of peak labels.
-							this_x = current_x - text_width
-				
-						current_x = this_x;
-						labels_x.push(this_x);
-						return "translate(" + this_x + ",0)rotate(90)"; 
-				 	})
-					.append("title")
-						.text("dbl Click to edit");
-	
-				svg_elem.selectAll("path")
-					.sort( function(a,b){return d3.ascending(a[0], b[0]);} )
-					.attr("class", function(d){return 'peak-line clr'+d[2];})
-					.attr("d", function(d,i){return peakLine(d[0],d[1],labels_x[i])});
-			})
-			.on("_peakpick", function (e, line_idx) {
-				this.addPeaks(e, line_idx)
-				//_peaks_vis.push([e.x, e.y]);				
-				svg_elem.on("_regionchange")({xdomain:true});
-				svg_elem.on("_redraw")({x:true, y:true});
-			})
-			.on("_peakdel", function (e) {
-				if(e.xdomain){
-					var domain = (e.xdomain).sort(d3.descending)
-					_peaks = _peaks.filter(function(el){
-						return !(el[0] <= domain[0] && el[0] >= domain[1]);
-					});
-				}
-				if(e.ydomain){
-					var domain = (e.ydomain).sort(d3.descending)
-					_peaks = _peaks.filter(function(el){
-						return !(el[0] <= domain[0] && el[0] >= domain[1]);
-					});
-				}			
-				svg_elem.on("_regionchange")({xdomain:x.domain(), ydomain:y.domain()});
-				svg_elem.on("_redraw")({x:true, y:true});
-			});
-		
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("regionchange.peaks."+dispatch_idx, svg_elem.on("_regionchange"));
-		dispatcher.on("redraw.peaks."+dispatch_idx, svg_elem.on("_redraw"));		
-		dispatcher.on("peakpickEnable.peaks."+dispatch_idx, function (_) {
-				dispatcher.on("click.peaks."+dispatch_idx, 
-					_? svg_elem.on("_click"): null);
-		});
-		
-		dispatcher.on("peakpick.peaks."+dispatch_idx, svg_elem.on("_peakpick"));
-		dispatcher.on("peakdel.peaks."+dispatch_idx, svg_elem.on("_peakdel"));
-		
-		svg_elem.node().peaks = function(){return _peaks;};
-		svg_elem.node().addpeaks = function(_, line_idx){
-			if(!_.x){
-				for (var i = _.length - 1; i >= 0; i--) {
-					this.addpeaks( _[i], line_idx );
-				}
-			}else{
-				if(_peaks.indexOf([_.x, _.y]) == -1) //TODO:check if peak already exists.
-					_peaks.push([_.x,_.y, line_idx]);
-					//cls.push('clr'+line_idx);
-			}
-		};
-		return svg_elem;						
-	}
-	
-	function peakLine(line_x, line_y, label_x){
-		var bottom = Math.max(y(line_y) - 10, 60);
-		return d3.svg.line()
-			.defined(function(d) { return !isNaN(d[1]); })
-			([
-			[label_x, 40], 
-			[x(line_x), 60],
-			[x(line_x), 80],
-			[NaN, NaN],
-			[x(line_x), bottom - 10],
-			[x(line_x), bottom]
-			]);
-	}	
-	
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
-    return _main;
-  }
-	
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  }
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  }
-	
-	return _main;
 };
 
 spec.d1.main_focus = function () {
@@ -829,15 +675,6 @@ spec.d1.main_focus = function () {
 		//focus.node().yScale = y;
 		//focus.node().range = range;
 		//focus.node().addPeaks
-		focus.node().getThreshold = function (callback) {
-			focus.call(
-				spec.d1.threshold()
-					.xScale(x).yScale(y)
-					.dispatcher(dispatcher)
-					.callback(callback)
-			);	
-		};
-		//focus.node().getThreshold(null);
 		
 		/*********** Handling Events **************/
 		focus
@@ -934,7 +771,7 @@ spec.d1.main_focus = function () {
 		}
 		
 		//peak picker	
-		spec.d1.pp()
+		require('./src/d1/pp')()
 			.xScale(x)
 			.yScale(y)
 			.dispatcher(dispatcher)
@@ -1518,6 +1355,8 @@ spec.d2.spec2d = function () {
 spec.app = function(){
 	var core = require('./src/elem');
 	var source = core.Elem().class('spec-app');
+	core.inherit(App, source);
+	
   var selection, svg_width, svg_height;
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
 	var modals;
@@ -1571,9 +1410,9 @@ spec.app = function(){
 		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
 			if (current_slide) { // When the first slide is added, no current_slide.
-				current_slide.sel().classed('active', false);
+				current_slide.show(false);
 			}
-			s.sel().classed('active', true);
+			s.show(true);
 			current_slide = s;
 			//slide_dispatcher = selection.select('.spec-slide.active').node().slideDispatcher;
 		});
@@ -1640,8 +1479,6 @@ spec.app = function(){
 	App.options = {
 		grid:{x:false, y:false}
 	};
-	
-	core.inherit(App, source);
 	return App;
 };
 
@@ -1649,10 +1486,10 @@ spec.app = function(){
 
 spec.slide = function(){
 	var core = require('./src/elem');
-	var source = core.Elem('svg').class('spec-slide');
+	var source = core.Elem('g');
 	core.inherit(Slide, source);
 	
-	var data, slide_selection, svg_width, svg_height;
+	var data, slide_selection, svg_selection, svg_width, svg_height;
 	var clip_id = require('./src/utils').guid();
 	var spec_container;
 	
@@ -1674,7 +1511,6 @@ spec.slide = function(){
 			//create_empty_slide();//TODO
 			return ;
 		}
-		
 		svg_width = Slide.width();
 		svg_height = Slide.height();
 		
@@ -1707,14 +1543,20 @@ spec.slide = function(){
 		var two_d = (data["nd"] && data["nd"] === 2);
 		dispatcher.idx = 0;
 		
-		slide_selection = source(app)
-			.style({
+		console.log(app);
+		svg_selection = app.append('svg')
+			.classed('spec-slide', true)
+			.attr({
 				width:svg_width,
-				height:svg_height,
-		    transform: 'translate(30px,30px)',
-		    overflow: 'visible'
+				height:svg_height
 			});
 			
+		slide_selection = source(svg_selection)
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.attr({
+				width:svg_width,
+				height:svg_height
+			});
 		
 		//var contents = slide_selection
 			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -1844,7 +1686,9 @@ spec.slide = function(){
 		
 		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
-	
+	Slide.show = function (_) {
+		svg_selection.classed('active', _);
+	};
 	Slide.nd = function(){
 		if (!data){ //TODO: empty slide?
 			return 0;
@@ -2068,17 +1912,16 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/crosshair":4,"./src/d1/main-brush":5,"./src/d1/scale-brush":6,"./src/elem":8,"./src/events":9,"./src/menu/menu":12,"./src/modals":16,"./src/pro/ajax":17,"./src/pro/process_data":18,"./src/utils":20}],4:[function(require,module,exports){
+},{"./src/d1/crosshair":4,"./src/d1/main-brush":5,"./src/d1/peak":6,"./src/d1/pp":7,"./src/d1/scale-brush":8,"./src/elem":10,"./src/events":11,"./src/menu/menu":14,"./src/modals":18,"./src/pro/ajax":19,"./src/pro/process_data":20,"./src/utils":22}],4:[function(require,module,exports){
 module.exports = function (){
-	function getDataPoint (x_point, i_scale, local_max) {
+	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
     if(local_max){
-      var s_window = [Math.floor(i_scale.invert(x_point-10)),
-        Math.floor(i_scale.invert(x_point+10))];
+      var s_window = [ pixel_to_i( x_point-10 ), pixel_to_i( x_point+10 ) ];
 
       i = s_window[0] + data.slice(s_window[0],s_window[1]+1).whichMax();
     }else{
-      i = Math.floor(i_scale.invert(x_point));					
+      i = pixel_to_i( x_point );					
     }
 		return data[i];
 	}
@@ -2101,7 +1944,7 @@ module.exports = function (){
 	}
 	
 	var x, y, data, dispatcher;
-	var svg_elem, i_scale, dispatch_idx;
+	var svg_elem, dispatch_idx;
 	var enabled, shown;
 	
 	var tip = d3.tip()
@@ -2112,14 +1955,13 @@ module.exports = function (){
 		
 	var core = require('../elem');
 	var source = core.SVGElem().class('crosshair');
-	
+	core.inherit(_main, source);
 	
 	function _main(spec_line) {
 		x = _main.xScale();
 		y = _main.yScale();
 		dispatcher = _main.dispatcher();
 		dispatch_idx = ++dispatcher.idx;
-		i_scale = x.copy();
 		enabled = shown = true;
 				
 		svg_elem = source(spec_line)
@@ -2140,10 +1982,6 @@ module.exports = function (){
 				spec_line.sel().classed('highlighted', false);
 			});
 
-		svg_elem.append("text")
-			.attr("x", 9)
-			.attr("dy", "-1em");
-			
 		svg_elem
 			.on("_regionchange", function(e){
 				if(e.x){					
@@ -2157,7 +1995,7 @@ module.exports = function (){
 				}
 			})
 			.on("_mousemove", function(e){
-        var p = getDataPoint(e.xcoor, i_scale, e.shiftKey);
+        var p = getDataPoint(e.xcoor, spec_line.pixelToi, e.shiftKey);
       
         if(typeof p === 'undefined'){
 					svg_elem.datum(null);
@@ -2179,7 +2017,6 @@ module.exports = function (){
 		return svg_elem;									
 	}
 	
-	core.inherit(_main, source);
 	_main.show = function (_) {
 		if (!arguments.length) {return shown;}
 		shown = _;
@@ -2199,11 +2036,6 @@ module.exports = function (){
 		
 		return _main.show(_);
 	};
-	_main.dataSlice = function (_) {
-		if (!arguments.length) {return i_scale.domain();}
-		i_scale.domain(_);
-		return _main;
-	};
   _main.datum = function(_){
     if (!arguments.length) {return data;}
     data = _;
@@ -2212,7 +2044,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":8}],5:[function(require,module,exports){
+},{"../elem":10}],5:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -2313,7 +2145,301 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":8}],6:[function(require,module,exports){
+},{"../elem":10}],6:[function(require,module,exports){
+function peakLine(line_x, line_y, label_x){
+	var bottom = Math.max(line_y - 10, 60);
+	return d3.svg.line()
+		.defined(function(d) { return !isNaN(d[1]); })
+		([
+		[label_x, 40], 
+		[line_x, 60],
+		[line_x, 80],
+		[NaN, NaN],
+		[line_x, bottom - 10],
+		[line_x, bottom]
+		]);
+}
+/*var menu = [
+	{
+		title: '\uf1f8 Delete peak',
+		action: function(elm, d, i) {
+			dispatcher.peakdel({xdomain:[d[0], d[0]]});
+		}
+	}
+];*/	
+
+module.exports = function(){
+	var svg_elem, x, y, dispatcher;
+	var peak_text, peak_line, clr_idx;
+	
+	var core = require('../elem');
+	var source = core.SVGElem().class('peak');
+	core.inherit(_main, source);
+	
+	function redraw() {
+		var x_pos = + (svg_elem.attr('peak_position')) || x(svg_elem.datum().x);
+		peak_text.text(function(d){return d3.round(d[0] ,3);})
+			.attr("transform", "translate(" + x_pos + ",0)rotate(90)");
+		
+		peak_line.attr("d", function(d){return peakLine( x(d.x), y(d.y) , x_pos);});
+	}
+	
+	function _main(slide) {
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
+		
+		svg_elem = source(slide);
+		
+		peak_text = svg_elem.append("text")
+			.attr("dy", "0.35em")
+			.attr("focusable", true)
+			.classed('peak-text clr' + _main.clrIdx(), true)
+			.on("focus", function(){})
+			.on("keydown", function(d) {
+				if(d3.event.keyCode===68){
+					dispatcher.peakdel({xdomain:[d[0], d[0]]});
+				}
+			});
+			//.on("contextmenu", d3.contextMenu(menu));
+    
+		peak_line = svg_elem.append("path")
+			.classed('peak-line clr' + _main.clrIdx(), true)
+			.style("fill", "none");	
+    
+	
+		
+		// Register event listeners
+		var dispatch_idx = ++dispatcher.idx;
+		dispatcher.on("redraw.peaks."+dispatch_idx, redraw);		
+
+		return svg_elem;									
+	}
+	
+	_main.clrIdx = function (_) {
+		if (!arguments.length) {return clr_idx;}
+		clr_idx = _;
+		return _main;
+	};
+	return _main;
+};
+
+},{"../elem":10}],7:[function(require,module,exports){
+function peakLine(line_x, line_y, label_x){
+	var bottom = Math.max(line_y - 10, 60);
+	return d3.svg.line()
+		.defined(function(d) { return !isNaN(d[1]); })
+		([
+		[label_x, 40], 
+		[line_x, 60],
+		[line_x, 80],
+		[NaN, NaN],
+		[line_x, bottom - 10],
+		[line_x, bottom]
+		]);
+}
+
+function adjust_peak_positions(_peaks, text_width, container_width) {
+	var tw = text_width;
+	var current_pos = container_width - tw;
+	//console.log('start', container_width, tw, _peaks);
+	for (var i = 0; i < _peaks.length; i++) {
+		//console.log(_peaks[i].d.x, _peaks[i].pos, current_pos );
+		if(_peaks[i].pos > current_pos){
+			_peaks[i].pos = current_pos;
+		}
+		current_pos = _peaks[i].pos - tw;
+	}
+	
+	if(current_pos < tw){ // if the rightmost peak is out of canvas.
+		current_pos = tw;
+		for (i = _peaks.length - 1; i >= 0; i--) {
+			if( _peaks[i].pos < current_pos ){
+				_peaks[i].pos = current_pos;
+				current_pos = _peaks[i].pos + tw;
+			}else{
+				break;
+			}
+		}
+	}
+	return _peaks;		
+}
+
+function getPeaks(spec_container) {
+	var spectra = spec_container.spectra();
+	var x = spec_container.xScale();
+	var all_peaks = [];
+	for (var i = 0; i < spectra.length; i++) {
+		var p = spectra[i].peaks(true).map(function (d) {
+			return {line:i, pos:x(d.x), d:d};
+		});
+		all_peaks = all_peaks.concat(p);
+	}
+	all_peaks = all_peaks.sort(function (a, b) {
+		return d3.descending(a.pos, b.pos);
+	});
+	return all_peaks;
+}
+
+module.exports = function(){
+	var menu = [
+		{
+			title: '\uf014 Delete peak',
+			action: function(elm, d) {
+				_main.parent().spectra().filter(function (s) {
+						return s.lineIdx() === d.line;
+					})[0]
+					.delPeaks([d.d.x, d.d.x]);
+				dispatcher.peakpick();
+			}
+		}
+	];
+	function update_text() {
+		var peak_text = svg_elem.selectAll("text")
+			.data(_peaks);
+
+		peak_text.enter()
+			.append("text")
+			.attr("dy", "0.35em")
+			.attr("focusable", true)
+			.on("focus", function(){});
+
+		peak_text.exit().remove();
+	}
+
+	function update_lines() {
+		var peak_line = svg_elem.selectAll("path")
+			.data(_peaks);
+
+		peak_line.enter()
+			.append("path")
+			.style("fill", "none");	
+	
+		peak_line.exit().remove();
+	}
+
+	function redraw_text() {
+		svg_elem.selectAll("text").text(function(d){return d3.round(d.d.x ,3);})
+			.attr("transform", function (d) {
+				return "translate(" + d.pos + ",0)rotate(90)";
+			})
+			.attr('class', function (d) {
+				return 'peak-text clr' + d.line;	
+			})
+			.on("keydown", function(d) {
+				if(d3.event.keyCode===68){
+					dispatcher.peakdel({xdomain:[d.d.x, d.d.x]});
+				}
+			})
+			.on('click', d3.contextMenu(menu));
+	}
+
+	function redraw_lines() {		  
+		svg_elem.selectAll("path")
+			.attr("d", function(d){return peakLine( x(d.d.x), y(d.d.y), d.pos );})
+			.attr('class', function (d) {
+				return 'peak-line clr' + d.line;	
+			});
+	}
+	
+	function get_text_width() {
+		var dummy_elem = svg_elem.append("text").text('any');
+		
+		// Using heigth because text will be rotated.
+		var text_width = dummy_elem.node().getBBox().height;
+		dummy_elem.remove();
+		return text_width;		
+	}
+	
+	var svg_elem, x, y, dispatcher;
+	var _peaks = [];
+	
+	var core = require('../elem');
+	var source = core.SVGElem().class('peaks');
+	core.inherit(_main, source);
+	
+	function _main(spec_container) {
+
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
+		
+		var width = spec_container.width();
+		svg_elem = source(spec_container);
+		
+		
+		svg_elem
+			.on("_click", function(e){
+				var spectra = spec_container.spectra();
+				
+				spectra.forEach(function (s) {
+					if(s.crosshair()){ // If there is a crosshair, get its current data. 
+						s.crosshair().sel().on("_mousemove")(e);
+						var p = s.crosshair().sel().datum();
+						if(p){
+							console.log(p, s.ppmToi(p.x));
+							s.addPeaks( s.ppmToi(p.x) );
+						}
+					}else{
+						s.addPeaks( s.pixelToi(e.xcoor) );
+					}
+				});
+				dispatcher.peakpick();
+			})
+			.on("_regionchange", function (e) {
+				if(e.xdomain){
+					_peaks = getPeaks(spec_container);
+					_peaks = adjust_peak_positions(_peaks, get_text_width(), width);
+				}
+			})
+			.on("_redraw", function(e){
+				if(e.x){
+					update_text();
+					update_lines();					
+				}
+				if (_peaks.length === 0){return;}
+				redraw_text();
+				redraw_lines();
+			})
+			.on("_peakpick", function () {
+				svg_elem.on("_regionchange")({xdomain:true});
+				svg_elem.on("_redraw")({x:true, y:true});
+			})
+			.on("_peakdel", function (e) {
+				if(e.xdomain){
+					spec_container.spectra().forEach(function (s) {
+						s.delPeaks(e.xdomain);
+					});
+				}
+				if(e.ydomain){
+					//TODO: delete peaks based on y-coordinates
+				}
+				dispatcher.peakpick();
+			});
+		
+		// Register event listeners
+		var dispatch_idx = ++dispatcher.idx;
+		dispatcher.on("regionchange.peaks."+dispatch_idx, svg_elem.on("_regionchange"));
+		dispatcher.on("redraw.peaks."+dispatch_idx, svg_elem.on("_redraw"));		
+		dispatcher.on("peakpickEnable.peaks."+dispatch_idx, function (_) {
+				dispatcher.on("click.peaks."+dispatch_idx, 
+					_? svg_elem.on("_click"): null);
+		});
+		
+		dispatcher.on("peakpick.peaks."+dispatch_idx, svg_elem.on("_peakpick"));
+		dispatcher.on("peakdel.peaks."+dispatch_idx, svg_elem.on("_peakdel"));
+		
+		return svg_elem;						
+	}
+	
+	_main.peaks = function () {
+		return getPeaks(_main.parent());
+	};
+		
+	return _main;
+};
+
+},{"../elem":10}],8:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -2415,7 +2541,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":8}],7:[function(require,module,exports){
+},{"../elem":10}],9:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -2445,10 +2571,11 @@ module.exports = function () {
 
 	return _main;	
 };
-},{"../elem":8}],8:[function(require,module,exports){
+},{"../elem":10}],10:[function(require,module,exports){
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
+			//console.log(f);
       d3.rebind(target, source, f);
     }
   }
@@ -2577,7 +2704,7 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],9:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2686,7 +2813,7 @@ function editText(evt){
 }*/
 
 
-},{}],10:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -2983,7 +3110,7 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./d1/threshold":7,"./utils":20}],11:[function(require,module,exports){
+},{"./d1/threshold":9,"./utils":22}],13:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -3050,7 +3177,7 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":10,"../utils":20}],12:[function(require,module,exports){
+},{"../input_elem":12,"../utils":22}],14:[function(require,module,exports){
 var utils = require('../utils');
 
 function create_menu (app){	
@@ -3127,7 +3254,7 @@ function create_menu (app){
 }
 
 module.exports = create_menu;
-},{"../utils":20,"./main_menu":11,"./menu_data":13,"./slides":14,"./spectra":15}],13:[function(require,module,exports){
+},{"../utils":22,"./main_menu":13,"./menu_data":15,"./slides":16,"./spectra":17}],15:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3196,18 +3323,16 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":9}],14:[function(require,module,exports){
+},{"../events":11}],16:[function(require,module,exports){
 var inp = require('../input_elem');
 
-function slides (app) {
+module.exports = function (app) {
 	function _main(div) {		
 		div.select('.menu-container').remove();
 		
-		var slides = app.selectAll('.spec-slide');
-		
 		var nav = div.append(inp.popover('Slides'))
 			.classed('menu-container', true)
-			.select('.popover-content')
+			.select('.popover-content');
 		
 		nav.append('ul')
 			.classed('block-list slide-list', true)
@@ -3224,8 +3349,8 @@ function slides (app) {
 	return _main;
 };
 
-module.exports = slides;
-},{"../input_elem":10}],15:[function(require,module,exports){
+
+},{"../input_elem":12}],17:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3254,7 +3379,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":10}],16:[function(require,module,exports){
+},{"../input_elem":12}],18:[function(require,module,exports){
 require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -3494,7 +3619,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":10,"./utils":20,"nanoModal":1}],17:[function(require,module,exports){
+},{"./input_elem":12,"./utils":22,"nanoModal":1}],19:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3568,7 +3693,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":16}],18:[function(require,module,exports){
+},{"../modals":18}],20:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3786,7 +3911,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":17,"./worker":19}],19:[function(require,module,exports){
+},{"./ajax":19,"./worker":21}],21:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3872,7 +3997,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4145,4 +4270,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":2}]},{},[3,17,16,8,9,20,19,18,4,5,6,7]);
+},{"simplify":2}]},{},[3,19,18,10,11,22,21,20,4,5,8,9,7]);

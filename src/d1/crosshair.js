@@ -1,13 +1,12 @@
 module.exports = function (){
-	function getDataPoint (x_point, i_scale, local_max) {
+	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
     if(local_max){
-      var s_window = [Math.floor(i_scale.invert(x_point-10)),
-        Math.floor(i_scale.invert(x_point+10))];
+      var s_window = [ pixel_to_i( x_point-10 ), pixel_to_i( x_point+10 ) ];
 
       i = s_window[0] + data.slice(s_window[0],s_window[1]+1).whichMax();
     }else{
-      i = Math.floor(i_scale.invert(x_point));					
+      i = pixel_to_i( x_point );					
     }
 		return data[i];
 	}
@@ -30,7 +29,7 @@ module.exports = function (){
 	}
 	
 	var x, y, data, dispatcher;
-	var svg_elem, i_scale, dispatch_idx;
+	var svg_elem, dispatch_idx;
 	var enabled, shown;
 	
 	var tip = d3.tip()
@@ -41,14 +40,13 @@ module.exports = function (){
 		
 	var core = require('../elem');
 	var source = core.SVGElem().class('crosshair');
-	
+	core.inherit(_main, source);
 	
 	function _main(spec_line) {
 		x = _main.xScale();
 		y = _main.yScale();
 		dispatcher = _main.dispatcher();
 		dispatch_idx = ++dispatcher.idx;
-		i_scale = x.copy();
 		enabled = shown = true;
 				
 		svg_elem = source(spec_line)
@@ -69,10 +67,6 @@ module.exports = function (){
 				spec_line.sel().classed('highlighted', false);
 			});
 
-		svg_elem.append("text")
-			.attr("x", 9)
-			.attr("dy", "-1em");
-			
 		svg_elem
 			.on("_regionchange", function(e){
 				if(e.x){					
@@ -86,7 +80,7 @@ module.exports = function (){
 				}
 			})
 			.on("_mousemove", function(e){
-        var p = getDataPoint(e.xcoor, i_scale, e.shiftKey);
+        var p = getDataPoint(e.xcoor, spec_line.pixelToi, e.shiftKey);
       
         if(typeof p === 'undefined'){
 					svg_elem.datum(null);
@@ -108,7 +102,6 @@ module.exports = function (){
 		return svg_elem;									
 	}
 	
-	core.inherit(_main, source);
 	_main.show = function (_) {
 		if (!arguments.length) {return shown;}
 		shown = _;
@@ -127,11 +120,6 @@ module.exports = function (){
 		enabled = _;
 		
 		return _main.show(_);
-	};
-	_main.dataSlice = function (_) {
-		if (!arguments.length) {return i_scale.domain();}
-		i_scale.domain(_);
-		return _main;
 	};
   _main.datum = function(_){
     if (!arguments.length) {return data;}

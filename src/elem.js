@@ -1,6 +1,7 @@
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
+			//console.log(f);
       d3.rebind(target, source, f);
     }
   }

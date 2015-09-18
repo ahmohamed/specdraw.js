@@ -1,14 +1,12 @@
 var inp = require('../input_elem');
 
-function slides (app) {
+module.exports = function (app) {
 	function _main(div) {		
 		div.select('.menu-container').remove();
 		
-		var slides = app.selectAll('.spec-slide');
-		
 		var nav = div.append(inp.popover('Slides'))
 			.classed('menu-container', true)
-			.select('.popover-content')
+			.select('.popover-content');
 		
 		nav.append('ul')
 			.classed('block-list slide-list', true)
@@ -25,4 +23,3 @@ function slides (app) {
 	return _main;
 };
 
-module.exports = slides;
