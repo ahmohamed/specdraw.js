@@ -5,7 +5,7 @@ spec.slide = function(){
 	
 	var data, slide_selection, svg_selection, svg_width, svg_height;
 	var clip_id = require('./src/utils').guid();
-	var spec_container;
+	var parent_app, spec_container;
 	
 	// Event dispatcher to group all listeners in one place.
 	var dispatcher = d3.dispatch(
@@ -21,6 +21,7 @@ spec.slide = function(){
 	
 	
 	function Slide(app){
+		parent_app = app;
 		if(!data){
 			//create_empty_slide();//TODO
 			return ;
@@ -176,7 +177,7 @@ spec.slide = function(){
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus() : spec.d1.main_focus();
+		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/main_focus')();
 		//Spec-Container
 		spec_container
 			.datum(data)
@@ -223,5 +224,8 @@ spec.slide = function(){
     data = _;
     return Slide;
   };
+	Slide.parent = function () {
+		return parent_app;
+	};
 	return Slide;
 };

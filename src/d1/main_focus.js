@@ -1,21 +1,14 @@
-spec.d1.main_focus = function () {
-	var focus, x, y, dispatcher, data, range = {};
-	var core = require('./src/elem');
+module.exports = function () {
+	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
 	core.inherit(SpecContainer, source);
+	
+	
+	var focus, x, y, dispatcher, data, range = {};
 	var specs = core.ElemArray();
-	var peak_picker = require('./src/d1/peak-picker')();
-	var main_brush = require('./src/d1/main-brush')();
-	/*var zoomTimer;
-	var new_region;
-	var stepzoom = function () {
-		//console.log(new_region)
-		if(new_region && (new_region[0] != range.y[0] || new_region[1] != range.y[1]))
-			focus.on("_regionchange")(
-				{zoom:true,	ydomain:new_region}
-			);
-		zoomTimer = setTimeout(stepzoom, 100);
-	}*/
+	var peak_picker = require('./peak-picker')();
+	var main_brush = require('./main-brush')();
+
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function () {
 			/* * When a y brush is applied, the scaled region should go both up and down.*/
@@ -208,7 +201,7 @@ spec.d1.main_focus = function () {
 		}	);
 		
 		if ( s.length === 0 ){
-		 	s = spec.d1.line()
+		 	s = require('./line')()
 				.datum(spec_data)
 				.crosshair(crosshair)
 				.s_id(s_id)

@@ -1,7 +1,39 @@
-spec.d1.line = function () {
-	var utils = require('./src/utils');
-	var core = require('./src/elem');
-	var path_elem = require('./src/d1/path-simplify')();
+function calcReductionFactor(spec_container) {
+	var seg_len = [];
+	var specs = spec_container.spectra();
+	for (var i = 0; i < specs.length; i++) {
+		var segs = specs[i].segments();
+		for (var j = 0; j < segs.length; j++) {
+			var len = Math.abs(segs[j].segment()[0] - segs[j].segment()[1]);
+			seg_len.push(len);
+		}
+	}
+	
+	var red = d3.max( seg_len ) / 0.5;
+	
+	spec_container.spectra().forEach(function (s) {
+		s.segments(true).forEach(function (seg) {
+			seg.reductionFactor(red);
+		});
+	});
+	
+	return d3.max( seg_len ) / 0.5;
+}
+function get_integ_factor(spec_container) {
+	var specs = spec_container.spectra();
+	var integ_factor;
+	for (var i = 0; i < specs.length; i++) {
+		var segs = specs[i].segments();
+		for (var j = 0; j < segs.length; j++) {
+			integ_factor = segs[j].integFactor();
+			if(integ_factor){ return integ_factor;}
+		}
+	}
+}
+
+module.exports = function () {
+	var core = require('../elem');
+	var path_elem = require('./path-simplify')();
 	var source = core.SVGElem().class('spec-line');
 	core.inherit(SpecLine, source);
 	
@@ -13,7 +45,7 @@ spec.d1.line = function () {
 	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
 	
 	var data_slice, scale_factor = 1;
-	var peaks = [], segments = [];
+	var peaks = [], segments = core.ElemArray();
 	
 	
 	function SpecLine(spec_container) {
@@ -43,12 +75,9 @@ spec.d1.line = function () {
 				(SpecLine);
 		}
 			
-		
-		var _integrate = (spec.d1.integrate() 
-			.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			)(svg_elem);
+		for (var i = 0; i < segments.length; i++) {
+			render_segment(segments[i]);
+		}
 		
 		svg_elem
 			.on("_redraw", function(e){
@@ -74,7 +103,6 @@ spec.d1.line = function () {
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					//var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
 					data_slice = e.xdomain.map(SpecLine.ppmToi);
 					i_to_pixel.domain( data_slice );
 					
@@ -85,26 +113,11 @@ spec.d1.line = function () {
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
 					
-					/*svg_elem.selectAll(".segment").remove();
-					segments.forEach(function (e) {
-						var seg_data = dataResample.filter(function (d) {
-							return d.x < e[0] &&  d.x > e[1];
-						});
-						svg_elem.append("path")
-				      .datum(seg_data)
-							.attr("class", "segment");				
-					});
-          */
-					
 				}
 			})
 			.on("_integrate", function(e){
-				//var segment = e.xdomain.map(SpecLine.ppmToi).sort(d3.ascending);
-				var sliced_data = utils.sliceData(data, e.xdomain, range.x);
-
-				_integrate.node().addIntegral (sliced_data);
-				svg_elem.node().addSegment([sliced_data[0].x, sliced_data[sliced_data.length-1].x]);
-				dispatcher.redraw({y:true});
+				var s = e.xdomain.map(SpecLine.ppmToi).sort(d3.ascending);
+				SpecLine.addSegment(s);
 			})
 			.on("_segment", function () {
 			});
@@ -125,35 +138,15 @@ spec.d1.line = function () {
 			}
 		});
 		
-		/*svg_elem.node().addSegment = function (seg) {
-			if(seg[0].constructor === Array){
-				for (var i = seg.length - 1; i >= 0; i--){
-					this.addSegment(seg[i]);					
-				}
-			}else{
-				segments.push(seg);
-				var seg_data = dataResample.filter(function (d) {
-					return d.x <= seg[0] &&  d.x >= seg[1];
-				});
-			
-				svg_elem.append("path")
-		      .datum(seg_data)
-					.attr("class", "segment")
-					.attr("d", path);
-			}
-		};
-		svg_elem.node().addSegmentByIndex = function (seg) {
-			if(seg[0].constructor === Array){
-				for (var i = seg.length - 1; i >= 0; i--){
-					this.addSegmentByIndex(seg[i]);				
-				} 
-			}else{
-				this.addSegment([data[seg[0]].x, data[seg[1]].x]);
-			}
-		};*/
-		
-		//SpecLine.addPeaks([100,1000,2000]);
+		//SpecLine.addSegment([1000,1050]);
 		return svg_elem;									
+	}
+	function render_segment(s) {
+		if (!svg_elem){ return; }
+		
+		s.xScale(x).yScale(y)
+			.dispatcher(dispatcher)
+			(SpecLine);
 	}
 	function redraw(x, y) {
 		if (!svg_elem){ return; }
@@ -167,16 +160,24 @@ spec.d1.line = function () {
 	}
 	
 	SpecLine.addSegment = function (_) {
-		segments.push(_);
+		var integ_elem = require('./integration-elem')()
+			.segment(_)
+			.integFactor(get_integ_factor(SpecLine.parent()));
+		
+		segments.push(integ_elem);
+		
+		render_segment(integ_elem);
+		calcReductionFactor( SpecLine.parent() );
 	};
 	SpecLine.delSegment = function (between) {
-		peaks = peaks.filter(function (e) {
+		segments = segments.filter(function (e) {
 			//retain all peaks NOT within the region.
 			return !(e >= between[0] && e <= between[1]);
 		});
 	};
 	SpecLine.segments = function (visible) {
-		var idx = segments;
+		return segments;
+		/*var idx = segments;
 		if(visible){ //get only peaks in the visible range (within dataSlice)
 			idx = idx.filter(function (e) {
 				return e[0] > data_slice[0] && 
@@ -185,11 +186,10 @@ spec.d1.line = function () {
 					e[1] < data_slice[1];
 			});
 		}
-		return idx;
+		return idx;*/
 	};
 	SpecLine.addPeaks = function (idx) {
 		peaks = peaks.concat(idx);
-		console.log(peaks);
 	};
 	SpecLine.delPeaks = function (between) {
 		between = between.map(SpecLine.ppmToi).sort(d3.ascending);
@@ -271,7 +271,7 @@ spec.d1.line = function () {
     if (!arguments.length) {return _crosshair;}
 		
 		if(_){
-			_crosshair = require('./src/d1/crosshair')().datum(data);
+			_crosshair = require('./crosshair')().datum(data);
 		} else {
 			_crosshair = false;
 		}			
