@@ -4,7 +4,8 @@ spec.d1.main_focus = function () {
 	var source = core.SVGElem().class('main-focus');
 	core.inherit(SpecContainer, source);
 	var specs = core.ElemArray();
-	
+	var peak_picker = require('./src/d1/peak-picker')();
+	var main_brush = require('./src/d1/main-brush')();
 	/*var zoomTimer;
 	var new_region;
 	var stepzoom = function () {
@@ -46,14 +47,6 @@ spec.d1.main_focus = function () {
 			.on("dblclick.zoom", null)
 			.on("mousedown.zoom", null);
 		
-		
-		/****** Attach functions on svg node ********/
-		//focus.node().dispatch_idx =  0; // an index as a namespace for dispacther events.
-		//focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
-		//focus.node().xScale = x;
-		//focus.node().yScale = y;
-		//focus.node().range = range;
-		//focus.node().addPeaks
 		
 		/*********** Handling Events **************/
 		focus
@@ -138,8 +131,7 @@ spec.d1.main_focus = function () {
 			.style("fill", "none");
 
 		//brushes
-		require('./src/d1/main-brush')()
-			.xScale(x)
+		main_brush.xScale(x)
 			.dispatcher(dispatcher)
 			(SpecContainer);
 		
@@ -150,8 +142,7 @@ spec.d1.main_focus = function () {
 		}
 		
 		//peak picker	
-		require('./src/d1/peak-picker')()
-			.xScale(x)
+		peak_picker.xScale(x)
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(SpecContainer);
@@ -244,7 +235,13 @@ spec.d1.main_focus = function () {
 	SpecContainer.spectra = function () {
 		return specs;
 	};
-  SpecContainer.range = function(){
+	SpecContainer.peakPicker = function () {
+		return peak_picker;
+	};
+	SpecContainer.mainBrush = function () {
+		return main_brush;
+	};
+	SpecContainer.range = function(){
 		return range;
   };
   SpecContainer.datum = function(_){

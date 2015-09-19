@@ -1,3 +1,5 @@
+var contextMenu = require('d3-context-menu')(d3);
+
 function peakLine(line_x, line_y, label_x){
 	var bottom = Math.max(line_y - 10, 60);
 	return d3.svg.line()
@@ -44,7 +46,7 @@ function getPeaks(spec_container) {
 	var all_peaks = [];
 	for (var i = 0; i < spectra.length; i++) {
 		var p = spectra[i].peaks(true).map(function (d) {
-			return {line:i, pos:x(d.x), d:d};
+			return {line:spectra[i].lineIdx(), pos:x(d.x), d:d};
 		});
 		all_peaks = all_peaks.concat(p);
 	}
@@ -104,7 +106,7 @@ module.exports = function(){
 					dispatcher.peakdel({xdomain:[d.d.x, d.d.x]});
 				}
 			})
-			.on('click', d3.contextMenu(menu));
+			.on('click', contextMenu(menu));
 	}
 
 	function redraw_lines() {		  
@@ -168,10 +170,11 @@ module.exports = function(){
 			.on("_redraw", function(e){
 				if(e.x){
 					update_text();
-					update_lines();					
+					update_lines();
+					
+					if (_peaks.length === 0){return;}
+					redraw_text();
 				}
-				if (_peaks.length === 0){return;}
-				redraw_text();
 				redraw_lines();
 			})
 			.on("_peakpick", function () {

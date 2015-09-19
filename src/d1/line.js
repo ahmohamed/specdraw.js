@@ -1,7 +1,9 @@
 spec.d1.line = function () {
 	var utils = require('./src/utils');
 	var core = require('./src/elem');
-	var peakElem;
+	var source = core.SVGElem().class('spec-line');
+	core.inherit(SpecLine, source);
+	
 	
 	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
 	var x, y, dispatcher;								//initiailized by parent at rendering
@@ -10,8 +12,7 @@ spec.d1.line = function () {
 	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
 	
 	var data_slice, scale_factor = 1;
-	var source = core.SVGElem().class('spec-line');
-	var peaks = [];
+	var peaks = [], segments = [];
 	
 	
 	function SpecLine(spec_container) {
@@ -30,12 +31,7 @@ spec.d1.line = function () {
 		var width = spec_container.width();
 		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
-		peakElem = require('./src/d1/peak')()
-			.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			.clrIdx(line_idx);
-		
+				
 		var path_elem = svg_elem.append("path")
       .datum(data)
 			.classed("line clr"+ line_idx, true);
@@ -82,9 +78,12 @@ spec.d1.line = function () {
 					var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
 
 					data_slice = new_slice;
+					i_to_pixel.domain( [data_slice.start, data_slice.end] );
+					
 					//TODO: resample factors both x and y dimensions.
 					// Both dimension need to have the same unit, i.e. pixels.
 					dataResample = utils.simplify(data.slice(data_slice.start, data_slice.end), x.domain(), width);
+					
 					path_elem.datum(dataResample);
 											
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
@@ -101,14 +100,12 @@ spec.d1.line = function () {
 				      .datum(seg_data)
 							.attr("class", "segment");				
 					});
+          
 					
-					//if(_crosshair){
-					//	_crosshair.dataSlice([data_slice.start, data_slice.end]);						
-					//}
-					i_to_pixel.domain( [data_slice.start, data_slice.end] );
 				}
 			})
 			.on("_integrate", function(e){
+				var segment = e.xdomain.map(SpecLine.ppmToi).sort(d3.ascending);
 				var sliced_data = utils.sliceData(data, e.xdomain, range.x);
 
 				_integrate.node().addIntegral (sliced_data);
@@ -164,7 +161,6 @@ spec.d1.line = function () {
 		//SpecLine.addPeaks([100,1000,2000]);
 		return svg_elem;									
 	}
-	core.inherit(SpecLine, source);
 	function redraw(x, y) {
 		if (!svg_elem){ return; }
 		svg_elem.on("_redraw")({x:x, y:y});
@@ -176,12 +172,32 @@ spec.d1.line = function () {
 		svg_elem.on("_redraw")({x:true});
 	}
 	
+	SpecLine.addSegment = function (_) {
+		segments.push(_);
+	};
+	SpecLine.delSegment = function (between) {
+		peaks = peaks.filter(function (e) {
+			//retain all peaks NOT within the region.
+			return !(e >= between[0] && e <= between[1]);
+		});
+	};
+	SpecLine.segments = function (visible) {
+		var idx = segments;
+		if(visible){ //get only peaks in the visible range (within dataSlice)
+			idx = idx.filter(function (e) {
+				return e[0] > data_slice.start && 
+					e[0] < data_slice.end &&
+					e[1] > data_slice.start && 
+					e[1] < data_slice.end;
+			});
+		}
+		return idx;
+	};
 	SpecLine.addPeaks = function (idx) {
 		peaks = peaks.concat(idx);
 	};
 	SpecLine.delPeaks = function (between) {
-		between = between.map(SpecLine.ppmToi).sort(d3.ascending);	
-		console.log(between, peaks);	
+		between = between.map(SpecLine.ppmToi).sort(d3.ascending);
 		peaks = peaks.filter(function (e) {
 			//retain all peaks NOT within the region.
 			return !(e >= between[0] && e <= between[1]);
@@ -195,18 +211,6 @@ spec.d1.line = function () {
 			});
 		}
 		return data.subset(idx);
-	};
-	SpecLine.peakPositions = function (_) {
-		if (!arguments.length) {
-			return SpecLine.peaks().map(function (e) { return x(e.x); });
-		}
-		var peak_sel = svg_elem.selectAll('.peak').data(SpecLine.peaks());
-		peakElem(peak_sel.enter());
-		peak_sel.exit().remove();
-		
-		peak_sel
-			.attr('peak_position', function (d,i) { return _[i];	});
-		
 	};
 	SpecLine.iToPixel = function (_) {
 		return i_to_pixel(_);

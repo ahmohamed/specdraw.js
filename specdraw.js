@@ -1,6 +1,68 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
+(function(root, factory) {
+	if (typeof module === 'object' && module.exports) {
+		module.exports = function(d3) {
+			d3.contextMenu = factory(d3);
+			return d3.contextMenu;
+		};
+	} else {
+		root.d3.contextMenu = factory(root.d3);
+	}
+}(	this, 
+	function(d3) {
+		return function (menu, openCallback) {
+
+			// create the div element that will hold the context menu
+			d3.selectAll('.d3-context-menu').data([1])
+				.enter()
+				.append('div')
+				.attr('class', 'd3-context-menu');
+
+			// close menu
+			d3.select('body').on('click.d3-context-menu', function() {
+				d3.select('.d3-context-menu').style('display', 'none');
+			});
+
+			// this gets executed when a contextmenu event occurs
+			return function(data, index) {
+				var elm = this;
+
+				d3.selectAll('.d3-context-menu').html('');
+				var list = d3.selectAll('.d3-context-menu').append('ul');
+				list.selectAll('li').data(menu).enter()
+					.append('li')
+					.html(function(d) {
+						return (typeof d.title === 'string') ? d.title : d.title(data);
+					})
+					.on('click', function(d, i) {
+						d.action(elm, data, index);
+						d3.select('.d3-context-menu').style('display', 'none');
+					});
+
+				// the openCallback allows an action to fire before the menu is displayed
+				// an example usage would be closing a tooltip
+				if (openCallback) {
+					if (openCallback(data, index) === false) {
+						return;
+					}
+				}
+
+				// display context menu
+				d3.select('.d3-context-menu')
+					.style('left', (d3.event.pageX - 2) + 'px')
+					.style('top', (d3.event.pageY - 2) + 'px')
+					.style('display', 'block');
+
+				d3.event.preventDefault();
+				d3.event.stopPropagation();
+			};
+		};
+	}
+));
+
 },{}],2:[function(require,module,exports){
+var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
+},{}],3:[function(require,module,exports){
 /*
  Copyright (c) 2012, Vladimir Agafonkin
  Simplify.js is a high-performance polyline simplification library
@@ -173,7 +235,7 @@ function simplify(points, tolerance, highestQuality) {
   return points;
 };
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function () { "use strict";
   var spec = {version: "0.5.2"}; // semver
 	var pro = {};
@@ -326,7 +388,9 @@ spec.d1.integrate = function(){
 spec.d1.line = function () {
 	var utils = require('./src/utils');
 	var core = require('./src/elem');
-	var peakElem;
+	var source = core.SVGElem().class('spec-line');
+	core.inherit(SpecLine, source);
+	
 	
 	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
 	var x, y, dispatcher;								//initiailized by parent at rendering
@@ -335,7 +399,6 @@ spec.d1.line = function () {
 	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
 	
 	var data_slice, scale_factor = 1;
-	var source = core.SVGElem().class('spec-line');
 	var peaks = [];
 	
 	
@@ -355,12 +418,7 @@ spec.d1.line = function () {
 		var width = spec_container.width();
 		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
-		peakElem = require('./src/d1/peak')()
-			.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			.clrIdx(line_idx);
-		
+				
 		var path_elem = svg_elem.append("path")
       .datum(data)
 			.classed("line clr"+ line_idx, true);
@@ -407,9 +465,12 @@ spec.d1.line = function () {
 					var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
 
 					data_slice = new_slice;
+					i_to_pixel.domain( [data_slice.start, data_slice.end] );
+					
 					//TODO: resample factors both x and y dimensions.
 					// Both dimension need to have the same unit, i.e. pixels.
 					dataResample = utils.simplify(data.slice(data_slice.start, data_slice.end), x.domain(), width);
+					
 					path_elem.datum(dataResample);
 											
 					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
@@ -426,11 +487,8 @@ spec.d1.line = function () {
 				      .datum(seg_data)
 							.attr("class", "segment");				
 					});
+          
 					
-					//if(_crosshair){
-					//	_crosshair.dataSlice([data_slice.start, data_slice.end]);						
-					//}
-					i_to_pixel.domain( [data_slice.start, data_slice.end] );
 				}
 			})
 			.on("_integrate", function(e){
@@ -489,7 +547,6 @@ spec.d1.line = function () {
 		//SpecLine.addPeaks([100,1000,2000]);
 		return svg_elem;									
 	}
-	core.inherit(SpecLine, source);
 	function redraw(x, y) {
 		if (!svg_elem){ return; }
 		svg_elem.on("_redraw")({x:x, y:y});
@@ -505,8 +562,7 @@ spec.d1.line = function () {
 		peaks = peaks.concat(idx);
 	};
 	SpecLine.delPeaks = function (between) {
-		between = between.map(SpecLine.ppmToi).sort(d3.ascending);	
-		console.log(between, peaks);	
+		between = between.map(SpecLine.ppmToi).sort(d3.ascending);
 		peaks = peaks.filter(function (e) {
 			//retain all peaks NOT within the region.
 			return !(e >= between[0] && e <= between[1]);
@@ -520,18 +576,6 @@ spec.d1.line = function () {
 			});
 		}
 		return data.subset(idx);
-	};
-	SpecLine.peakPositions = function (_) {
-		if (!arguments.length) {
-			return SpecLine.peaks().map(function (e) { return x(e.x); });
-		}
-		var peak_sel = svg_elem.selectAll('.peak').data(SpecLine.peaks());
-		peakElem(peak_sel.enter());
-		peak_sel.exit().remove();
-		
-		peak_sel
-			.attr('peak_position', function (d,i) { return _[i];	});
-		
 	};
 	SpecLine.iToPixel = function (_) {
 		return i_to_pixel(_);
@@ -625,7 +669,8 @@ spec.d1.main_focus = function () {
 	var source = core.SVGElem().class('main-focus');
 	core.inherit(SpecContainer, source);
 	var specs = core.ElemArray();
-	
+	var peak_picker = require('./src/d1/peak-picker')();
+	var main_brush = require('./src/d1/main-brush')();
 	/*var zoomTimer;
 	var new_region;
 	var stepzoom = function () {
@@ -667,14 +712,6 @@ spec.d1.main_focus = function () {
 			.on("dblclick.zoom", null)
 			.on("mousedown.zoom", null);
 		
-		
-		/****** Attach functions on svg node ********/
-		//focus.node().dispatch_idx =  0; // an index as a namespace for dispacther events.
-		//focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
-		//focus.node().xScale = x;
-		//focus.node().yScale = y;
-		//focus.node().range = range;
-		//focus.node().addPeaks
 		
 		/*********** Handling Events **************/
 		focus
@@ -759,8 +796,7 @@ spec.d1.main_focus = function () {
 			.style("fill", "none");
 
 		//brushes
-		require('./src/d1/main-brush')()
-			.xScale(x)
+		main_brush.xScale(x)
 			.dispatcher(dispatcher)
 			(SpecContainer);
 		
@@ -771,8 +807,7 @@ spec.d1.main_focus = function () {
 		}
 		
 		//peak picker	
-		require('./src/d1/pp')()
-			.xScale(x)
+		peak_picker.xScale(x)
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(SpecContainer);
@@ -865,7 +900,13 @@ spec.d1.main_focus = function () {
 	SpecContainer.spectra = function () {
 		return specs;
 	};
-  SpecContainer.range = function(){
+	SpecContainer.peakPicker = function () {
+		return peak_picker;
+	};
+	SpecContainer.mainBrush = function () {
+		return main_brush;
+	};
+	SpecContainer.range = function(){
 		return range;
   };
   SpecContainer.datum = function(_){
@@ -1912,7 +1953,7 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/crosshair":4,"./src/d1/main-brush":5,"./src/d1/peak":6,"./src/d1/pp":7,"./src/d1/scale-brush":8,"./src/elem":10,"./src/events":11,"./src/menu/menu":14,"./src/modals":18,"./src/pro/ajax":19,"./src/pro/process_data":20,"./src/utils":22}],4:[function(require,module,exports){
+},{"./src/d1/crosshair":5,"./src/d1/main-brush":6,"./src/d1/peak-picker":7,"./src/d1/scale-brush":8,"./src/elem":10,"./src/events":11,"./src/menu/menu":14,"./src/modals":18,"./src/pro/ajax":19,"./src/pro/process_data":20,"./src/utils":22}],5:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -2044,7 +2085,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":10}],5:[function(require,module,exports){
+},{"../elem":10}],6:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -2145,86 +2186,9 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":10}],6:[function(require,module,exports){
-function peakLine(line_x, line_y, label_x){
-	var bottom = Math.max(line_y - 10, 60);
-	return d3.svg.line()
-		.defined(function(d) { return !isNaN(d[1]); })
-		([
-		[label_x, 40], 
-		[line_x, 60],
-		[line_x, 80],
-		[NaN, NaN],
-		[line_x, bottom - 10],
-		[line_x, bottom]
-		]);
-}
-/*var menu = [
-	{
-		title: '\uf1f8 Delete peak',
-		action: function(elm, d, i) {
-			dispatcher.peakdel({xdomain:[d[0], d[0]]});
-		}
-	}
-];*/	
-
-module.exports = function(){
-	var svg_elem, x, y, dispatcher;
-	var peak_text, peak_line, clr_idx;
-	
-	var core = require('../elem');
-	var source = core.SVGElem().class('peak');
-	core.inherit(_main, source);
-	
-	function redraw() {
-		var x_pos = + (svg_elem.attr('peak_position')) || x(svg_elem.datum().x);
-		peak_text.text(function(d){return d3.round(d[0] ,3);})
-			.attr("transform", "translate(" + x_pos + ",0)rotate(90)");
-		
-		peak_line.attr("d", function(d){return peakLine( x(d.x), y(d.y) , x_pos);});
-	}
-	
-	function _main(slide) {
-		x = _main.xScale();
-		y = _main.yScale();
-		dispatcher = _main.dispatcher();
-		
-		svg_elem = source(slide);
-		
-		peak_text = svg_elem.append("text")
-			.attr("dy", "0.35em")
-			.attr("focusable", true)
-			.classed('peak-text clr' + _main.clrIdx(), true)
-			.on("focus", function(){})
-			.on("keydown", function(d) {
-				if(d3.event.keyCode===68){
-					dispatcher.peakdel({xdomain:[d[0], d[0]]});
-				}
-			});
-			//.on("contextmenu", d3.contextMenu(menu));
-    
-		peak_line = svg_elem.append("path")
-			.classed('peak-line clr' + _main.clrIdx(), true)
-			.style("fill", "none");	
-    
-	
-		
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("redraw.peaks."+dispatch_idx, redraw);		
-
-		return svg_elem;									
-	}
-	
-	_main.clrIdx = function (_) {
-		if (!arguments.length) {return clr_idx;}
-		clr_idx = _;
-		return _main;
-	};
-	return _main;
-};
-
 },{"../elem":10}],7:[function(require,module,exports){
+var contextMenu = require('d3-context-menu')(d3);
+
 function peakLine(line_x, line_y, label_x){
 	var bottom = Math.max(line_y - 10, 60);
 	return d3.svg.line()
@@ -2271,7 +2235,7 @@ function getPeaks(spec_container) {
 	var all_peaks = [];
 	for (var i = 0; i < spectra.length; i++) {
 		var p = spectra[i].peaks(true).map(function (d) {
-			return {line:i, pos:x(d.x), d:d};
+			return {line:spectra[i].lineIdx(), pos:x(d.x), d:d};
 		});
 		all_peaks = all_peaks.concat(p);
 	}
@@ -2284,7 +2248,7 @@ function getPeaks(spec_container) {
 module.exports = function(){
 	var menu = [
 		{
-			title: '\uf014 Delete peak',
+			title: 'Delete peak',
 			action: function(elm, d) {
 				_main.parent().spectra().filter(function (s) {
 						return s.lineIdx() === d.line;
@@ -2331,7 +2295,7 @@ module.exports = function(){
 					dispatcher.peakdel({xdomain:[d.d.x, d.d.x]});
 				}
 			})
-			.on('click', d3.contextMenu(menu));
+			.on('click', contextMenu(menu));
 	}
 
 	function redraw_lines() {		  
@@ -2439,7 +2403,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":10}],8:[function(require,module,exports){
+},{"../elem":10,"d3-context-menu":1}],8:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -3619,7 +3583,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":12,"./utils":22,"nanoModal":1}],19:[function(require,module,exports){
+},{"./input_elem":12,"./utils":22,"nanoModal":2}],19:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -4270,4 +4234,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":2}]},{},[3,19,18,10,11,22,21,20,4,5,8,9,7]);
+},{"simplify":3}]},{},[4,19,18,10,11,22,21,20,5,6,8,9,7]);
