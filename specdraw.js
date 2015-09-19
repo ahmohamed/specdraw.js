@@ -388,6 +388,7 @@ spec.d1.integrate = function(){
 spec.d1.line = function () {
 	var utils = require('./src/utils');
 	var core = require('./src/elem');
+	var path_elem = require('./src/d1/path-simplify')();
 	var source = core.SVGElem().class('spec-line');
 	core.inherit(SpecLine, source);
 	
@@ -399,7 +400,7 @@ spec.d1.line = function () {
 	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
 	
 	var data_slice, scale_factor = 1;
-	var peaks = [];
+	var peaks = [], segments = [];
 	
 	
 	function SpecLine(spec_container) {
@@ -408,20 +409,16 @@ spec.d1.line = function () {
 		dispatcher = SpecLine.dispatcher();
 		i_to_pixel = x.copy();
 		
-		var dataResample, segments = [];
-		
-		var path = d3.svg.line()
-			.interpolate('linear')
-			.x(function(d) { return x(d.x); })
-			.y(function(d) { return y(d.y * scale_factor); });
-		
-		var width = spec_container.width();
+		//var width = spec_container.width();
 		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
 				
-		var path_elem = svg_elem.append("path")
-      .datum(data)
-			.classed("line clr"+ line_idx, true);
+		path_elem.datum(data)
+			.xScale(x)
+			.yScale(y)
+			.simplify(2)
+			.class("line clr"+ line_idx)
+			(svg_elem);
 		
 		if(typeof _crosshair === 'undefined'){
 			SpecLine.crosshair(true);
@@ -443,9 +440,10 @@ spec.d1.line = function () {
 		svg_elem
 			.on("_redraw", function(e){
 				if(e.x){
-					path_elem.attr("d", path)
+					path_elem.redraw().sel()
 						.attr("transform", 'scale(1,1)translate(0,0)');
-					svg_elem.selectAll(".segment").attr("d", path);
+					
+					//svg_elem.selectAll(".segment").attr("d", path);
 				}else{ //change is in the Y axis only.
 					var orignial_yscale = y.copy().domain(spec_container.range().y);
 					
@@ -455,30 +453,26 @@ spec.d1.line = function () {
 					var	scale_coor = [ 1,
 					  Math.abs((spec_container.range().y[0]-spec_container.range().y[1])/(y.domain()[0]-y.domain()[1]))];
 				
-					path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					path_elem.sel()
+						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 					svg_elem.selectAll(".segment")
 						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 				}
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
-
-					data_slice = new_slice;
-					i_to_pixel.domain( [data_slice.start, data_slice.end] );
+					//var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
+					data_slice = e.xdomain.map(SpecLine.ppmToi);
+					i_to_pixel.domain( data_slice );
 					
 					//TODO: resample factors both x and y dimensions.
-					// Both dimension need to have the same unit, i.e. pixels.
-					dataResample = utils.simplify(data.slice(data_slice.start, data_slice.end), x.domain(), width);
-					
-					path_elem.datum(dataResample);
-											
-					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
+					// Both dimension need to have the same unit, i.e. pixels.										
+					path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
+					range.y = path_elem.range().y;
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
-					//scale=1
 					
-					svg_elem.selectAll(".segment").remove();
+					/*svg_elem.selectAll(".segment").remove();
 					segments.forEach(function (e) {
 						var seg_data = dataResample.filter(function (d) {
 							return d.x < e[0] &&  d.x > e[1];
@@ -487,11 +481,12 @@ spec.d1.line = function () {
 				      .datum(seg_data)
 							.attr("class", "segment");				
 					});
-          
+          */
 					
 				}
 			})
 			.on("_integrate", function(e){
+				//var segment = e.xdomain.map(SpecLine.ppmToi).sort(d3.ascending);
 				var sliced_data = utils.sliceData(data, e.xdomain, range.x);
 
 				_integrate.node().addIntegral (sliced_data);
@@ -517,7 +512,7 @@ spec.d1.line = function () {
 			}
 		});
 		
-		svg_elem.node().addSegment = function (seg) {
+		/*svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){
 				for (var i = seg.length - 1; i >= 0; i--){
 					this.addSegment(seg[i]);					
@@ -542,7 +537,7 @@ spec.d1.line = function () {
 			}else{
 				this.addSegment([data[seg[0]].x, data[seg[1]].x]);
 			}
-		};
+		};*/
 		
 		//SpecLine.addPeaks([100,1000,2000]);
 		return svg_elem;									
@@ -558,8 +553,30 @@ spec.d1.line = function () {
 		svg_elem.on("_redraw")({x:true});
 	}
 	
+	SpecLine.addSegment = function (_) {
+		segments.push(_);
+	};
+	SpecLine.delSegment = function (between) {
+		peaks = peaks.filter(function (e) {
+			//retain all peaks NOT within the region.
+			return !(e >= between[0] && e <= between[1]);
+		});
+	};
+	SpecLine.segments = function (visible) {
+		var idx = segments;
+		if(visible){ //get only peaks in the visible range (within dataSlice)
+			idx = idx.filter(function (e) {
+				return e[0] > data_slice[0] && 
+					e[0] < data_slice[1] &&
+					e[1] > data_slice[0] && 
+					e[1] < data_slice[1];
+			});
+		}
+		return idx;
+	};
 	SpecLine.addPeaks = function (idx) {
 		peaks = peaks.concat(idx);
+		console.log(peaks);
 	};
 	SpecLine.delPeaks = function (between) {
 		between = between.map(SpecLine.ppmToi).sort(d3.ascending);
@@ -572,7 +589,7 @@ spec.d1.line = function () {
 		var idx = peaks;
 		if(visible){ //get only peaks in the visible range (within dataSlice)
 			idx = idx.filter(function (e) {
-				return e > data_slice.start && e < data_slice.end;
+				return e > data_slice[0] && e < data_slice[1];
 			});
 		}
 		return data.subset(idx);
@@ -584,10 +601,14 @@ spec.d1.line = function () {
 		return Math.round( i_to_pixel.invert(_) );
 	};
 	SpecLine.ppmToi = function (_) {
+		console.log('ppm', _);
 		var i = Math.round( ppm_to_i(_) );
-		if ( Math.abs(_ - data[i].x) > Math.abs(_ - data[i-1].x) ){
+		i = i > data.length-1 ? data.length-1 : i;
+		i = i < 0 ? 0 : i;
+		
+		if (data[i-1] && Math.abs(_ - data[i].x) > Math.abs(_ - data[i-1].x) ){
 			i--;
-		}else if( Math.abs(_ - data[i].x) > Math.abs(_ - data[i+1].x) ){
+		}else if(data[i+1] && Math.abs(_ - data[i].x) > Math.abs(_ - data[i+1].x) ){
 			i++;
 		}
 		return i;
@@ -1953,7 +1974,7 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/crosshair":5,"./src/d1/main-brush":6,"./src/d1/peak-picker":7,"./src/d1/scale-brush":8,"./src/elem":10,"./src/events":11,"./src/menu/menu":14,"./src/modals":18,"./src/pro/ajax":19,"./src/pro/process_data":20,"./src/utils":22}],5:[function(require,module,exports){
+},{"./src/d1/crosshair":5,"./src/d1/main-brush":6,"./src/d1/path-simplify":7,"./src/d1/peak-picker":8,"./src/d1/scale-brush":9,"./src/elem":11,"./src/events":12,"./src/menu/menu":15,"./src/modals":19,"./src/pro/ajax":20,"./src/pro/process_data":21,"./src/utils":23}],5:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -2085,7 +2106,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":10}],6:[function(require,module,exports){
+},{"../elem":11}],6:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -2186,7 +2207,78 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":10}],7:[function(require,module,exports){
+},{"../elem":11}],7:[function(require,module,exports){
+module.exports = function () {
+	var utils = require('../utils');
+	var core = require('../elem');
+	var source = core.ResponsiveElem('path');
+	core.inherit(PathElem, source);
+	
+	
+	var data;	//initiailized by parent at generation
+	var x, y;								//initiailized by parent at rendering
+	var range={}, svg_elem;		//initialized by self at rendering
+	var data_resample, simplify_val, path_fun;
+	
+	function PathElem(spec_line) {
+		x = PathElem.xScale();
+		y = PathElem.yScale();
+	
+		path_fun = d3.svg.line()
+			.interpolate('linear')
+			.x(function(d) { return x(d.x); })
+			.y(function(d) { return y(d.y); });
+		
+		svg_elem = source(spec_line);
+		return svg_elem;			
+	}
+	function update_range() {
+		range.x = [data_resample[0].x, data_resample[data_resample.length - 1].x];
+		range.y = d3.extent(data_resample.map(function (d) { return d.y; }));
+		
+		//range.x = range.x.map(x.invert);
+		//range.y = range.y.map(y.invert);
+		console.log(range);
+	}
+	PathElem.redraw = function () {
+		if ( !svg_elem ){return PathElem;}
+		svg_elem.attr("d", path_fun);
+		return PathElem;
+	};
+	PathElem.update = function () {
+		if ( !svg_elem ){return PathElem;}
+		
+		if(simplify_val){
+			data_resample = utils.simplify(data, x, simplify_val);
+			console.log('simplify', data_resample.length);
+		}else{
+			data_resample = data;
+		}
+		
+		svg_elem.datum(data_resample);
+		update_range();
+		return PathElem;
+	};
+	PathElem.range = function () {
+		return range;
+	};
+	PathElem.datum = function (_) {
+		if (!arguments.length) {return data;}
+		data = _;
+		
+		return PathElem.update();
+	};
+	PathElem.simplify = function (_) {
+		if (!arguments.length) {return simplify_val;}
+		simplify_val = _;
+		return PathElem;
+	};
+	
+	
+	return PathElem;
+};
+
+},{"../elem":11,"../utils":23}],8:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -2359,10 +2451,11 @@ module.exports = function(){
 			.on("_redraw", function(e){
 				if(e.x){
 					update_text();
-					update_lines();					
+					update_lines();
+					
+					if (_peaks.length === 0){return;}
+					redraw_text();
 				}
-				if (_peaks.length === 0){return;}
-				redraw_text();
 				redraw_lines();
 			})
 			.on("_peakpick", function () {
@@ -2403,7 +2496,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":10,"d3-context-menu":1}],8:[function(require,module,exports){
+},{"../elem":11,"d3-context-menu":1}],9:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -2505,7 +2598,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":10}],9:[function(require,module,exports){
+},{"../elem":11}],10:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -2535,7 +2628,7 @@ module.exports = function () {
 
 	return _main;	
 };
-},{"../elem":10}],10:[function(require,module,exports){
+},{"../elem":11}],11:[function(require,module,exports){
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
@@ -2668,7 +2761,7 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2777,7 +2870,7 @@ function editText(evt){
 }*/
 
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -3074,7 +3167,7 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./d1/threshold":9,"./utils":22}],13:[function(require,module,exports){
+},{"./d1/threshold":10,"./utils":23}],14:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -3141,7 +3234,7 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":12,"../utils":22}],14:[function(require,module,exports){
+},{"../input_elem":13,"../utils":23}],15:[function(require,module,exports){
 var utils = require('../utils');
 
 function create_menu (app){	
@@ -3218,7 +3311,7 @@ function create_menu (app){
 }
 
 module.exports = create_menu;
-},{"../utils":22,"./main_menu":13,"./menu_data":15,"./slides":16,"./spectra":17}],15:[function(require,module,exports){
+},{"../utils":23,"./main_menu":14,"./menu_data":16,"./slides":17,"./spectra":18}],16:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3287,7 +3380,7 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":11}],16:[function(require,module,exports){
+},{"../events":12}],17:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -3314,7 +3407,7 @@ module.exports = function (app) {
 };
 
 
-},{"../input_elem":12}],17:[function(require,module,exports){
+},{"../input_elem":13}],18:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3343,7 +3436,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":12}],18:[function(require,module,exports){
+},{"../input_elem":13}],19:[function(require,module,exports){
 require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -3583,7 +3676,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":12,"./utils":22,"nanoModal":2}],19:[function(require,module,exports){
+},{"./input_elem":13,"./utils":23,"nanoModal":2}],20:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3657,7 +3750,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":18}],20:[function(require,module,exports){
+},{"../modals":19}],21:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3875,7 +3968,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":19,"./worker":21}],21:[function(require,module,exports){
+},{"./ajax":20,"./worker":22}],22:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3961,7 +4054,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4125,8 +4218,13 @@ var getSlicedData = function (data, domain, range) {
 	var slice_idx = sliceDataIdx(data, domain, range);
 	return data.slice(slice_idx.start, slice_idx.end);
 };
-var resample = function (data, domain, npoints) {
-  var dataResample = require('simplify')(data, (domain[0] - domain[1])/npoints);
+var resample = function (data, xscale, tolerance) {
+	var ppm_range = Math.abs(xscale.domain()[0] - xscale.domain()[1]);
+	var pixels = Math.abs(xscale.range()[0] - xscale.range()[1]);
+	ppm_per_pixel = ppm_range / pixels;
+	tolerance *= ppm_per_pixel
+	
+  var dataResample = require('simplify')(data, tolerance);
 	return dataResample;
 };
 var disable = function (svg) {
@@ -4234,4 +4332,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":3}]},{},[4,19,18,10,11,22,21,20,5,6,8,9,7]);
+},{"simplify":3}]},{},[4,20,19,11,12,23,22,21,5,6,9,10,8,7]);

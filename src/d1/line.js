@@ -1,6 +1,7 @@
 spec.d1.line = function () {
 	var utils = require('./src/utils');
 	var core = require('./src/elem');
+	var path_elem = require('./src/d1/path-simplify')();
 	var source = core.SVGElem().class('spec-line');
 	core.inherit(SpecLine, source);
 	
@@ -21,20 +22,16 @@ spec.d1.line = function () {
 		dispatcher = SpecLine.dispatcher();
 		i_to_pixel = x.copy();
 		
-		var dataResample, segments = [];
-		
-		var path = d3.svg.line()
-			.interpolate('linear')
-			.x(function(d) { return x(d.x); })
-			.y(function(d) { return y(d.y * scale_factor); });
-		
-		var width = spec_container.width();
+		//var width = spec_container.width();
 		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
 				
-		var path_elem = svg_elem.append("path")
-      .datum(data)
-			.classed("line clr"+ line_idx, true);
+		path_elem.datum(data)
+			.xScale(x)
+			.yScale(y)
+			.simplify(2)
+			.class("line clr"+ line_idx)
+			(svg_elem);
 		
 		if(typeof _crosshair === 'undefined'){
 			SpecLine.crosshair(true);
@@ -56,9 +53,10 @@ spec.d1.line = function () {
 		svg_elem
 			.on("_redraw", function(e){
 				if(e.x){
-					path_elem.attr("d", path)
+					path_elem.redraw().sel()
 						.attr("transform", 'scale(1,1)translate(0,0)');
-					svg_elem.selectAll(".segment").attr("d", path);
+					
+					//svg_elem.selectAll(".segment").attr("d", path);
 				}else{ //change is in the Y axis only.
 					var orignial_yscale = y.copy().domain(spec_container.range().y);
 					
@@ -68,30 +66,26 @@ spec.d1.line = function () {
 					var	scale_coor = [ 1,
 					  Math.abs((spec_container.range().y[0]-spec_container.range().y[1])/(y.domain()[0]-y.domain()[1]))];
 				
-					path_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+					path_elem.sel()
+						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 					svg_elem.selectAll(".segment")
 						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 				}
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
-
-					data_slice = new_slice;
-					i_to_pixel.domain( [data_slice.start, data_slice.end] );
+					//var new_slice = utils.sliceDataIdx(data, x.domain(), range.x);
+					data_slice = e.xdomain.map(SpecLine.ppmToi);
+					i_to_pixel.domain( data_slice );
 					
 					//TODO: resample factors both x and y dimensions.
-					// Both dimension need to have the same unit, i.e. pixels.
-					dataResample = utils.simplify(data.slice(data_slice.start, data_slice.end), x.domain(), width);
-					
-					path_elem.datum(dataResample);
-											
-					range.y = d3.extent(dataResample.map(function(d) { return d.y; }));
+					// Both dimension need to have the same unit, i.e. pixels.										
+					path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
+					range.y = path_elem.range().y;
 					range.y[0] *= scale_factor;
 					range.y[1] *= scale_factor;
-					//scale=1
 					
-					svg_elem.selectAll(".segment").remove();
+					/*svg_elem.selectAll(".segment").remove();
 					segments.forEach(function (e) {
 						var seg_data = dataResample.filter(function (d) {
 							return d.x < e[0] &&  d.x > e[1];
@@ -100,12 +94,12 @@ spec.d1.line = function () {
 				      .datum(seg_data)
 							.attr("class", "segment");				
 					});
-          
+          */
 					
 				}
 			})
 			.on("_integrate", function(e){
-				var segment = e.xdomain.map(SpecLine.ppmToi).sort(d3.ascending);
+				//var segment = e.xdomain.map(SpecLine.ppmToi).sort(d3.ascending);
 				var sliced_data = utils.sliceData(data, e.xdomain, range.x);
 
 				_integrate.node().addIntegral (sliced_data);
@@ -131,7 +125,7 @@ spec.d1.line = function () {
 			}
 		});
 		
-		svg_elem.node().addSegment = function (seg) {
+		/*svg_elem.node().addSegment = function (seg) {
 			if(seg[0].constructor === Array){
 				for (var i = seg.length - 1; i >= 0; i--){
 					this.addSegment(seg[i]);					
@@ -156,7 +150,7 @@ spec.d1.line = function () {
 			}else{
 				this.addSegment([data[seg[0]].x, data[seg[1]].x]);
 			}
-		};
+		};*/
 		
 		//SpecLine.addPeaks([100,1000,2000]);
 		return svg_elem;									
@@ -185,16 +179,17 @@ spec.d1.line = function () {
 		var idx = segments;
 		if(visible){ //get only peaks in the visible range (within dataSlice)
 			idx = idx.filter(function (e) {
-				return e[0] > data_slice.start && 
-					e[0] < data_slice.end &&
-					e[1] > data_slice.start && 
-					e[1] < data_slice.end;
+				return e[0] > data_slice[0] && 
+					e[0] < data_slice[1] &&
+					e[1] > data_slice[0] && 
+					e[1] < data_slice[1];
 			});
 		}
 		return idx;
 	};
 	SpecLine.addPeaks = function (idx) {
 		peaks = peaks.concat(idx);
+		console.log(peaks);
 	};
 	SpecLine.delPeaks = function (between) {
 		between = between.map(SpecLine.ppmToi).sort(d3.ascending);
@@ -207,7 +202,7 @@ spec.d1.line = function () {
 		var idx = peaks;
 		if(visible){ //get only peaks in the visible range (within dataSlice)
 			idx = idx.filter(function (e) {
-				return e > data_slice.start && e < data_slice.end;
+				return e > data_slice[0] && e < data_slice[1];
 			});
 		}
 		return data.subset(idx);
@@ -219,10 +214,14 @@ spec.d1.line = function () {
 		return Math.round( i_to_pixel.invert(_) );
 	};
 	SpecLine.ppmToi = function (_) {
+		console.log('ppm', _);
 		var i = Math.round( ppm_to_i(_) );
-		if ( Math.abs(_ - data[i].x) > Math.abs(_ - data[i-1].x) ){
+		i = i > data.length-1 ? data.length-1 : i;
+		i = i < 0 ? 0 : i;
+		
+		if (data[i-1] && Math.abs(_ - data[i].x) > Math.abs(_ - data[i-1].x) ){
 			i--;
-		}else if( Math.abs(_ - data[i].x) > Math.abs(_ - data[i+1].x) ){
+		}else if(data[i+1] && Math.abs(_ - data[i].x) > Math.abs(_ - data[i+1].x) ){
 			i++;
 		}
 		return i;

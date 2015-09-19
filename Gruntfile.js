@@ -27,6 +27,7 @@ module.exports = function(grunt) {
 										'src/d1/scale-brush.js',
 										'src/d1/threshold.js',
 										'src/d1/peak-picker.js',
+										'src/d1/path-simplify.js',
 										]
                 }
             }

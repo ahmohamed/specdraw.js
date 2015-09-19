@@ -161,8 +161,13 @@ var getSlicedData = function (data, domain, range) {
 	var slice_idx = sliceDataIdx(data, domain, range);
 	return data.slice(slice_idx.start, slice_idx.end);
 };
-var resample = function (data, domain, npoints) {
-  var dataResample = require('simplify')(data, (domain[0] - domain[1])/npoints);
+var resample = function (data, xscale, tolerance) {
+	var ppm_range = Math.abs(xscale.domain()[0] - xscale.domain()[1]);
+	var pixels = Math.abs(xscale.range()[0] - xscale.range()[1]);
+	ppm_per_pixel = ppm_range / pixels;
+	tolerance *= ppm_per_pixel
+	
+  var dataResample = require('simplify')(data, tolerance);
 	return dataResample;
 };
 var disable = function (svg) {

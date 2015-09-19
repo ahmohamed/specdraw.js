@@ -1,5 +1,6 @@
 module.exports = function () {
-	var core = require('./src/elem');
+	var utils = require('../utils');
+	var core = require('../elem');
 	var source = core.ResponsiveElem('path');
 	core.inherit(PathElem, source);
 	
@@ -15,18 +16,15 @@ module.exports = function () {
 	
 		path_fun = d3.svg.line()
 			.interpolate('linear')
-			.x(function(d) { return d.x; })
-			.y(function(d) { return d.y; });
+			.x(function(d) { return x(d.x); })
+			.y(function(d) { return y(d.y); });
 		
 		svg_elem = source(spec_line);
 		return svg_elem;			
 	}
 	function update_range() {
-		range.x = [data_resample[0].x, data_resample[data_resample - 1].x];
+		range.x = [data_resample[0].x, data_resample[data_resample.length - 1].x];
 		range.y = d3.extent(data_resample.map(function (d) { return d.y; }));
-		
-		range.x = range.x.map(x.invert);
-		range.y = range.y.map(y.invert);
 	}
 	PathElem.redraw = function () {
 		if ( !svg_elem ){return PathElem;}
@@ -36,9 +34,11 @@ module.exports = function () {
 	PathElem.update = function () {
 		if ( !svg_elem ){return PathElem;}
 		
-		data_resample = data.map(function (d) { return {x:x(d.x), y:y(d.y)};	});
 		if(simplify_val){
-			data_resample = require('simplify')(data_resample, simplify_val);
+			data_resample = utils.simplify(data, x, simplify_val);
+			console.log('simplify', data_resample.length);
+		}else{
+			data_resample = data;
 		}
 		
 		svg_elem.datum(data_resample);
@@ -55,7 +55,7 @@ module.exports = function () {
 		return PathElem.update();
 	};
 	PathElem.simplify = function (_) {
-		if (!arguments.length) {return data;}
+		if (!arguments.length) {return simplify_val;}
 		simplify_val = _;
 		return PathElem;
 	};
