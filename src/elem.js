@@ -1,3 +1,4 @@
+
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
@@ -11,10 +12,12 @@ function ElemArray(arr){
 	if(!arr){
 		arr = [];
 	}
-  arr.__proto__.nodes = function(){
+  arr.nodes = function(){
 	  return this.map(function(e){return e.node();});
 	};
-	
+  arr.sel = function(){
+	  return d3.selectAll(this.nodes());
+	};
   return arr;
 }
 

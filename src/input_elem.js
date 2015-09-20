@@ -18,7 +18,7 @@ inp.num = function (label, val, _min, _max, step, unit) {
 	elem.node().getValue = function(){ 
 		return elem.select('input').node().value;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 
 inp.checkbox = function (label, val) {
@@ -35,12 +35,12 @@ inp.checkbox = function (label, val) {
 			.classed('checker', true);
   elem.append('div')
 		.classed('label', true)
-		.text(label);
+		.text(typeof label === 'string' ? label : '');
 	
 	elem.node().getValue = function(){ 
 		return elem.select('input').node().checked;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 inp.checkbox_toggle = function (label, val, div_data) {
 	var elem = d3.select(document.createElement('div'))
@@ -77,7 +77,7 @@ inp.select = function (label, options, val) {
 	elem.node().getValue = function(){ 
 		return select_elem.node().value;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 
 inp.select_multi = function (label, options) {
@@ -101,7 +101,7 @@ inp.select_multi = function (label, options) {
 		.data(options).enter()
 		.append('li')
 			.each(function(d){
-        d3.select(this).append(inp.checkbox(d, true))
+        d3.select(this).append(inp.checkbox(d, true));
       });
 	
 	elem.node().getValue = function(){ 
@@ -113,9 +113,8 @@ inp.select_multi = function (label, options) {
 				return typeof(e.value) !== 'undefined' ? e.value
 					: d3.select(e).select('.label').text();
 			});
-		return elem.select('input').node().value;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 
 inp.select_toggle = function (label, options) {
@@ -140,7 +139,7 @@ inp.select_toggle = function (label, options) {
 
 		if( Object.keys( options[select_elem.value][1]).length > 0 ){
 			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ))
+				.append(inp.div( options[select_elem.value][1] ));
 				//.appened('legend', 'Parameters');
 		}
     
@@ -162,7 +161,7 @@ inp.button = function (label) {
 		.classed('param btn', true)
 		.attr('type', 'button')
 		.attr('value', label)
-		.on("click", function(){ fireEvent(this, 'input') });
+		.on("click", function(){ fireEvent(this, 'input'); });
 	
 	elem.node().getValue = function(){ 
 		return d3.event && d3.event.target === elem.node();
@@ -174,7 +173,7 @@ inp.threshold = function (label, axis, app) {
 	var elem = d3.select(document.createElement('div'))
 	.classed('param threshold', true);
 	
-	var input = elem.append("input").attr("type", "hidden")
+	var input = elem.append("input").attr("type", "hidden");
 
 	var val = elem.append("input")
 		.attr("type", "text")
@@ -186,7 +185,7 @@ inp.threshold = function (label, axis, app) {
 				.style('display', 'none');
 			
 			//TODO: app-specific.
-			th_fun = require('./d1/threshold')();
+			var th_fun = require('./d1/threshold')();
 			
 			th_fun(app.currentSlide().specContainer(), function (t) {
 				val.attr('value', t.toExponential(2));
@@ -199,7 +198,7 @@ inp.threshold = function (label, axis, app) {
 	elem.node().getValue = function () {
 		return input.node().value;
 	};
-	return function(){return elem.node()}
+	return function() { return elem.node(); };
 };
 /* parses the GUI data into a div HTML element.
 	 @param div_data object containing parameter names as keys
@@ -214,7 +213,7 @@ inp.div = function (div_data, app) {
 	var div = d3.select(document.createElement('div'));
   for (var key in div_data){
 		var p = div_data[key];
-		if(typeof p == 'function') continue; //Exclude Array prototype functions.
+		if(typeof p === 'function') {continue;} //Exclude Array prototype functions.
 		div.append(parseInputElem.apply(null, p.concat(app)))
 			.node().id = key;
   }
@@ -228,37 +227,37 @@ var parseInputElem = function (label, type, details, app) {
 		inp.checkbox_toggle, inp.button, inp.threshold
 	][type];
 	
-	var args = [label].concat(details)
+	var args = [label].concat(details);
 	args = type === 6 ? args.concat(app) : args;
 	return f.apply(null, args);
 };
 
-inp.spectrumSelector = function () {
-	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0){
+inp.spectrumSelector = function (app) {
+	var specs = app.currentSlide().spectra();
+	var spec_container = app.currentSlide().specContainer();
+	
+	if (specs.length === 0){
 		return function () {
 			return d3.select(document.createElement('div')).text('No Spectra to show').node();
 		};
 	} 
 		
 	var elem = 	d3.select(
-			inp.select_multi('Select Spectrum', specs[0])()
-		).classed('spec-selector', true)
+		inp.select_multi('Select Spectrum', specs)()
+		).classed('spec-selector', true);
 	
 	elem.selectAll('li')
-	  	.each(function(d){
+	  	.each(function(s){
 				d3.select(this).select('.checkbox')					
-					.style('color', getComputedStyle(d.childNodes[0]).stroke)
-					.select('.label').text(d.label);
+					.style('color', getComputedStyle(s.select('path').node()).stroke)
+					.select('.label').text( s.label() );
 					
 				d3.select(this).on('mouseenter', function () {
-						d3.select(d.parentNode).classed('dimmed', true);
-						d3.select(d).classed('highlighted', true);
-					})//mouseover
-					.on('mouseleave', function () {
-						d3.select(d.parentNode).classed('dimmed', false);
-						d3.select(d).classed('highlighted', false);
-					});//mouseout
+					spec_container.highlightSpec(s);
+				})//mouseover
+				.on('mouseleave', function () {
+					spec_container.highlightSpec();
+				});//mouseout
 			});//end each
 	
 	elem.node().getValue = function () {
@@ -286,11 +285,11 @@ inp.popover = function (title) {
 		.classed('popover right', true);
 	
 	div.append('div').classed('arrow', true);
-	var inner = div.append('div').classed('popover-inner', true)
+	var inner = div.append('div').classed('popover-inner', true);
 	inner.append('h3').classed('popover-title', true).text(title);
 	inner.append('div').classed('popover-content', true);
 	
 	return function() {return div.node();};
-}
+};
 
 module.exports = inp;

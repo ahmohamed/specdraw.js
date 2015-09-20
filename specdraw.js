@@ -299,12 +299,7 @@ spec.app = function(){
 		
 		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
-			if (current_slide) { // When the first slide is added, no current_slide.
-				current_slide.show(false);
-			}
-			s.show(true);
-			current_slide = s;
-			//slide_dispatcher = selection.select('.spec-slide.active').node().slideDispatcher;
+			if (current_slide !== s) { App.currentSlide(s);	}
 		});
 		
 		for (var i = 0; i < slides.length; i++) {
@@ -316,15 +311,20 @@ spec.app = function(){
 		s.width(svg_width).height(svg_height)
 			(App);
 		
-		app_dispatcher.slideChange(s);
+		App.currentSlide(s);
 	}
 	
 	App.slides = function () {
 		return slides;
 	};
-	App.currentSlide = function (_) {
+	App.currentSlide = function (s) {
 		if (!arguments.length) { return current_slide; }
-		app_dispatcher.slideChange(_);
+		if (current_slide) { // When the first slide is added, no current_slide.
+			current_slide.show(false);
+		}
+		s.show(true);
+		current_slide = s;
+		app_dispatcher.slideChange(s);
 	};
 	App.dispatcher = function () {
 		return app_dispatcher;
@@ -1891,6 +1891,16 @@ module.exports = function () {
 	SpecContainer.spectra = function () {
 		return specs;
 	};
+	SpecContainer.highlightSpec = function (_) {
+		s_idx = specs.indexOf(_);
+		if(s_idx < 0){ //no spectrum to highlight
+			specs.sel().classed('dimmed', false)
+				.classed('highlighted', false);
+		}else{
+			specs.sel().classed('dimmed', false);
+			_.sel().classed('highlighted', true);
+		}		
+	};
 	SpecContainer.peakPicker = function () {
 		return peak_picker;
 	};
@@ -2358,6 +2368,7 @@ module.exports = function () {
 };
 
 },{"../elem":17,"./crosshair-2d":14}],17:[function(require,module,exports){
+
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
@@ -2371,10 +2382,12 @@ function ElemArray(arr){
 	if(!arr){
 		arr = [];
 	}
-  arr.__proto__.nodes = function(){
+  arr.nodes = function(){
 	  return this.map(function(e){return e.node();});
 	};
-	
+  arr.sel = function(){
+	  return d3.selectAll(this.nodes());
+	};
   return arr;
 }
 
@@ -2646,7 +2659,7 @@ inp.checkbox = function (label, val) {
 			.classed('checker', true);
   elem.append('div')
 		.classed('label', true)
-		.text(label);
+		.text(typeof label === 'string' ? label : '');
 	
 	elem.node().getValue = function(){ 
 		return elem.select('input').node().checked;
@@ -2844,32 +2857,32 @@ var parseInputElem = function (label, type, details, app) {
 	return f.apply(null, args);
 };
 
-inp.spectrumSelector = function () {
-	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0){
+inp.spectrumSelector = function (app) {
+	var specs = app.currentSlide().spectra();
+	var spec_container = app.currentSlide().specContainer();
+	
+	if (specs.length === 0){
 		return function () {
 			return d3.select(document.createElement('div')).text('No Spectra to show').node();
 		};
 	} 
 		
 	var elem = 	d3.select(
-			inp.select_multi('Select Spectrum', specs[0])()
-		).classed('spec-selector', true)
+		inp.select_multi('Select Spectrum', specs)()
+		).classed('spec-selector', true);
 	
 	elem.selectAll('li')
-	  	.each(function(d){
+	  	.each(function(s){
 				d3.select(this).select('.checkbox')					
-					.style('color', getComputedStyle(d.childNodes[0]).stroke)
-					.select('.label').text(d.label);
+					.style('color', getComputedStyle(s.select('path').node()).stroke)
+					.select('.label').text( s.label() );
 					
 				d3.select(this).on('mouseenter', function () {
-						d3.select(d.parentNode).classed('dimmed', true);
-						d3.select(d).classed('highlighted', true);
-					})//mouseover
-					.on('mouseleave', function () {
-						d3.select(d.parentNode).classed('dimmed', false);
-						d3.select(d).classed('highlighted', false);
-					});//mouseout
+					spec_container.highlightSpec(s);
+				})//mouseover
+				.on('mouseleave', function () {
+					spec_container.highlightSpec();
+				});//mouseout
 			});//end each
 	
 	elem.node().getValue = function () {
@@ -3150,23 +3163,24 @@ var inp = require('../input_elem');
 
 function spectra (app) {
 	function _main(div) {
+		
 		div.select('.menu-container').remove();
 		
 		var nav = div.append(inp.popover('Spectra'))
 			.classed('menu-container', true)
-			.select('.popover-content')
+			.select('.popover-content');
 		
 		//TODO: SpectrumSelector takes an App
-		var spec_list = d3.select(inp.spectrumSelector()())
-			.select('ul');
+		var spec_selector = inp.spectrumSelector(app);
 		
-		if(spec_list.size() === 0){
-			nav.append(inp.spectrumSelector());
+		if( (!app.currentSlide()) || app.currentSlide().spectra().length === 0){
+			nav.append(spec_selector);
 		}else{
-			nav.append(function () {
-				return spec_list.node();
-			}).classed('block-list spec-list no-checkbox', true);
-		}					
+			var spec_list = d3.select( spec_selector() ).select('ul');
+			
+			nav.append( function () {return spec_list.node();} )
+				.classed('block-list spec-list no-checkbox', true);
+		}				
 		
 		return div;
 	}

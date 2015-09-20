@@ -2,23 +2,24 @@ var inp = require('../input_elem');
 
 function spectra (app) {
 	function _main(div) {
+		
 		div.select('.menu-container').remove();
 		
 		var nav = div.append(inp.popover('Spectra'))
 			.classed('menu-container', true)
-			.select('.popover-content')
+			.select('.popover-content');
 		
 		//TODO: SpectrumSelector takes an App
-		var spec_list = d3.select(inp.spectrumSelector()())
-			.select('ul');
+		var spec_selector = inp.spectrumSelector(app);
 		
-		if(spec_list.size() === 0){
-			nav.append(inp.spectrumSelector());
+		if( (!app.currentSlide()) || app.currentSlide().spectra().length === 0){
+			nav.append(spec_selector);
 		}else{
-			nav.append(function () {
-				return spec_list.node();
-			}).classed('block-list spec-list no-checkbox', true);
-		}					
+			var spec_list = d3.select( spec_selector() ).select('ul');
+			
+			nav.append( function () {return spec_list.node();} )
+				.classed('block-list spec-list no-checkbox', true);
+		}				
 		
 		return div;
 	}

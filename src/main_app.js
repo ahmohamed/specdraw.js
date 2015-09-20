@@ -55,12 +55,7 @@ spec.app = function(){
 		
 		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
-			if (current_slide) { // When the first slide is added, no current_slide.
-				current_slide.show(false);
-			}
-			s.show(true);
-			current_slide = s;
-			//slide_dispatcher = selection.select('.spec-slide.active').node().slideDispatcher;
+			if (current_slide !== s) { App.currentSlide(s);	}
 		});
 		
 		for (var i = 0; i < slides.length; i++) {
@@ -72,15 +67,20 @@ spec.app = function(){
 		s.width(svg_width).height(svg_height)
 			(App);
 		
-		app_dispatcher.slideChange(s);
+		App.currentSlide(s);
 	}
 	
 	App.slides = function () {
 		return slides;
 	};
-	App.currentSlide = function (_) {
+	App.currentSlide = function (s) {
 		if (!arguments.length) { return current_slide; }
-		app_dispatcher.slideChange(_);
+		if (current_slide) { // When the first slide is added, no current_slide.
+			current_slide.show(false);
+		}
+		s.show(true);
+		current_slide = s;
+		app_dispatcher.slideChange(s);
 	};
 	App.dispatcher = function () {
 		return app_dispatcher;

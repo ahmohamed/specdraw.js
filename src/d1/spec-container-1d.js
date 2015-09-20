@@ -230,6 +230,16 @@ module.exports = function () {
 	SpecContainer.spectra = function () {
 		return specs;
 	};
+	SpecContainer.highlightSpec = function (_) {
+		s_idx = specs.indexOf(_);
+		if(s_idx < 0){ //no spectrum to highlight
+			specs.sel().classed('dimmed', false)
+				.classed('highlighted', false);
+		}else{
+			specs.sel().classed('dimmed', false);
+			_.sel().classed('highlighted', true);
+		}		
+	};
 	SpecContainer.peakPicker = function () {
 		return peak_picker;
 	};
