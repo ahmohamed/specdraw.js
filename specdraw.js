@@ -242,444 +242,6 @@ function simplify(points, tolerance, highestQuality) {
 	spec.globals = {};
 	spec.globals.render = true;
 	
-spec.d2 = {};
-
-spec.d2.crosshair = function(){
-	var svg_elem, x, y, dispatcher;
-	
-	function _main(svg) {		
-		var tip = d3.tip()
-		  .attr('class', 'crosshair tooltip')
-			.direction('ne')
-		  .offset([0, 0])
-			.bootstrap(true);
-		
-		//var i_scale = x.copy();
-		var line_idx = 0; //TODO: imp for datasets
-		
-		svg_elem = svg.append("g")
-			.classed("crosshair clr" + line_idx, true)
-			.datum(null).call(tip);
-
-		var crosslines = svg_elem.append("g")
-			.attr("class", "crosshair line");
-		
-		crosslines.append("path")
-			.attr("class", "crosshair line x")
-			.attr('d', d3.svg.line()(
-				[[-x.range()[1], 0], [x.range()[1], 0]]
-			));
-		
-		crosslines.append("path")
-			.attr("class", "crosshair line y")
-			.attr('d', d3.svg.line()(
-				[[0, -y.range()[0]], [0, y.range()[0]]]
-			));
-		
-		var cross_circle = svg_elem.append("circle")
-			.attr("r", 4.5)
-
-			/*			.on("click",function(){
-							svg.toggleClass("selected");
-						})
-			*/ //TODO: select / highlight spectrum from dataset.
-
-		svg_elem.append("text")
-			.attr("x", 9)
-			.attr("dy", "-1em");
-			
-		svg_elem
-			.on("_regionchange", function(e){
-					svg_elem.datum(null);
-					svg_elem.attr("transform", "translate(" + (-10000) + "," + (-10000) + ")");
-			})
-			.on("_mousemove", function(e){
-				var data_point = [x.invert(e.xcoor), y.invert(e.ycoor)]
-					
-				tip.text(
-					d3.round(data_point[0],3) + ', ' + d3.round(data_point[1],3)
-				).show(cross_circle.node());
-				//d3.selectAll('.tooltip').style('pointer-events', 'none');
-				
-				svg_elem.datum(data_point);				
-				svg_elem.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
-				/*svg_elem.select("text").text(
-					d3.round(data_point[0],3) + ',' + d3.round(data_point[1],3)
-				);*/				
-			});
-		
-		
-		svg_elem.node().show = function (_) {
-			if (!arguments.length) return !(svg_elem.style("display")==="none");			
-			svg_elem.style("display", _? null : "none");
-			
-			if(_) { tip.show(svg_elem); }
-			else{tip.hide()}
-			
-			dispatcher.on("mousemove.line."+dispatch_idx, 
-				_? svg_elem.on("_mousemove") : null);
-		};
-	
-		svg_elem.node().enable = function (_) {
-			if (!arguments.length) return params.crosshair;
-			if (_){
-				dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
-				dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});		
-			}
-			else{
-				dispatcher.on("mouseenter.line."+dispatch_idx, null);
-				dispatcher.on("mouseleave.line."+dispatch_idx, null);		
-			}
-			svg_elem.node().show(_);
-		};
-		/*
-		svg_elem.node().i = function (_) {
-			if (!arguments.length) return svg_elem.attr("i_pos");
-			svg_elem.attr("i_pos", i);
-			svg_elem.datum(data[i]);
-		};*/
-		svg_elem.node().remove = function () {
-			dispatcher.on("regionchange.line."+dispatch_idx, null);
-			dispatcher.on("mouseenter.line."+dispatch_idx, null);
-			dispatcher.on("mouseleave.line."+dispatch_idx, null);
-			dispatcher.on("mousemove.line."+dispatch_idx, null);	
-			dispatcher.on("crosshairEnable.line."+dispatch_idx, null);
-			data = null;
-			svg_elem.remove();			
-		};
-		
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
-		dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
-		dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});
-		dispatcher.on("mousemove.line."+dispatch_idx, svg_elem.on("_mousemove"));	
-		dispatcher.on("crosshairEnable.line."+dispatch_idx, svg_elem.node().enable);
-
-		
-		return svg_elem;									
-	}
-	
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
-    return _main;
-  };
-			
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  };
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-	
-	return _main;
-};
-
-spec.d2.main_focus = function () {
-	var core = require('./src/elem');
-	var source = core.SVGElem().class('main-focus');
-	core.inherit(SpecContainer, source);
-
-	var x, y, dispatcher, data;
-	var focus, range = {};
-	var specs = core.ElemArray();
-	var main_brush = require('./src/d1/main-brush')();
-	
-	var zoomer = d3.behavior.zoom()
-		.on("zoom", function (){
-			d3.select("#rfunc").attr("slope", zoomer.scale());
-			d3.select("#bfunc").attr("slope", zoomer.scale());
-		}).scaleExtent([0.1,100]);	
-	
-	function SpecContainer(slide) {
-		x = SpecContainer.xScale();
-		y = SpecContainer.yScale();
-		dispatcher = SpecContainer.dispatcher();
-		
-		focus = source(slide)
-	    .attr("pointer-events", "all")
-			.attr('clip-path', "url(#" + slide.clipId() + ")")
-			.attr("width", SpecContainer.width())
-			.attr("height", SpecContainer.height())
-			.call(zoomer)
-			.on("dblclick.zoom", null)
-			.on("mousedown.zoom", null);
-				
-		
-		/*********** Handling Events **************/
-		focus
-			.on("_redraw", function(e){			
-				dispatcher.redraw(e);
-			})
-			.on("_regionchange", function(e){
-				// If the change is in X
-				if(e.xdomain){
-					x.domain(e.xdomain);	
-				}				
-				//dispatcher.regionchange({xdomain:e.xdomain});
-							
-				if(e.ydomain){
-					y.domain(e.ydomain);					
-				}
-				
-				dispatcher.regionchange({xdomain:e.xdomain, ydomain:y.domain()});
-				focus.on("_redraw")({x:e.xdomain, y:true});
-			})
-			.on("_rangechange", function(e){
-				if(e.x)
-					{range.x = e.x;}
-				if(e.y)
-					{range.y = e.y;}
-			
-				dispatcher.rangechange(e);
-				
-				if(!e.norender){
-					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
-				} 
-			})
-			.on("mouseenter", dispatcher.mouseenter)
-			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
-			
-				dispatcher.mousemove(new_e);
-			})
-			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
-			  var new_click_event = new Event('mousedown');
-			  new_click_event.pageX = d3.event.pageX;
-			  new_click_event.clientX = d3.event.clientX;
-			  new_click_event.pageY = d3.event.pageY;
-			  new_click_event.clientY = d3.event.clientY;
-			  focus.select(".main-brush").node()
-					.dispatchEvent(new_click_event);
-			})
-			.on("click", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
-		
-				dispatcher.click(new_e);
-			})
-			.on("dblclick", dispatcher.regionfull);
-
-		dispatcher.on("regionfull",function () {
-			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
-		});
-		
-		//spectral lines
-		for (var i = 0; i < specs.length; i++) {
-			render_spec(specs[i]);
-		}
-		//brushes
-		main_brush
-			.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
-		
-	}
-	function render_spec(s) {
-		if(!focus){return;}
-		console.log(s);
-		s.xScale(x).yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
-				
-		update_range();
-	}
-	function update_range() {
-		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
-			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
-			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
-		
-
-		var xdomain = x.domain(), ydomain = y.domain();
-		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
-
-		if(specs.length > 1){
-			focus.on("_regionchange")({xdomain:xdomain, ydomain:ydomain});
-		}
-	}
-	
-	SpecContainer.addSpec = function(spec_data, crosshair){
-		if (!arguments.length) {
-			throw new Error("appendSlide: No data provided.");
-		} 
-		
-		if(typeof crosshair === 'undefined'){
-			crosshair = true;
-		}
-		var s = specs.filter(function (e) {
-			return e.s_id() === spec_data["s_id"];
-		}	);
-		
-		if ( s.length === 0 ){
-			s = spec.d2.spec2d()
-				.datum(spec_data["data"])
-				.s_id(spec_data["s_id"])
-				.crosshair(crosshair)
-				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
-			
-			console.log(s);	
-			specs.push(s);
-		}else{
-			s = s[0];
-			s.datum(spec_data)
-				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
-		}
-		render_spec(s);
-		return s;
-	};
-	SpecContainer.changeRegion = function (_) {
-		if( focus ){
-			focus.on('_regionchange')(_);
-		}
-	};
-	SpecContainer.nd = function(){
-		return 2;
-	};
-	SpecContainer.spectra = function () {
-		return specs;
-	};
-	SpecContainer.range = function(){
-		return range;
-  };
-  SpecContainer.datum = function(_){
-    if (!arguments.length) {return data;}
-    data = _;
-		
-		SpecContainer.addSpec(_);
-    return SpecContainer;
-  };
-	return SpecContainer;	
-};
-spec.d2.spec2d = function () {
-	var core = require('./src/elem');
-	var source = core.SVGElem().class('spec-img');
-	core.inherit(_main, source);
-	
-	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
-	var x, y, dispatcher;								//initiailized by parent at rendering
-	var svg_elem, img_elem, range={};		//initiailized by self at rendering
-	
-	function _main(spec_container) {
-		x = _main.xScale();
-		y = _main.yScale();
-		dispatcher = _main.dispatcher();
-		
-		svg_elem = source(spec_container);
-		
-		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
-
-		img_elem = svg_elem.append("g")
-			.attr("filter", "url(#2dColorFilter)")
-			.append("svg:image")
-			  .attr('width', spec_container.width())
-			  .attr('height', spec_container.height())
-			  .attr('xlink:href', "data:image/ png;base64," + data)
-			  .attr("preserveAspectRatio", "none");	
-				
-		
-		/*** TODO: 2D dataset vis *****
-		******************************/
-		
-		if(_crosshair){
-			_crosshair 
-				.xScale(x).yScale(y)
-				.dispatcher(dispatcher)
-				(svg_elem);
-		}
-			
-		
-		// TODO: 2D integration
-		
-		svg_elem
-			.on("_redraw", redraw)
-			.on("_regionchange", function(){
-			})
-			.on("_integrate", function(){
-			})
-			.on("_segment", function () {
-			})
-			.on('_remove', function () {
-				dispatcher.on("regionchange.line."+dispatch_idx, null);
-				dispatcher.on("redraw.line."+dispatch_idx, null);
-				data = null;
-				if(_crosshair){_crosshair.remove();}
-			});
-		
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
-		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
-				
-		return svg_elem;									
-	}
-	function redraw() {
-		if (!img_elem) {return;}
-		
-		var orignial_xscale = x.copy().domain(range.x),
-			orignial_yscale = y.copy().domain(range.y);
-
-		//zooming on 2d picture by first translating, then scaling.
-		var translate_coor = [-Math.min(orignial_xscale(x.domain()[1]), orignial_xscale(x.domain()[0])),
-			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
-
-		var	scale_coor = [ Math.abs((range.x[0]-range.x[1])/(x.domain()[0]-x.domain()[1])),
-						   Math.abs((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]))];
-
-		img_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
-	}
-	function render_data() {
-		if (!img_elem) {return;}
-		
-		img_elem.attr('xlink:href', "data:image/ png;base64," + data);
-		redraw();
-	}
-	
-  _main.datum = function(_){
-    if (!arguments.length) {return data;}
-		data = _;
-		
-		render_data();
-		return _main;
-  };
-  _main.range = function(_){
-		if (!arguments.length) {return range;}
-		range = _;
-		return _main;
-  };
-  _main.crosshair = function(_){
-    if (!arguments.length) {return _crosshair;}
-
-		if(_){
-			_crosshair = spec.d2.crosshair();
-		} else {
-			_crosshair = false;
-		}    return _main;
-  };
-  _main.s_id = function(_){
-    if (!arguments.length) {return s_id;}
-    s_id = _;
-    return _main;
-  };
-  _main.label = function(_){
-    if (!arguments.length) {return spec_label;}
-    spec_label = _;
-    return _main;
-  };
-	return _main;
-};
-
 spec.app = function(){
 	var core = require('./src/elem');
 	var source = core.Elem().class('spec-app');
@@ -778,7 +340,7 @@ spec.app = function(){
 			throw new Error("appendSlide: No data provided.");
 		} 
 		
-		var s = spec.slide().datum(data);
+		var s = require('./src/slide')().datum(data);
 		slides.push(s);
 		render_slide(s);
 		return App;
@@ -811,238 +373,6 @@ spec.app = function(){
 };
 
 //TODO: remove Elements
-
-spec.slide = function(){
-	var core = require('./src/elem');
-	var source = core.Elem('g');
-	core.inherit(Slide, source);
-	
-	var data, slide_selection, svg_selection, svg_width, svg_height;
-	var clip_id = require('./src/utils').guid();
-	var parent_app, spec_container;
-	
-	// Event dispatcher to group all listeners in one place.
-	var dispatcher = d3.dispatch(
-		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
-		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
-		"keyboard",																//Keyboard
-		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-		"integrateEnable", "integrate", "integ_refactor",						//Integration events
-		"crosshairEnable",
-		"blindregion",
-		"log"
-	);
-	
-	
-	function Slide(app){
-		parent_app = app;
-		if(!data){
-			//create_empty_slide();//TODO
-			return ;
-		}
-		svg_width = Slide.width();
-		svg_height = Slide.height();
-		
-		var brush_margin = 20;
-    var margin = {
-        top: 10 + brush_margin,
-        right: 40,
-        bottom: 40,
-        left:10 + brush_margin
-    };
-
-		var width = svg_width - margin.left - margin.right,
-        height = svg_height - margin.top - margin.bottom;
-		
-		console.log('slide w,h ', svg_width, svg_height);
-    var x = d3.scale.linear().range([0, width]),
-    y = d3.scale.linear().range([height, 0]);
-  
-    var xAxis = d3.svg.axis().scale(x).orient("bottom"),
-        yAxis = d3.svg.axis().scale(y).orient("right")
-          .tickFormat(d3.format("s"));
-		
-    var xGrid = d3.svg.axis().scale(x)
-				.orient("bottom").innerTickSize(height)
-				.tickFormat(''),
-	    yGrid = d3.svg.axis().scale(y)
-				.orient("right").innerTickSize(width)
-				.tickFormat('');
-  	
-		var two_d = (data["nd"] && data["nd"] === 2);
-		dispatcher.idx = 0;
-		
-		console.log(app);
-		svg_selection = app.append('svg')
-			.classed('spec-slide', true)
-			.attr({
-				width:svg_width,
-				height:svg_height
-			});
-			
-		slide_selection = source(svg_selection)
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-			.attr({
-				width:svg_width,
-				height:svg_height
-			});
-		
-		//var contents = slide_selection
-			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-		
-		
-    var defs = slide_selection.append("defs");
-		defs.append("clipPath")
-		.attr("id", clip_id)
-		  .append("rect")
-		    .attr("width", width)
-		    .attr("height", height);
-
-		/** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
-				where 127 represent the zero. We want to recolor them as follows:
-			 	* positive values colored with a red-orange hue.
-				* negative values colored with a blue-cyan hue.
-				* Zeros colored as white.
-			* To do so, first copy Red component to Green and Blue.
-			* Red component will take zeros upto 255/2 (127) i.e negative values. values >127 colored using red/green gradient.
-			* constrast this for the blue component.
-		*/
-	
-		if(two_d){
-			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
-			svg_filter.append("feColorMatrix")
-				.attr("type","matrix")
-				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
-	
-			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-				.attr("color-interpolation-filters","sRGB");
-	
-			fe_component_transfer.append("feFuncR")
-				.attr("type","linear")
-				.attr("slope","-1")
-				.attr("intercept","0.5");
-				
-			fe_component_transfer.append("feFuncB")
-				.attr("type","linear")
-				.attr("slope","1")
-				.attr("intercept","-0.5");
-	
-			fe_component_transfer = svg_filter.append("feComponentTransfer")
-				.attr("color-interpolation-filters","sRGB");
-
-			fe_component_transfer.append("feFuncR")
-				.attr("id","rfunc")
-				.attr("type","linear")
-				.attr("slope","1");
-					
-			fe_component_transfer.append("feFuncB")
-				.attr("id","bfunc")
-				.attr("type","linear")
-				.attr("slope","1");
-											
-			svg_filter.append("feColorMatrix")
-				.attr("type","matrix")
-				.attr("values","-10 0 0 0 1 -10 0 -10 0 1 0 0 -10 0 1 0 0 0 1 0");
-	
-		}
-		/**********************************/				
-		
-		//axes	and their labels
-		slide_selection.append("g")
-			.attr("class", "x axis")
-			.attr("transform", "translate(0," + height + ")");
-			
-
-		slide_selection.append("g")
-			.attr("class", "y axis")
-			.attr("transform", "translate(" + width + ",0)");
-		
-		slide_selection.append("g").classed('x grid', true);
-		slide_selection.append("g").classed('y grid', true);
-		
-		slide_selection.append("text")
-	    .attr("class", "x label")
-	    .attr("text-anchor", "middle")
-	    .attr("x", width/2)
-	    .attr("y", height)
-			.attr("dy", "2.8em")
-	    .text("Chemical shift (ppm)");
-		
-		slide_selection.append("text")
-	    .attr("class", "y label")
-	    .attr("text-anchor", "end")
-	    .attr("y", width)
-	    .attr("dy", "-.75em")
-	    .attr("transform", "rotate(-90)")
-	    .text("Intensity");
-		
-		dispatcher.on("redraw.slide", function (e) {
-			if(e.x){
-				slide_selection.select(".x.axis").call(xAxis);
-				if(app.options.grid.x){
-					slide_selection.select(".x.grid").call(xGrid);
-				}
-			}
-			if(e.y){
-				slide_selection.select(".y.axis").call(yAxis);
-				if(app.options.grid.y){
-					slide_selection.select(".y.grid").call(yGrid);
-				}
-			}
-		});
-		
-		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/spec-container-1d')();
-		//Spec-Container
-		spec_container
-			.datum(data)
-			.xScale(x)
-			.yScale(y)
-			.width(width)
-			.height(height)
-			.dispatcher(dispatcher)
-			(Slide);
-		
-		//Scale brushes
-		require('./src/d1/scale-brush')()
-			.xScale(x)
-			.dispatcher(dispatcher)
-			(Slide);
-				
-		require('./src/d1/scale-brush')()
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(Slide);
-		
-		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
-	}
-	Slide.show = function (_) {
-		svg_selection.classed('active', _);
-	};
-	Slide.nd = function(){
-		if (!data){ //TODO: empty slide?
-			return 0;
-		}
-		return (data["nd"] && data["nd"] === 2) ? 2 : 1;
-	};
-	Slide.clipId = function(){
-		return clip_id;
-	};
-	Slide.slideDispatcher = function(){
-		return dispatcher;
-	};
-	Slide.specContainer = function(){
-		return spec_container;
-	};
-  Slide.datum = function(_){
-    if (!arguments.length) {return data;}
-    data = _;
-    return Slide;
-  };
-	Slide.parent = function () {
-		return parent_app;
-	};
-	return Slide;
-};
 
 pro.read_menu = function (app, menu_data) {
 	var plugins = pro.plugins(app.node());
@@ -1244,7 +574,7 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/main-brush":8,"./src/d1/scale-brush":11,"./src/d1/spec-container-1d":12,"./src/elem":14,"./src/events":15,"./src/menu/menu":18,"./src/modals":22,"./src/pro/ajax":23,"./src/pro/process_data":24,"./src/utils":26}],5:[function(require,module,exports){
+},{"./src/elem":17,"./src/events":18,"./src/menu/menu":21,"./src/modals":25,"./src/pro/ajax":26,"./src/pro/process_data":27,"./src/slide":29}],5:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -1376,7 +706,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":14}],6:[function(require,module,exports){
+},{"../elem":17}],6:[function(require,module,exports){
 function integrate(data){
 	var _cumsum = data.map(function(d) { return d.y; }).cumsum();
 	
@@ -1540,7 +870,7 @@ module.exports = function (){
 	return IntegElem;
 };
 
-},{"../elem":14}],7:[function(require,module,exports){
+},{"../elem":17}],7:[function(require,module,exports){
 function calcReductionFactor(spec_container) {
 	var seg_len = [];
 	var specs = spec_container.spectra();
@@ -1840,7 +1170,7 @@ module.exports = function () {
 	return SpecLine;
 };
 
-},{"../elem":14,"./crosshair":5,"./integration-elem":6,"./path-simplify":9}],8:[function(require,module,exports){
+},{"../elem":17,"./crosshair":5,"./integration-elem":6,"./path-simplify":9}],8:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -1941,7 +1271,7 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":14}],9:[function(require,module,exports){
+},{"../elem":17}],9:[function(require,module,exports){
 module.exports = function () {
 	var utils = require('../utils');
 	var core = require('../elem');
@@ -2008,7 +1338,7 @@ module.exports = function () {
 	return PathElem;
 };
 
-},{"../elem":14,"../utils":26}],10:[function(require,module,exports){
+},{"../elem":17,"../utils":30}],10:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -2226,7 +1556,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":14,"d3-context-menu":1}],11:[function(require,module,exports){
+},{"../elem":17,"d3-context-menu":1}],11:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -2328,7 +1658,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":14}],12:[function(require,module,exports){
+},{"../elem":17}],12:[function(require,module,exports){
 
 module.exports = function () {
 	var core = require('../elem');
@@ -2582,7 +1912,7 @@ module.exports = function () {
 	
 	return SpecContainer;
 };
-},{"../elem":14,"./line":7,"./main-brush":8,"./peak-picker":10}],13:[function(require,module,exports){
+},{"../elem":17,"./line":7,"./main-brush":8,"./peak-picker":10}],13:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -2612,7 +1942,422 @@ module.exports = function () {
 
 	return _main;	
 };
-},{"../elem":14}],14:[function(require,module,exports){
+},{"../elem":17}],14:[function(require,module,exports){
+module.exports = function(){
+	function registerDispatcher() {
+		var suff = ".line."+dispatch_idx;
+		dispatcher.on("regionchange"+suff, null);
+		dispatcher.on("mouseenter"+suff, null);
+		dispatcher.on("mouseleave"+suff, null);
+		dispatcher.on("mousemove"+suff, null);	
+		
+		if( enabled ){
+			dispatcher.on("regionchange"+suff, svg_elem.on("_regionchange"));
+			dispatcher.on("mouseenter"+suff, function(){_main.show(true);});
+			dispatcher.on("mouseleave"+suff, function(){_main.show(false);});
+			if ( shown ){
+				dispatcher.on("mousemove"+suff, svg_elem.on("_mousemove"));	
+			}
+		}
+		dispatcher.on("crosshairEnable"+suff, _main.enable);
+	}
+	
+	var core = require('../elem');
+	var source = core.SVGElem().class('crosshair');
+	core.inherit(_main, source);
+	
+	var svg_elem, x, y, dispatcher, dispatch_idx;
+	var enabled, shown;
+	var tip = d3.tip()
+	  .attr('class', 'crosshair tooltip')
+		.direction('ne')
+	  .offset([0, 0])
+		.bootstrap(true);
+	
+	
+	function _main(spec_img) {
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
+		dispatch_idx = ++dispatcher.idx;
+		enabled = shown = true;
+		
+		svg_elem = source(spec_img)
+			.classed("clr" + spec_img.lineIdx(), true)
+			.datum(null).call(tip);
+
+		var crosslines = svg_elem.append("g")
+			.attr("class", "crosshair line");
+		
+		crosslines.append("path")
+			.attr("class", "crosshair line x")
+			.attr('d', d3.svg.line()(
+				[[-x.range()[1], 0], [x.range()[1], 0]]
+			));
+		
+		crosslines.append("path")
+			.attr("class", "crosshair line y")
+			.attr('d', d3.svg.line()(
+				[[0, -y.range()[0]], [0, y.range()[0]]]
+			));
+		
+		var cross_circle = svg_elem.append("circle")
+			.attr("r", 4.5);
+
+		//TODO: select / highlight spectrum from dataset.
+
+		svg_elem
+			.on("_regionchange", function(){
+					//TODO: update coordinates
+			})
+			.on("_mousemove", function(e){
+				var data_point = [x.invert(e.xcoor), y.invert(e.ycoor)];
+				
+				svg_elem.datum(data_point);
+				svg_elem.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
+				tip.text(
+					d3.round(data_point[0],2) + ', ' + d3.round(data_point[1],2)
+				).show(cross_circle.node());
+			})
+			.on('remove', function () {
+				_main.enabled(false);
+				dispatcher.on("crosshairEnable.line."+dispatch_idx, null);
+				tip.destroy();
+			});
+				
+		registerDispatcher();
+		return svg_elem;									
+	}
+	
+	_main.show = function (_) {
+		if (!arguments.length) {return shown;}
+		shown = _;
+		
+		if (!svg_elem){return _main;}
+		svg_elem.style("display", _? null : "none");
+		
+		if(_) { tip.show(svg_elem); }
+		else{tip.hide();}
+		
+		registerDispatcher();
+		return _main;
+	};
+	_main.enable = function (_) {
+		if (!arguments.length) {return enabled;}
+		enabled = _;
+		
+		return _main.show(_);
+	};
+	return _main;
+};
+
+},{"../elem":17}],15:[function(require,module,exports){
+module.exports = function () {
+	var core = require('../elem');
+	var source = core.SVGElem().class('main-focus');
+	core.inherit(SpecContainer, source);
+
+	var x, y, dispatcher, data;
+	var focus, range = {};
+	var specs = core.ElemArray();
+	var main_brush = require('../d1/main-brush')();
+	
+	var zoomer = d3.behavior.zoom()
+		.on("zoom", function (){
+			d3.select("#rfunc").attr("slope", zoomer.scale());
+			d3.select("#bfunc").attr("slope", zoomer.scale());
+		}).scaleExtent([0.1,100]);	
+	
+	function SpecContainer(slide) {
+		x = SpecContainer.xScale();
+		y = SpecContainer.yScale();
+		dispatcher = SpecContainer.dispatcher();
+		
+		focus = source(slide)
+	    .attr("pointer-events", "all")
+			.attr('clip-path', "url(#" + slide.clipId() + ")")
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
+			.call(zoomer)
+			.on("dblclick.zoom", null)
+			.on("mousedown.zoom", null);
+				
+		
+		/*********** Handling Events **************/
+		focus
+			.on("_redraw", function(e){			
+				dispatcher.redraw(e);
+			})
+			.on("_regionchange", function(e){
+				// If the change is in X
+				if(e.xdomain){
+					x.domain(e.xdomain);	
+				}				
+				//dispatcher.regionchange({xdomain:e.xdomain});
+							
+				if(e.ydomain){
+					y.domain(e.ydomain);					
+				}
+				
+				dispatcher.regionchange({xdomain:e.xdomain, ydomain:y.domain()});
+				focus.on("_redraw")({x:e.xdomain, y:true});
+			})
+			.on("_rangechange", function(e){
+				if(e.x)
+					{range.x = e.x;}
+				if(e.y)
+					{range.y = e.y;}
+			
+				dispatcher.rangechange(e);
+				
+				if(!e.norender){
+					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
+				} 
+			})
+			.on("mouseenter", dispatcher.mouseenter)
+			.on("mouseleave", dispatcher.mouseleave)
+			.on("mousemove", function(){
+				var new_e = d3.event;
+				new_e.xcoor = d3.mouse(this)[0];
+				new_e.ycoor = d3.mouse(this)[1];
+			
+				dispatcher.mousemove(new_e);
+			})
+			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
+			  var new_click_event = new Event('mousedown');
+			  new_click_event.pageX = d3.event.pageX;
+			  new_click_event.clientX = d3.event.clientX;
+			  new_click_event.pageY = d3.event.pageY;
+			  new_click_event.clientY = d3.event.clientY;
+			  focus.select(".main-brush").node()
+					.dispatchEvent(new_click_event);
+			})
+			.on("click", function(){
+				var new_e = d3.event;
+				new_e.xcoor = d3.mouse(this)[0];
+				new_e.ycoor = d3.mouse(this)[1];
+		
+				dispatcher.click(new_e);
+			})
+			.on("dblclick", dispatcher.regionfull);
+
+		dispatcher.on("regionfull",function () {
+			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
+		});
+		
+		//spectral lines
+		for (var i = 0; i < specs.length; i++) {
+			render_spec(specs[i]);
+		}
+		//brushes
+		main_brush
+			.xScale(x)
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+		
+	}
+	function render_spec(s) {
+		if(!focus){return;}
+		console.log(s);
+		s.xScale(x).yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+				
+		update_range();
+	}
+	function update_range() {
+		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+		
+
+		var xdomain = x.domain(), ydomain = y.domain();
+		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
+
+		if(specs.length > 1){
+			focus.on("_regionchange")({xdomain:xdomain, ydomain:ydomain});
+		}
+	}
+	
+	SpecContainer.addSpec = function(spec_data, crosshair){
+		if (!arguments.length) {
+			throw new Error("appendSlide: No data provided.");
+		} 
+		
+		if(typeof crosshair === 'undefined'){
+			crosshair = true;
+		}
+		var s = specs.filter(function (e) {
+			return e.s_id() === spec_data["s_id"];
+		}	);
+		
+		if ( s.length === 0 ){
+			s = require('./spec2d')()
+				.datum(spec_data["data"])
+				.s_id(spec_data["s_id"])
+				.crosshair(crosshair)
+				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
+				
+			specs.push(s);
+		}else{
+			s = s[0];
+			s.datum(spec_data)
+				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
+		}
+		render_spec(s);
+		return s;
+	};
+	SpecContainer.changeRegion = function (_) {
+		if( focus ){
+			focus.on('_regionchange')(_);
+		}
+	};
+	SpecContainer.nd = function(){
+		return 2;
+	};
+	SpecContainer.spectra = function () {
+		return specs;
+	};
+	SpecContainer.range = function(){
+		return range;
+  };
+  SpecContainer.datum = function(_){
+    if (!arguments.length) {return data;}
+    data = _;
+		
+		SpecContainer.addSpec(_);
+    return SpecContainer;
+  };
+	return SpecContainer;	
+};
+},{"../d1/main-brush":8,"../elem":17,"./spec2d":16}],16:[function(require,module,exports){
+module.exports = function () {
+	var core = require('../elem');
+	var source = core.SVGElem().class('spec-img');
+	core.inherit(_main, source);
+	
+	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
+	var x, y, dispatcher;								//initiailized by parent at rendering
+	var svg_elem, img_elem, line_idx, range={};		//initiailized by self at rendering
+	
+	
+	function _main(spec_container) {
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
+		
+		svg_elem = source(spec_container);
+		line_idx = spec_container.spectra().indexOf(_main);
+		
+		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
+
+		img_elem = svg_elem.append("g")
+			.attr("filter", "url(#2dColorFilter)")
+			.append("svg:image")
+			  .attr('width', spec_container.width())
+			  .attr('height', spec_container.height())
+			  .attr('xlink:href', "data:image/ png;base64," + data)
+			  .attr("preserveAspectRatio", "none");	
+				
+		
+		/*** TODO: 2D dataset vis *****
+		******************************/
+		
+		if(_crosshair){
+			_crosshair 
+				.xScale(x).yScale(y)
+				.dispatcher(dispatcher)
+				(_main);
+		}
+			
+		
+		// TODO: 2D integration
+		
+		svg_elem
+			.on("_redraw", redraw)
+			.on("_regionchange", function(){
+			})
+			.on("_integrate", function(){
+			})
+			.on("_segment", function () {
+			})
+			.on('_remove', function () {
+				dispatcher.on("regionchange.line."+dispatch_idx, null);
+				dispatcher.on("redraw.line."+dispatch_idx, null);
+				data = null;
+				if(_crosshair){_crosshair.remove();}
+			});
+		
+		// Register event listeners
+		var dispatch_idx = ++dispatcher.idx;
+		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
+		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
+				
+		return svg_elem;									
+	}
+	function redraw() {
+		if (!img_elem) {return;}
+		
+		var orignial_xscale = x.copy().domain(range.x),
+			orignial_yscale = y.copy().domain(range.y);
+
+		//zooming on 2d picture by first translating, then scaling.
+		var translate_coor = [-Math.min(orignial_xscale(x.domain()[1]), orignial_xscale(x.domain()[0])),
+			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+
+		var	scale_coor = [ Math.abs((range.x[0]-range.x[1])/(x.domain()[0]-x.domain()[1])),
+						   Math.abs((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]))];
+
+		img_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+	}
+	function render_data() {
+		if (!img_elem) {return;}
+		
+		img_elem.attr('xlink:href', "data:image/ png;base64," + data);
+		redraw();
+	}
+	
+  _main.datum = function(_){
+    if (!arguments.length) {return data;}
+		data = _;
+		
+		render_data();
+		return _main;
+  };
+  _main.range = function(_){
+		if (!arguments.length) {return range;}
+		range = _;
+		return _main;
+  };
+  _main.crosshair = function(_){
+    if (!arguments.length) {return _crosshair;}
+
+		if(_){
+			_crosshair = require('./crosshair-2d')();
+		} else {
+			_crosshair = false;
+		}    return _main;
+  };
+  _main.s_id = function(_){
+    if (!arguments.length) {return s_id;}
+    s_id = _;
+    return _main;
+  };
+  _main.label = function(_){
+    if (!arguments.length) {return spec_label;}
+    spec_label = _;
+    return _main;
+  };
+	_main.lineIdx = function () {
+		return line_idx;
+	};
+	
+	return _main;
+};
+
+},{"../elem":17,"./crosshair-2d":14}],17:[function(require,module,exports){
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
@@ -2754,7 +2499,7 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],15:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2863,7 +2608,7 @@ function editText(evt){
 }*/
 
 
-},{}],16:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -3160,7 +2905,7 @@ inp.popover = function (title) {
 }
 
 module.exports = inp;
-},{"./d1/threshold":13,"./utils":26}],17:[function(require,module,exports){
+},{"./d1/threshold":13,"./utils":30}],20:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -3227,7 +2972,7 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":16,"../utils":26}],18:[function(require,module,exports){
+},{"../input_elem":19,"../utils":30}],21:[function(require,module,exports){
 var utils = require('../utils');
 
 function create_menu (app){	
@@ -3304,7 +3049,7 @@ function create_menu (app){
 }
 
 module.exports = create_menu;
-},{"../utils":26,"./main_menu":17,"./menu_data":19,"./slides":20,"./spectra":21}],19:[function(require,module,exports){
+},{"../utils":30,"./main_menu":20,"./menu_data":22,"./slides":23,"./spectra":24}],22:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3373,7 +3118,7 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":15}],20:[function(require,module,exports){
+},{"../events":18}],23:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -3400,7 +3145,7 @@ module.exports = function (app) {
 };
 
 
-},{"../input_elem":16}],21:[function(require,module,exports){
+},{"../input_elem":19}],24:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3429,7 +3174,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":16}],22:[function(require,module,exports){
+},{"../input_elem":19}],25:[function(require,module,exports){
 require('nanoModal');
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
@@ -3669,7 +3414,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":16,"./utils":26,"nanoModal":2}],23:[function(require,module,exports){
+},{"./input_elem":19,"./utils":30,"nanoModal":2}],26:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3743,7 +3488,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":22}],24:[function(require,module,exports){
+},{"../modals":25}],27:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3961,7 +3706,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":23,"./worker":25}],25:[function(require,module,exports){
+},{"./ajax":26,"./worker":28}],28:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -4047,7 +3792,240 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],26:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
+module.exports = function(){
+	var core = require('./elem');
+	var source = core.Elem('g');
+	core.inherit(Slide, source);
+	
+	var data, slide_selection, svg_selection, svg_width, svg_height;
+	var clip_id = require('./utils').guid();
+	var parent_app, spec_container;
+	
+	// Event dispatcher to group all listeners in one place.
+	var dispatcher = d3.dispatch(
+		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
+		"keyboard",																//Keyboard
+		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
+		"integrateEnable", "integrate", "integ_refactor",						//Integration events
+		"crosshairEnable",
+		"blindregion",
+		"log"
+	);
+	
+	
+	function Slide(app){
+		parent_app = app;
+		if(!data){
+			//create_empty_slide();//TODO
+			return ;
+		}
+		svg_width = Slide.width();
+		svg_height = Slide.height();
+		
+		var brush_margin = 20;
+    var margin = {
+        top: 10 + brush_margin,
+        right: 40,
+        bottom: 40,
+        left:10 + brush_margin
+    };
+
+		var width = svg_width - margin.left - margin.right,
+        height = svg_height - margin.top - margin.bottom;
+		
+		console.log('slide w,h ', svg_width, svg_height);
+    var x = d3.scale.linear().range([0, width]),
+    y = d3.scale.linear().range([height, 0]);
+  
+    var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+        yAxis = d3.svg.axis().scale(y).orient("right")
+          .tickFormat(d3.format("s"));
+		
+    var xGrid = d3.svg.axis().scale(x)
+				.orient("bottom").innerTickSize(height)
+				.tickFormat(''),
+	    yGrid = d3.svg.axis().scale(y)
+				.orient("right").innerTickSize(width)
+				.tickFormat('');
+  	
+		var two_d = (data["nd"] && data["nd"] === 2);
+		dispatcher.idx = 0;
+		
+		console.log(app);
+		svg_selection = app.append('svg')
+			.classed('spec-slide', true)
+			.attr({
+				width:svg_width,
+				height:svg_height
+			});
+			
+		slide_selection = source(svg_selection)
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.attr({
+				width:svg_width,
+				height:svg_height
+			});
+		
+		//var contents = slide_selection
+			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		
+		
+    var defs = slide_selection.append("defs");
+		defs.append("clipPath")
+		.attr("id", clip_id)
+		  .append("rect")
+		    .attr("width", width)
+		    .attr("height", height);
+
+		/** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
+				where 127 represent the zero. We want to recolor them as follows:
+			 	* positive values colored with a red-orange hue.
+				* negative values colored with a blue-cyan hue.
+				* Zeros colored as white.
+			* To do so, first copy Red component to Green and Blue.
+			* Red component will take zeros upto 255/2 (127) i.e negative values. values >127 colored using red/green gradient.
+			* constrast this for the blue component.
+		*/
+	
+		if(two_d){
+			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
+			svg_filter.append("feColorMatrix")
+				.attr("type","matrix")
+				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
+	
+			var fe_component_transfer = svg_filter.append("feComponentTransfer")
+				.attr("color-interpolation-filters","sRGB");
+	
+			fe_component_transfer.append("feFuncR")
+				.attr("type","linear")
+				.attr("slope","-1")
+				.attr("intercept","0.5");
+				
+			fe_component_transfer.append("feFuncB")
+				.attr("type","linear")
+				.attr("slope","1")
+				.attr("intercept","-0.5");
+	
+			fe_component_transfer = svg_filter.append("feComponentTransfer")
+				.attr("color-interpolation-filters","sRGB");
+
+			fe_component_transfer.append("feFuncR")
+				.attr("id","rfunc")
+				.attr("type","linear")
+				.attr("slope","1");
+					
+			fe_component_transfer.append("feFuncB")
+				.attr("id","bfunc")
+				.attr("type","linear")
+				.attr("slope","1");
+											
+			svg_filter.append("feColorMatrix")
+				.attr("type","matrix")
+				.attr("values","-10 0 0 0 1 -10 0 -10 0 1 0 0 -10 0 1 0 0 0 1 0");
+	
+		}
+		/**********************************/				
+		
+		//axes	and their labels
+		slide_selection.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + height + ")");
+			
+
+		slide_selection.append("g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(" + width + ",0)");
+		
+		slide_selection.append("g").classed('x grid', true);
+		slide_selection.append("g").classed('y grid', true);
+		
+		slide_selection.append("text")
+	    .attr("class", "x label")
+	    .attr("text-anchor", "middle")
+	    .attr("x", width/2)
+	    .attr("y", height)
+			.attr("dy", "2.8em")
+	    .text("Chemical shift (ppm)");
+		
+		slide_selection.append("text")
+	    .attr("class", "y label")
+	    .attr("text-anchor", "end")
+	    .attr("y", width)
+	    .attr("dy", "-.75em")
+	    .attr("transform", "rotate(-90)")
+	    .text("Intensity");
+		
+		dispatcher.on("redraw.slide", function (e) {
+			if(e.x){
+				slide_selection.select(".x.axis").call(xAxis);
+				if(app.options.grid.x){
+					slide_selection.select(".x.grid").call(xGrid);
+				}
+			}
+			if(e.y){
+				slide_selection.select(".y.axis").call(yAxis);
+				if(app.options.grid.y){
+					slide_selection.select(".y.grid").call(yGrid);
+				}
+			}
+		});
+		
+		spec_container = two_d ? require('./d2/spec-container-2d')() : require('./d1/spec-container-1d')();
+		//Spec-Container
+		spec_container
+			.datum(data)
+			.xScale(x)
+			.yScale(y)
+			.width(width)
+			.height(height)
+			.dispatcher(dispatcher)
+			(Slide);
+		
+		//Scale brushes
+		require('./d1/scale-brush')()
+			.xScale(x)
+			.dispatcher(dispatcher)
+			(Slide);
+				
+		require('./d1/scale-brush')()
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(Slide);
+		
+		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
+	}
+	Slide.show = function (_) {
+		svg_selection.classed('active', _);
+	};
+	Slide.nd = function(){
+		if (!data){ //TODO: empty slide?
+			return 0;
+		}
+		return (data["nd"] && data["nd"] === 2) ? 2 : 1;
+	};
+	Slide.clipId = function(){
+		return clip_id;
+	};
+	Slide.slideDispatcher = function(){
+		return dispatcher;
+	};
+	Slide.specContainer = function(){
+		return spec_container;
+	};
+  Slide.datum = function(_){
+    if (!arguments.length) {return data;}
+    data = _;
+    return Slide;
+  };
+	Slide.parent = function () {
+		return parent_app;
+	};
+	return Slide;
+};
+
+},{"./d1/scale-brush":11,"./d1/spec-container-1d":12,"./d2/spec-container-2d":15,"./elem":17,"./utils":30}],30:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4325,4 +4303,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":3}]},{},[4,23,22,14,15,26,25,24,5,8,11,13,10,9]);
+},{"simplify":3}]},{},[4,26,25,17,18,30,28,27,5,8,11,13,10,9,15,16,29]);

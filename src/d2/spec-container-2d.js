@@ -1,12 +1,12 @@
-spec.d2.main_focus = function () {
-	var core = require('./src/elem');
+module.exports = function () {
+	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
 	core.inherit(SpecContainer, source);
 
 	var x, y, dispatcher, data;
 	var focus, range = {};
 	var specs = core.ElemArray();
-	var main_brush = require('./src/d1/main-brush')();
+	var main_brush = require('../d1/main-brush')();
 	
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function (){
@@ -140,13 +140,12 @@ spec.d2.main_focus = function () {
 		}	);
 		
 		if ( s.length === 0 ){
-			s = spec.d2.spec2d()
+			s = require('./spec2d')()
 				.datum(spec_data["data"])
 				.s_id(spec_data["s_id"])
 				.crosshair(crosshair)
 				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
-			
-			console.log(s);	
+				
 			specs.push(s);
 		}else{
 			s = s[0];

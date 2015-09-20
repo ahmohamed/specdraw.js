@@ -1,10 +1,10 @@
-spec.slide = function(){
-	var core = require('./src/elem');
+module.exports = function(){
+	var core = require('./elem');
 	var source = core.Elem('g');
 	core.inherit(Slide, source);
 	
 	var data, slide_selection, svg_selection, svg_width, svg_height;
-	var clip_id = require('./src/utils').guid();
+	var clip_id = require('./utils').guid();
 	var parent_app, spec_container;
 	
 	// Event dispatcher to group all listeners in one place.
@@ -177,7 +177,7 @@ spec.slide = function(){
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/spec-container-1d')();
+		spec_container = two_d ? require('./d2/spec-container-2d')() : require('./d1/spec-container-1d')();
 		//Spec-Container
 		spec_container
 			.datum(data)
@@ -189,12 +189,12 @@ spec.slide = function(){
 			(Slide);
 		
 		//Scale brushes
-		require('./src/d1/scale-brush')()
+		require('./d1/scale-brush')()
 			.xScale(x)
 			.dispatcher(dispatcher)
 			(Slide);
 				
-		require('./src/d1/scale-brush')()
+		require('./d1/scale-brush')()
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(Slide);

@@ -1,11 +1,12 @@
-spec.d2.spec2d = function () {
-	var core = require('./src/elem');
+module.exports = function () {
+	var core = require('../elem');
 	var source = core.SVGElem().class('spec-img');
 	core.inherit(_main, source);
 	
 	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
 	var x, y, dispatcher;								//initiailized by parent at rendering
-	var svg_elem, img_elem, range={};		//initiailized by self at rendering
+	var svg_elem, img_elem, line_idx, range={};		//initiailized by self at rendering
+	
 	
 	function _main(spec_container) {
 		x = _main.xScale();
@@ -13,6 +14,7 @@ spec.d2.spec2d = function () {
 		dispatcher = _main.dispatcher();
 		
 		svg_elem = source(spec_container);
+		line_idx = spec_container.spectra().indexOf(_main);
 		
 		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
 
@@ -32,7 +34,7 @@ spec.d2.spec2d = function () {
 			_crosshair 
 				.xScale(x).yScale(y)
 				.dispatcher(dispatcher)
-				(svg_elem);
+				(_main);
 		}
 			
 		
@@ -98,7 +100,7 @@ spec.d2.spec2d = function () {
     if (!arguments.length) {return _crosshair;}
 
 		if(_){
-			_crosshair = spec.d2.crosshair();
+			_crosshair = require('./crosshair-2d')();
 		} else {
 			_crosshair = false;
 		}    return _main;
@@ -113,5 +115,9 @@ spec.d2.spec2d = function () {
     spec_label = _;
     return _main;
   };
+	_main.lineIdx = function () {
+		return line_idx;
+	};
+	
 	return _main;
 };

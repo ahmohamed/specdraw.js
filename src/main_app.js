@@ -96,7 +96,7 @@ spec.app = function(){
 			throw new Error("appendSlide: No data provided.");
 		} 
 		
-		var s = spec.slide().datum(data);
+		var s = require('./src/slide')().datum(data);
 		slides.push(s);
 		render_slide(s);
 		return App;
