@@ -1,4 +1,7 @@
-var ajax = function (url, callback, err) {
+//TODO:var modals = spec.modals;
+var modals = require('../modals');
+
+var request = function (url, callback, err) {
 	var http_request = new XMLHttpRequest();
 	http_request.open("GET", url, true);
 	http_request.onreadystatechange = function () {
@@ -13,9 +16,10 @@ var ajax = function (url, callback, err) {
 	};
 	http_request.send();	
 };
-var ajaxJSONGet = function(url, callback, show_progress){
+
+var getJSON = function(url, callback, show_progress){
 	var prog = ajaxProgress();
-	ajax(url, function (response) {
+	request(url, function (response) {
 		prog.stop();
 		var json = JSON.parse(response);
 		if(typeof json['error'] === 'undefined'){
@@ -29,7 +33,7 @@ var ajaxJSONGet = function(url, callback, show_progress){
 		prog.stop();
 		modals.error('Network Error', err);
 	});
-	
+
 	if(show_progress)
 		prog();
 };
@@ -37,8 +41,9 @@ var ajaxJSONGet = function(url, callback, show_progress){
 var ajaxProgress = function () {
 	var interval, stopped=false;
 	function check () {
-		ajax('/nmr/test', function (response) {
+		request('/nmr/test', function (response) {
 			if(!stopped){
+				// TODO: Progress should be bound to app
 				d3.select(".progress").text(response);
 				setTimeout(check, 100);
 			}else{
@@ -46,18 +51,22 @@ var ajaxProgress = function () {
 			}
 		});
 	}
-	
+
 	var run = function() {
 		check();
 	}
-	
+
 	run.stop = function() {
 		clearInterval(interval);
 		stopped = true;
+		// TODO: Progress should be bound to app
 	  d3.select(".progress").text("Completed")
 			/*.transition()
 	    .duration(2500)
 	    .style("opacity", 1e-6)*/
 	}
 	return run;
-}
+};
+
+module.exports.request = request;
+module.exports.getJSON = getJSON;

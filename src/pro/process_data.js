@@ -22,11 +22,6 @@ var get_png_data = function(y, callback){
 	img.src = "data:image/png;base64," + y;	
 };
 
-var process_xy = function(pre_data, render_fun){
-	var data = pre_data.x.map(function(d,i){ return {x:d, y:pre_data.y[i]}; });	
-	render_fun(data);
-};
-
 var process_png = function(pre_data, render_fun){
 	if (pre_data['nd'] == 1){
 		get_png_data(pre_data['y'], function(img_data){
@@ -46,6 +41,10 @@ var process_png = function(pre_data, render_fun){
 	}
 };
 
+var process_xy = function(pre_data, render_fun){
+	var data = pre_data.x.map(function(d,i){ return {x:d, y:pre_data.y[i]}; });	
+	render_fun(data);
+};
 
 var process_b64 = function(pre_data, render_fun){
 	var img_data = atob(pre_data['y'])
@@ -121,9 +120,6 @@ var processPNGworker = function (json, callback) {
 	    var canvas = document.createElement("canvas");
 	    canvas.width = img.width;
 	    canvas.height = img.height;
-
-	    
-	    
 	
 			var e = {};
 			e._16bit = (json['format'] == "png16")
@@ -157,7 +153,8 @@ var processPNGworker = function (json, callback) {
 			};
 			
 			var worker_message = [e, [e.buffer.buffer]];
-			pro.worker.queue.addJob({message:worker_message, callback:worker_callback});
+			
+			require('./worker').addJob({message:worker_message, callback:worker_callback});
 		}
 		var png_data = json['data']? json['data']: json['y'];
 		img.src = "data:image/png;base64," + png_data;
@@ -183,28 +180,11 @@ var processPNGworker = function (json, callback) {
 	* y: singal intensities along the sepctrum.
 	* y_domain: if 'y' was reduced to 8 or 16 bit, y_domain scales it back to original values.
 */
-
-pro.get_spec = function(url, render_fun){
-	ajaxJSONGet(url, function(pre_data){
-		switch (pre_data['format']){
-			case 'xy':
-				process_xy(pre_data, render_fun);
-				break;
-			case 'base64'://add base64 processing
-				process_b64(pre_data, render_fun)
-				break;
-			case 'png':
-				process_png(pre_data, render_fun);
-				break;
-		}
-	});	
-};
-
-pro.process_spectrum = function(json, render_fun){
+function process_spectrum (json, render_fun){
 	console.log('processing')
 	if (json.constructor === Array) {
 		for (var i = json.length - 1; i >= 0; i--) {
-			pro.process_spectrum(json[i], render_fun);
+			process_spectrum(json[i], render_fun);
 		}
 		return;
 	}
@@ -217,14 +197,21 @@ pro.process_spectrum = function(json, render_fun){
 			break;
 		case 'png':
 		case 'png16':
-			//pro.worker(json, render_fun);
-			processPNGworker(json, render_fun);
+			if (require('./worker').maxWorkers() > 0){
+				processPNGworker(json, render_fun);
+			}else{
+				processPNG(json, render_fun);
+			}			
 			break;
 	}	
-};
+}
 
-pro.get_spectrum = function (url, render_fun) {
-	ajaxJSONGet(url, function (response) {
-		pro.process_spectrum(response, render_fun);
+function get_spectrum (url, render_fun) {
+	var ajax = require('./ajax');
+	ajax.getJSON(url, function (response) {
+		process_spectrum(response, render_fun);
 	});
-};
+}
+
+module.exports.get_spectrum = get_spectrum;
+module.exports.process_spectrum = process_spectrum;

@@ -1,8 +1,15 @@
-spec.d1.threshold = function () {
-	var svg_elem, x, y, dispatcher, callback;
-	function _main(svg) {
-		svg_elem = svg.append("path")
-			.attr("class", "threshold line x")
+module.exports = function () {
+	var svg_elem, x, y, dispatcher;
+	var core = require('../elem');
+	var source = core.ResponsiveElem('path').class('threshold line x');
+	core.inherit(_main, source);
+		
+	function _main(spec_container, callback) {
+		x = _main.xScale() || spec_container.xScale();
+		y = _main.yScale() || spec_container.yScale();
+		dispatcher = _main.dispatcher() || spec_container.dispatcher();
+		
+		svg_elem = source(spec_container)
 			.on("_mousemove", function(e) {
 				svg_elem.attr("d", d3.svg.line()([[x.range()[0], e.ycoor], [x.range()[1], e.ycoor]]));
 			})
@@ -18,26 +25,5 @@ spec.d1.threshold = function () {
 		dispatcher.on("click.thresh."+dispatch_idx, svg_elem.on("_click"));
 	}
 
-  _main.callback = function(_) {
-  	if (!arguments.length) return callback;
-  	callback = _;
-  	return _main;
-  };
-  _main.dispatcher = function(_) {
-  	if (!arguments.length) return dispatcher;
-  	dispatcher = _;
-  	return _main;
-  };
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  };
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-	
 	return _main;	
 };

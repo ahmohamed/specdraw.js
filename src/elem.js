@@ -1,285 +1,143 @@
-var inp = {};
-inp.num = function (label, val, _min, _max, step, unit) {
-	var elem = d3.select(document.createElement("label"));
-	elem.classed('param num', true)
-		.text(label)
-		.append("input")
-			.attr({
-				type: 'number',
-				value: typeof val === "undefined" ? 0: val,
-				min: typeof _min === 'undefined'? -Infinity: _min,
-				max: typeof _max === 'undefined'? Infinity: _max,
-				step: typeof step === 'undefined'? 1: step
-			})
-			.text(typeof unit === 'undefined'? '': unit);
-	
-	elem.node().getValue = function(){ 
-		return elem.select('input').node().value;
-	};
-	return function () { return elem.node()	}
-};
 
-inp.checkbox = function (label, val) {
-	var elem = d3.select(document.createElement('label'));
-	elem.classed('param checkbox', true)
-		.append("input")
-			.attr('type', 'checkbox')
-      .on('change', function () {
-        fireEvent(this, 'input');
-      })
-      .node().checked = val ? true: false;
-	
-	elem.append('div')
-			.classed('checker', true);
-  elem.append('div')
-		.classed('label', true)
-		.text(label);
-	
-	elem.node().getValue = function(){ 
-		return elem.select('input').node().checked;
-	};
-	return function () { return elem.node()	}
-};
-inp.checkbox_toggle = function (label, val, div_data) {
-	var elem = d3.select(document.createElement('div'))
-    .classed('param checkbox-toggle', true);
-  
-  elem.append(inp.checkbox(label, val))
-    .select('input').on('change', function () {
-      elem.select('.div_enable')
-        .classed('disabled', !this.checked);
-      fireEvent(this, 'input');
-    });
-	
-  elem.append(inp.div(div_data))
-		.classed('div_enable', true)
-  	.classed('disabled', !elem.select('input').node().checked);
-		
-  elem.node().getValue = elem.select('.param.checkbox').node().getValue;
-  
-  return function () { return elem.node();	};
-};
-inp.select = function (label, options, val) {
-	var elem = d3.select(document.createElement('label'))
-		.classed('param select', true)
-		.text(label);
-	var select_elem = elem.append("select");
-  
-  select_elem.selectAll('option')
-		.data(options).enter()
-		.append('option')
-			.text(function(d){return d;});
-  
-  select_elem.node().value = val;
-  
-	elem.node().getValue = function(){ 
-		return select_elem.node().value;
-	};
-	return function () { return elem.node()	}
-};
+function inherit(target, source){
+  for (var f in source){
+    if (typeof source[f] === 'function'){
+			//console.log(f);
+      d3.rebind(target, source, f);
+    }
+  }
+}
 
-inp.select_multi = function (label, options) {
-	var elem = d3.select(document.createElement('div'))
-    .classed('param select-multi', true);
-  
-	elem.append('label')
-    .text(label)
-		.append("input")
-			.attr('type', 'checkbox')
-			.style('display', 'none')
-      .on('change', function () {
-        elem.select('ul')
-          .classed('shown', this.checked);
-      })
-			.node().checked = false;
-	
-	elem.append('ul')
-		.classed('block-list', true)
-		.selectAll('li')
-		.data(options).enter()
-		.append('li')
-			.each(function(d){
-        d3.select(this).append(inp.checkbox(d, true))
-      });
-	
-	elem.node().getValue = function(){ 
-		return elem.selectAll('.param.checkbox')
-			.filter(function () {
-				return this.children[0].checked;
-			})[0]
-			.map(function (e) {
-				return typeof(e.value) !== 'undefined' ? e.value
-					: d3.select(e).select('.label').text();
-			});
-		return elem.select('input').node().value;
-	};
-	return function () { return elem.node()	}
-};
-
-inp.select_toggle = function (label, options) {
-	console.log(label, options);
-	var elem = d3.select(document.createElement('div'))
-    .classed('param select-toggle', true);
-  
-  elem.append(inp.select(label, Object.keys(options))) 
-	  .selectAll('option')
-      .attr('value', function(d){return d;})
-      .text(function(d){return options[d][0];});
-	
-	var fieldset = elem.append("div")
-		.classed("method_params", true);
-	var select_elem = elem.select('select').node();
-	
-	elem.select('select').on('input', function () {
-    d3.event.stopPropagation();
-  })
-    .on('change', function () {
-		fieldset.select('fieldset').remove();
-
-		if( Object.keys( options[select_elem.value][1]).length > 0 ){
-			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ))
-				//.appened('legend', 'Parameters');
-		}
-    
-    fireEvent(this.parentNode, 'input');
-	});
-	
-	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
-		fieldset.append("fieldset")	
-			.append(inp.div( options[ select_elem.value ][1] ));
+function ElemArray(arr){
+	if(!arr){
+		arr = [];
 	}
-	
-	elem.node().getValue = function(){ 
-		return select_elem.value;
+  arr.nodes = function(){
+	  return this.map(function(e){return e.node();});
 	};
-	return function(){return elem.node();};
-};
-inp.button = function (label) {
-	var elem = d3.select(document.createElement('input'))
-		.classed('param btn', true)
-		.attr('type', 'button')
-		.attr('value', label)
-		.on("click", function(){ fireEvent(this, 'input') });
-	
-	elem.node().getValue = function(){ 
-		return d3.event && d3.event.target === elem.node();
-	};	
-	return function(){return elem.node();};
-};
-inp.threshold = function (label) {
-	var elem = d3.select(document.createElement('div'))
-	.classed('param threshold', true);
-	
-	var input = elem.append("input").attr("type", "hidden")
+  arr.sel = function(){
+	  return d3.selectAll(this.nodes());
+	};
+  return arr;
+}
 
-	var val = elem.append("input")
-		.attr("type", "text")
-		.attr('readonly', 'readonly');
-	
-	elem.insert(inp.button(label), ':last-child')
-  	.on("click", function(){ 
-			var modal = d3.selectAll(".nanoModalOverride:not([style*='display: none'])")
-				.style('display', 'none');
-			
-			d3.select('.spec-slide.active').select('.main-focus').node()
-				.getThreshold(function (t) {
-					val.attr('value', t.toExponential(2));
-					input.attr('value', t);
-					modal.style('display', 'block');
-				});
-		});
-	
-	elem.node().getValue = function () {
-		return input.node().value;
-	};
-	return function(){return elem.node()}
-};
-/* parses the GUI data into a div HTML element.
-	 @param div_data object containing parameter names as keys
-	 and GUI information (Array) as values.
-	 The GUI array consists of the following:
-	 * label: text label of the input
-	 * type: the input type:
-			0:number 1:checkbox 2:text 3:select_toggle 4:checkbox_toggle
-			5:button 6:threshold
-*/
-inp.div = function (div_data) {
-	var div = d3.select(document.createElement('div'));
-  for (var key in div_data){
-		var p = div_data[key];
-		if(typeof p == 'function') continue; //Exclude Array prototype functions.
-    div.append(parseInputElem.apply(null, p))
-			.node().id = key;
+function Elem(tag){
+  var selection, parentElem, width, height, cls;
+  function _main (container){
+    selection = container.append(tag || 'div');
+		parentElem = container;
+    if(cls){
+      selection.classed(cls, true);
+    }
+    return selection;
   }
 	
-	return function() {return div.node();};
-};
-
-var parseInputElem = function (label, type, details) {
-	var f = [
-		inp.num, inp.checkbox, inp.text, inp.select_toggle,
-		inp.checkbox_toggle, inp.button, inp.threshold
-	][type];
-	return f.apply(null, [label].concat(details));
-};
-
-inp.spectrumSelector = function () {
-	var specs = d3.select('.spec-slide.active').select(".main-focus").selectAll(".spec-line")
-	if (specs.size() === 0){
-		return function () {
-			return d3.select(document.createElement('div')).text('No Spectra to show').node();
-		};
-	} 
-		
-	var elem = 	d3.select(
-			inp.select_multi('Select Spectrum', specs[0])()
-		).classed('spec-selector', true)
-	
-	elem.selectAll('li')
-	  	.each(function(d){
-				d3.select(this).select('.checkbox')					
-					.style('color', getComputedStyle(d.childNodes[0]).stroke)
-					.select('.label').text(d.label);
-					
-				d3.select(this).on('mouseenter', function () {
-						d3.select(d.parentNode).classed('dimmed', true);
-						d3.select(d).classed('highlighted', true);
-					})//mouseover
-					.on('mouseleave', function () {
-						d3.select(d.parentNode).classed('dimmed', false);
-						d3.select(d).classed('highlighted', false);
-					});//mouseout
-			});//end each
-	
-	elem.node().getValue = function () {
-		return elem.selectAll('li')
-			.filter(function () {
-				return d3.select(this).select('input').node().checked === true;
-			})
-			.data().map(function(e){
-	        return e.s_id();
-	    });
+  _main.sel = function(){
+    return selection;
+  };
+  _main.node = function(){
+    return selection ? selection.node() : undefined;
+  };
+  _main.parent = function(){
+    return parentElem ;
+  };
+  _main.width = function(_){
+    if (!arguments.length) {return width;}
+    width = _;
+    return _main;
+  };
+  _main.height = function(_){
+    if (!arguments.length) {return height;}
+    height = _;
+    return _main;
+  };
+	_main.class = function(_){
+    if (!arguments.length) {return cls;}
+    cls = _;
+    return _main;
+  };
+	_main.append = function(_){ 
+		if(!selection){
+			throw new Error('Elem is not in DOM');
+		}
+		return selection.append(_);
 	};
-	elem.node().id = 'sid';
-	
-	return function(){return elem.node();};
-};
-inp.preview = function(auto){
-	var div_data = {
-		"prev_auto":["Instant Preview", 1, typeof auto !== 'undefined'],
-		"prev_btn":["Preview", 5, null],
+	_main.select = function(_){
+		if(!selection){
+			throw new Error('Elem is not in DOM');
+		}
+		return selection.select(_);
 	};
-	return inp.div(div_data);
-};
-inp.popover = function (title) {
-	var div = d3.select(document.createElement('div'))
-		.classed('popover right', true);
-	
-	div.append('div').classed('arrow', true);
-	var inner = div.append('div').classed('popover-inner', true)
-	inner.append('h3').classed('popover-title', true).text(title);
-	inner.append('div').classed('popover-content', true);
-	
-	return function() {return div.node();};
+	_main.selectAll = function(_){
+		if(!selection){
+			throw new Error('Elem is not in DOM');
+		}
+		return selection.selectAll(_);
+	};
+	_main.remove = function () {
+		if( selection ){
+			if ( selection.on('remove') ){
+				selection.on('remove')();
+			}
+			selection.remove();
+		}
+	};
+	_main.parentApp = function () {
+		var _parent = parentElem;
+		while(_parent){    
+			if(typeof _parent.currentSlide === 'function'){
+				return _parent;
+			}
+			_parent = _parent.parent ? _parent.parent() : null;
+		}
+		return null;
+	};
+  return _main;
 }
+
+function ResponsiveElem(tag){
+	var source = Elem(tag);
+  var x, y, data, dispatcher;
+  function _main (container){
+    var selection = source(container);
+    return selection;
+  }
+  _main.xScale = function(_){
+    if (!arguments.length) {return x;}
+    x = _;
+    return _main;
+  };
+  _main.yScale = function(_){
+    if (!arguments.length) {return y;}
+    y = _;
+    return _main;
+  };
+  _main.datum = function(_){
+    if (!arguments.length) {return data;}
+    data = _;
+    return _main;
+  };
+  _main.dispatcher = function(_) {
+  	if (!arguments.length) {return dispatcher;}
+  	dispatcher = _;
+  	return _main;
+  };	
+	inherit(_main, source);
+  return _main;
+}
+
+function SVGElem(){
+	var source = ResponsiveElem('g');
+  function _main (container){
+    var selection = source(container);
+    return selection;
+  }
+	inherit(_main, source);
+  return _main;
+}
+
+module.exports.inherit = inherit;
+module.exports.ElemArray = ElemArray;
+module.exports.Elem = Elem;
+module.exports.ResponsiveElem = ResponsiveElem;
+module.exports.SVGElem = SVGElem;

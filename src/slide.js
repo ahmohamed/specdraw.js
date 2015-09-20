@@ -1,19 +1,36 @@
-/*
-	import 'event';
-	import 'd1/main-focus';
-	import 'd2/main-focus';
-	import 'd1/scale-brush';
-*/
-spec.slide = function(){
-	var data, elem, svg_width, svg_height;
-	function _main(app){
+module.exports = function(){
+	var core = require('./elem');
+	var source = core.Elem('g');
+	core.inherit(Slide, source);
+	
+	var data, slide_selection, svg_selection, svg_width, svg_height;
+	var clip_id = require('./utils').guid();
+	var parent_app, spec_container;
+	
+	// Event dispatcher to group all listeners in one place.
+	var dispatcher = d3.dispatch(
+		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+		'specDataChange',
+		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
+		"keyboard",																//Keyboard
+		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
+		"integrateEnable", "integrate", "integ_refactor",						//Integration events
+		"crosshairEnable",
+		"blindregion",
+		"log"
+	);
+	
+	
+	function Slide(app){
+		parent_app = app;
 		if(!data){
-			create_empty_slide();//TODO
+			//create_empty_slide();//TODO
 			return ;
 		}
+		svg_width = Slide.width();
+		svg_height = Slide.height();
 		
 		var brush_margin = 20;
-
     var margin = {
         top: 10 + brush_margin,
         right: 40,
@@ -32,42 +49,36 @@ spec.slide = function(){
           .tickFormat(d3.format("s"));
 		
     var xGrid = d3.svg.axis().scale(x)
-					.orient("bottom").innerTickSize(height)
-					.tickFormat(''),
-        yGrid = d3.svg.axis().scale(y)
-					.orient("right").innerTickSize(width)
-					.tickFormat('');
+				.orient("bottom").innerTickSize(height)
+				.tickFormat(''),
+	    yGrid = d3.svg.axis().scale(y)
+				.orient("right").innerTickSize(width)
+				.tickFormat('');
   	
 		var two_d = (data["nd"] && data["nd"] === 2);
-		
-		// Event dispatcher to group all listeners in one place.
-		var dispatcher = d3.dispatch(
-			"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
-			"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
-			"keyboard",																//Keyboard
-			"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
-			"integrateEnable", "integrate", "integ_refactor",						//Integration events
-			"crosshairEnable",
-			"blindregion",
-			"log"
-		);
 		dispatcher.idx = 0;
 		
-		var spec_slide = app.append("svg")
+		svg_selection = app.append('svg')
+			.classed('spec-slide', true)
 			.attr({
 				width:svg_width,
-				height:svg_height				
-			}).classed("spec-slide", true)
-			.classed("active", true)
+				height:svg_height
+			});
+			
+		slide_selection = source(svg_selection)
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+			.attr({
+				width:svg_width,
+				height:svg_height
+			});
 		
-		var contents = spec_slide.append('g')
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		//var contents = slide_selection
+			//.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 		
 		
-		spec_slide.node().clip_id = guid();
-    var defs = spec_slide.append("defs");
+    var defs = slide_selection.append("defs");
 		defs.append("clipPath")
-		.attr("id", spec_slide.node().clip_id)
+		.attr("id", clip_id)
 		  .append("rect")
 		    .attr("width", width)
 		    .attr("height", height);
@@ -83,36 +94,40 @@ spec.slide = function(){
 		*/
 	
 		if(two_d){
+			var slope = 1;
+			if (require('bowser').safari) {
+			  slope *= 2;
+			}
 			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
 				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
 	
 			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
+				.attr("color-interpolation-filters","sRGB");
 	
 			fe_component_transfer.append("feFuncR")
-									.attr("type","linear")
-									.attr("slope","-1")
-									.attr("intercept","0.5");
-							
+				.attr("type","linear")
+				.attr("slope",-slope)
+				.attr("intercept","0.5");
+				
 			fe_component_transfer.append("feFuncB")
-									.attr("type","linear")
-									.attr("slope","1")
-									.attr("intercept","-0.5");
+				.attr("type","linear")
+				.attr("slope",slope)
+				.attr("intercept","-0.5");
 	
-			var fe_component_transfer = svg_filter.append("feComponentTransfer")
-											.attr("color-interpolation-filters","sRGB");
+			fe_component_transfer = svg_filter.append("feComponentTransfer")
+				.attr("color-interpolation-filters","sRGB");
 
 			fe_component_transfer.append("feFuncR")
-									.attr("id","rfunc")
-									.attr("type","linear")
-									.attr("slope","1");
+				.attr("id","rfunc")
+				.attr("type","linear")
+				.attr("slope","1");
 					
 			fe_component_transfer.append("feFuncB")
-									.attr("id","bfunc")
-									.attr("type","linear")
-									.attr("slope","1");
+				.attr("id","bfunc")
+				.attr("type","linear")
+				.attr("slope","1");
 											
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
@@ -122,19 +137,19 @@ spec.slide = function(){
 		/**********************************/				
 		
 		//axes	and their labels
-		contents.append("g")
+		slide_selection.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")");
 			
 
-		contents.append("g")
+		slide_selection.append("g")
 			.attr("class", "y axis")
-			.attr("transform", "translate(" + width + ",0)");;
+			.attr("transform", "translate(" + width + ",0)");
 		
-		contents.append("g").classed('x grid', true);
-		contents.append("g").classed('y grid', true);
+		slide_selection.append("g").classed('x grid', true);
+		slide_selection.append("g").classed('y grid', true);
 		
-		contents.append("text")
+		slide_selection.append("text")
 	    .attr("class", "x label")
 	    .attr("text-anchor", "middle")
 	    .attr("x", width/2)
@@ -142,7 +157,7 @@ spec.slide = function(){
 			.attr("dy", "2.8em")
 	    .text("Chemical shift (ppm)");
 		
-		contents.append("text")
+		slide_selection.append("text")
 	    .attr("class", "y label")
 	    .attr("text-anchor", "end")
 	    .attr("y", width)
@@ -152,65 +167,68 @@ spec.slide = function(){
 		
 		dispatcher.on("redraw.slide", function (e) {
 			if(e.x){
-				contents.select(".x.axis").call(xAxis);
-				if(app.node().options.grid.x)
-					contents.select(".x.grid").call(xGrid);
+				slide_selection.select(".x.axis").call(xAxis);
+				if(app.options.grid.x){
+					slide_selection.select(".x.grid").call(xGrid);
+				}
 			}
 			if(e.y){
-				contents.select(".y.axis").call(yAxis);
-				if(app.node().options.grid.y)
-					contents.select(".y.grid").call(yGrid);
-				
+				slide_selection.select(".y.axis").call(yAxis);
+				if(app.options.grid.y){
+					slide_selection.select(".y.grid").call(yGrid);
+				}
 			}
 		});
 		
-		var main_focus = two_d ? spec.d2.main_focus : spec.d1.main_focus
-		//Main focus
-		contents.call(
-			main_focus()
-				.datum(data)
-				.xScale(x)
-				.yScale(y)
-				.width(width)
-				.height(height)
-				.dispatcher(dispatcher)
-		);
+		spec_container = two_d ? require('./d2/spec-container-2d')() : require('./d1/spec-container-1d')();
+		//Spec-Container
+		spec_container
+			.datum(data)
+			.xScale(x)
+			.yScale(y)
+			.width(width)
+			.height(height)
+			.dispatcher(dispatcher)
+			(Slide);
 		
 		//Scale brushes
-		contents.call(
-			spec.d1.scaleBrush()
-				.xScale(x)
-				.dispatcher(dispatcher)
-		);
-	
-		contents.call(
-			spec.d1.scaleBrush()
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);
+		require('./d1/scale-brush')()
+			.xScale(x)
+			.dispatcher(dispatcher)
+			(Slide);
+				
+		require('./d1/scale-brush')()
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(Slide);
 		
-		spec_slide.node().nd = two_d ? 2 : 1;
-		spec_slide.node().addSpec = function (_) {
-			contents.select('.main-focus').node().addSpec(_);
-		};
-		spec_slide.node().slideDispatcher = dispatcher;
+		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
-	
-  _main.datum = function(_){
-    if (!arguments.length) return data;
+	Slide.show = function (_) {
+		svg_selection.classed('active', _);
+	};
+	Slide.nd = function(){
+		if (!data){ //TODO: empty slide?
+			return 0;
+		}
+		return (data["nd"] && data["nd"] === 2) ? 2 : 1;
+	};
+	Slide.clipId = function(){
+		return clip_id;
+	};
+	Slide.slideDispatcher = function(){
+		return dispatcher;
+	};
+	Slide.specContainer = function(){
+		return spec_container;
+	};
+  Slide.datum = function(_){
+    if (!arguments.length) {return data;}
     data = _;
-    return _main;
+    return Slide;
   };
-  _main.width = function(x){
-    if (!arguments.length) return svg_width;
-    svg_width = x;
-    return _main;
-  };
-
-  _main.height = function(x){
-    if (!arguments.length) return svg_height;
-    svg_height = x;
-    return _main;
-  };
-	return _main;
+	Slide.parent = function () {
+		return parent_app;
+	};
+	return Slide;
 };

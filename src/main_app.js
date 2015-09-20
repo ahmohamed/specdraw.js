@@ -1,105 +1,118 @@
-/*
-	import 'event';
-	import 'menu';
-	import 'slide';
-*/
-spec.app = function(){
-  var slides = [], elem, svg_width, svg_height;
-
-  function _main(div){
+module.exports = function(){
+	var core = require('./elem');
+	var source = core.Elem().class('spec-app');
+	core.inherit(App, source);
+	
+  var selection, svg_width, svg_height;
+	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
+	var modals;
+	var slides = core.ElemArray(), current_slide;
+	
+  function App(div){
+		svg_width = App.width();
+		svg_height = App.height();
+		
     /* * Check size definitions**/
-		if (typeof svg_width === 'undefined' || typeof svg_height === 'undefined'
-			|| isNaN(svg_width) || isNaN(svg_height)){
+		if (typeof svg_width === 'undefined' ||
+			typeof svg_height === 'undefined' ||
+			isNaN(svg_width) || isNaN(svg_height)
+		){
 				var parent_svg = div.node();
 				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
 					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
 				
-				svg_width = dimensions[0] - 50; //deduct 50px for column menu.
+				svg_width = dimensions[0]; //deduct 50px for column menu.
 				svg_height = dimensions[1];
-		};
+		}
 		
     if (svg_width < 400 || svg_height < 400){
       throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
     }
 		
-		
-		var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
-		
-		elem = div.append('div')
-			.classed('spec-app', true)
-			.attr({
+		selection = source(div)
+			.style({
 				width:svg_width,
 				height:svg_height				
 			});
 		
-		elem.node().dispatcher = app_dispatcher;
+		svg_width -= 50; //deduct 50px for column menu.
 		
-		// TODO: decide whether to inject CSS styles.
-		//applyCSS2();
-		
-		elem.call(spec.menu());
-		/*var svg_elem = elem.append('svg')
-			.attr({
-				width:svg_width,
-				height:svg_height				
-			}).append('g');
-		*/
-		//elem.call(spec.slideChanger());
+		modals = require('./modals')(App);
+		require('./menu/menu')(App);
+
 		/**** Keyboard events and logger ****/
-		registerKeyboard(elem.node());
+		require('./events').registerKeyboard(App);
 		
-		elem.node().appendSlide = function (data) {
-			elem.selectAll('.spec-slide').classed('active', false);
-			elem.call(
-				spec.slide()
-					.datum(data)
-					.width(svg_width)
-					.height(svg_height)
-			);
-			app_dispatcher.slideChange();
-			//elem.call(spec.slideChanger());
-		};
-		elem.node().appendToCurrentSlide = function (data) {
-			var current_slide = elem.select('.spec-slide.active').node();
+		selection.node().appendToCurrentSlide = function (data) {
+			var current_slide = selection.select('.spec-slide.active').node();
 			if(!current_slide){
-				elem.node().appendSlide(data);
+				selection.node().appendSlide(data);
 			}	else{
 				current_slide.addSpec(data);
 				app_dispatcher.slideContentChange();
 			}
 		};
 		
-		elem.node().options = _main.options;
-		app_dispatcher.on('slideChange.app', function () {
-			elem.node().slideDispatcher = elem.select('.spec-slide.active').node().slideDispatcher;
+		//selection.node().options = App.options;
+		app_dispatcher.on('slideChange.app', function (s) {
+			if (current_slide !== s) { App.currentSlide(s);	}
 		});
 		
 		for (var i = 0; i < slides.length; i++) {
-			elem.node().appendSlide(slides[i].slide);
-		}		
+			render_slide(slides[i]);
+		}
+	}
+	function render_slide(s) {
+		if(! selection){ return; }
+		s.width(svg_width).height(svg_height)
+			(App);
+		
+		App.currentSlide(s);
 	}
 	
-	_main.appendSlide = function(data){
-		if (!arguments.length) 
-			throw new Error("appendSlide: No data provided.");
-		
-		if (elem){
-			elem.node().appendSlide(data);
-		} else{
-			slides.push({'slide':data});
-		}
-		return _main;
+	App.slides = function () {
+		return slides;
 	};
-	_main.appendToCurrentSlide = function(data){
-		if (!arguments.length) 
-			throw new Error("appendToCurrentSlide: No data provided.");
+	App.currentSlide = function (s) {
+		if (!arguments.length) { return current_slide; }
+		if (current_slide) { // When the first slide is added, no current_slide.
+			current_slide.show(false);
+		}
+		s.show(true);
+		current_slide = s;
+		app_dispatcher.slideChange(s);
+	};
+	App.dispatcher = function () {
+		return app_dispatcher;
+	};
+	App.slideDispatcher = function () {
+		return current_slide.slideDispatcher();
+	};
+	App.modals = function () {
+		return modals;
+	};
+	App.pluginRequest = require('./pro/plugins')(App);
+	App.appendSlide = function(data){
+		if (!arguments.length){
+			throw new Error("appendSlide: No data provided.");
+		} 
 		
-		if (elem){
-			elem.node().appendToCurrentSlide(data);
+		var s = require('./slide')().datum(data);
+		slides.push(s);
+		render_slide(s);
+		return App;
+	};
+	App.appendToCurrentSlide = function(data){
+		if (!arguments.length){
+			throw new Error("appendToCurrentSlide: No data provided.");
+		} 
+		
+		if (selection){
+			selection.node().appendToCurrentSlide(data);
 		} else{
-			if(slides.length === 0) //No slides available; create a new one
-				return _main.appendSlide(data);
-			
+			if(slides.length === 0){ //No slides available; create a new one
+				return App.appendSlide(data);
+			}
 			//Otherwise, append data to last slide.
 			var current_slide = slides[slides.length-1].slide;
 			//TODO: BUG
@@ -107,23 +120,13 @@ spec.app = function(){
 			// or an array of data arrays (i.e dataset)
 			current_slide.push(data);
 			
-			return _main;
+			return App;
 		}
 	};
-	
-  _main.width = function(x){
-    if (!arguments.length) return svg_width;
-    svg_width = x;
-    return _main;
-  };
-
-  _main.height = function(x){
-    if (!arguments.length) return svg_height;
-    svg_height = x;
-    return _main;
-  };
-	_main.options = {
+	App.options = {
 		grid:{x:false, y:false}
 	};
-	return _main;
+	return App;
 };
+
+//TODO: remove Elements

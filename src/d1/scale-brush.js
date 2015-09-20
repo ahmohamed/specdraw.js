@@ -1,13 +1,22 @@
-spec.d1.scaleBrush = function(){
-	var svg_elem, axisorient, x, y, dispatcher,brushscale;
+module.exports = function(){
+	var svg_elem, x, y, dispatcher,brushscale;
 	
-	function _main(svg) {
+	var core = require('../elem');
+	var source = core.SVGElem().class('scale-brush');
+	core.inherit(_main, source);
+	
+	function _main(slide) {
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
+		
 		var mainscale = x? x : y;
 		brushscale = x? x.copy() : y.copy();
-		axisorient = x? "bottom": "top";
 		
-    var axis = d3.svg.axis().scale(brushscale).orient(axisorient)
-			.tickFormat(d3.format("s"));;
+    var axis = d3.svg.axis()
+			.scale(brushscale)
+			.orient(x? "bottom": "top")
+			.tickFormat(d3.format("s"));
     
     var _brush = d3.svg.brush()
       .x(brushscale)
@@ -17,18 +26,18 @@ spec.d1.scaleBrush = function(){
 				extent = extent.sort(brushscale.domain()[0] > brushscale.domain()[1]?
 					d3.descending : d3.ascending );
 				
-				svg.select(".main-focus").on("_regionchange")( x ? {xdomain:extent}	: {ydomain:extent} );
-			})
+				slide.changeRegion( x ? {xdomain:extent}	: {ydomain:extent} );
+			});
 		
-		svg_elem = svg.append("g")
-			.attr("class", (x? "x":"y") + " scale-brush")
+		svg_elem = source(slide)
+			.classed( x ?  "x" : "y", true)
 			.attr("transform", x? "translate(0," + -20 + ")"
 				: "translate(-20," + 0 + ")rotate("+90+")"
 			);
 
     svg_elem.append("g")
 	    .call(axis)
-			.attr("class", "brush-axis")
+			.attr("class", "brush-axis");
     
         
 		svg_elem.append("g")
@@ -54,13 +63,13 @@ spec.d1.scaleBrush = function(){
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain || (e.ydomain && y)){
-					var domain = process_domains(mainscale.domain(), brushscale.domain())
+					var domain = process_domains(mainscale.domain(), brushscale.domain());
 					_brush.extent(domain);
 				}
 			})
 			.on("_redraw", function(e){
 				if(e.x || (e.y && y))
-					svg_elem.select(".brush").call(_brush);				
+					{svg_elem.select(".brush").call(_brush);}
 			});
 		
 		// Register event listeners
@@ -69,8 +78,6 @@ spec.d1.scaleBrush = function(){
 		dispatcher.on("regionchange.scalebrush."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.scalebrush."+dispatch_idx, svg_elem.on("_redraw"));		
 
-		
-		
 		return svg_elem;									
 	}
 	
@@ -84,29 +91,10 @@ spec.d1.scaleBrush = function(){
 			domain[1] = Math.min(main[1], brush[1]);
 		}
 		
-		if(domain.join()==brush.join())
-			domain = [0,0];
+		if(domain.join() === brush.join())
+			{domain = [0,0];}
 		
 		return domain;
 	}
-	
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
-    return _main;
-  }
-	
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  }
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  }
-	
 	return _main;
 };

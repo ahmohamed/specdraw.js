@@ -1,4 +1,7 @@
-var make_png_worker = function () {
+var workers_pool = [];
+var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
+
+function make_png_worker () {
 	var png_worker = function () {
 		function scale(range, domain){
 			var domain_limits = domain[1] - domain[0];
@@ -34,27 +37,49 @@ var make_png_worker = function () {
 	return worker;
 }
 
-pro.worker = make_png_worker();
-pro.worker_queue = function (worker) {
-	var q = [], job;
-	var init = {};
-	init.next = function () {
-		job = q.shift();
-		if (!job) // if the queue is finished.
-			return;
-		
-		worker.onmessage = function (e) {
-			var callback = job['callback'];
-			init.next();
-			callback(e);
-		};
-		worker.postMessage(job['message'][0], job['message'][1]);
+var q = [];
+
+function next (worker) {
+	var job = q.shift();
+	if (!job) // if the queue is finished.
+		return;
+	
+	worker.hasJob = true;
+	worker.onmessage = function (e) {
+		var callback = job['callback'];
+		worker.hasJob = false;
+		next(worker);
+		callback(e);
 	};
-	init.addJob = function (_) {
-		q.push(_);
-		if (!job) //if not job is currently excuting, do this job.
-			init.next();
-	};
-	return init;
+	worker.postMessage(job['message'][0], job['message'][1]);
 };
-pro.worker.queue = pro.worker_queue(pro.worker);
+
+function addJob (_) {
+	q.push(_);
+	var free_worker = getFreeWorker();
+	if ( typeof free_worker !== 'undefined'){ //if there is a currently free worker, start this job.
+		next(free_worker);
+	}
+};
+
+function getFreeWorker() {
+	for (var i = 0; i < workers_pool.length; i++) {
+		if (! workers_pool[i].hasJob){
+			return workers_pool[i];
+		}
+	}
+	if (workers_pool.length < MAX_WORKERS){
+		var new_worker = make_png_worker();
+		workers_pool.push(new_worker);
+		return new_worker;
+	}
+	return undefined;
+}
+
+function maxWorkers(_) {
+  if (!arguments.length) return MAX_WORKERS;
+  MAX_WORKERS = _;
+}
+
+module.exports.addJob = addJob;
+module.exports.maxWorkers = maxWorkers;
