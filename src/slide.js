@@ -177,7 +177,7 @@ spec.slide = function(){
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/main_focus')();
+		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/spec-container-1d')();
 		//Spec-Container
 		spec_container
 			.datum(data)

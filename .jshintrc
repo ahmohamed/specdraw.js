@@ -16,15 +16,14 @@
     "newcap": false,
     "loopfunc": true,
     "bitwise": false,
-
+    
+    "node":true,
     "browser": true,
-
+    "devel":true,
+    
     "globals": {
         "spec": true,
-        "require": false,
-        "d3": false,
-        "console":false,
-        "module":true
+        "d3": false
     }
 
 }

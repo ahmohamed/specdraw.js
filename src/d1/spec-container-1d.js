@@ -1,3 +1,4 @@
+
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');

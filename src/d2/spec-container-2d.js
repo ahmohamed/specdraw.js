@@ -2,10 +2,6 @@ spec.d2.main_focus = function () {
 	var focus, width, height, x, y, dispatcher, data, range = {};
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function (){
-			/*var factor = 0.3/Math.log(30);
-			var val = Math.log(zoomer.scale())*factor;		
-			d3.select("#rfunc").attr("slope",0.5+val);
-			d3.select("#bfunc").attr("intercept",-0.5+val);*/
 			d3.select("#rfunc").attr("slope", zoomer.scale());
 			d3.select("#bfunc").attr("slope", zoomer.scale());
 		}).scaleExtent([0.1,100]);	
