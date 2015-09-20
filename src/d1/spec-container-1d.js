@@ -42,6 +42,12 @@ module.exports = function () {
 			.on("mousedown.zoom", null);
 		
 		
+		// overlay rectangle for mouse events to be dispatched.
+		focus.append("rect")
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
+			.style("fill", "none");
+		
 		/*********** Handling Events **************/
 		focus
 			.on("_redraw", function(e){
@@ -118,28 +124,23 @@ module.exports = function () {
 			focus.on("_regionchange")({xdomain:range.x});		
 		});
 			
-		// overlay rectangle for mouse events to be dispatched.
-		focus.append("rect")
-			.attr("width", SpecContainer.width())
-			.attr("height", SpecContainer.height())
-			.style("fill", "none");
-
 		//brushes
 		main_brush.xScale(x)
 			.dispatcher(dispatcher)
 			(SpecContainer);
-		
+	
 
 		//spectral lines
 		for (var i = 0; i < specs.length; i++) {
 			render_spec(specs[i]);
 		}
-		
+	
 		//peak picker	
 		peak_picker.xScale(x)
 			.yScale(y)
 			.dispatcher(dispatcher)
 			(SpecContainer);
+		
 	}
 	function update_range() {
 		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),

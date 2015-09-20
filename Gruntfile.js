@@ -5,7 +5,7 @@ module.exports = function(grunt) {
         concat: {
             dist: {
                 src: [
-									'src/start.js','src/d2/d2.js','src/d2/crosshair_2d.js','src/d2/main_focus.js','src/d2/spec2d.js','src/main_app.js','src/slide.js','src/pro/read_menu.js','src/pro/output.js','src/pro/plugins.js','src/end.js'
+									'src/start.js','src/d2/d2.js','src/d2/crosshair_2d.js','src/d2/spec-container-2d.js','src/d2/spec2d.js','src/main_app.js','src/slide.js','src/pro/read_menu.js','src/pro/output.js','src/pro/plugins.js','src/end.js'
 								],
                 dest: "<%= pkg.name %>.js"
             }

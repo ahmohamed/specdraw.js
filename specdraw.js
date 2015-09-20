@@ -382,85 +382,35 @@ spec.d2.crosshair = function(){
 };
 
 spec.d2.main_focus = function () {
-	var focus, width, height, x, y, dispatcher, data, range = {};
+	var core = require('./src/elem');
+	var source = core.SVGElem().class('main-focus');
+	core.inherit(SpecContainer, source);
+
+	var x, y, dispatcher, data;
+	var focus, range = {};
+	var specs = core.ElemArray();
+	var main_brush = require('./src/d1/main-brush')();
+	
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function (){
-			/*var factor = 0.3/Math.log(30);
-			var val = Math.log(zoomer.scale())*factor;		
-			d3.select("#rfunc").attr("slope",0.5+val);
-			d3.select("#bfunc").attr("intercept",-0.5+val);*/
 			d3.select("#rfunc").attr("slope", zoomer.scale());
 			d3.select("#bfunc").attr("slope", zoomer.scale());
 		}).scaleExtent([0.1,100]);	
 	
-	function _main(slide) {
-		focus = slide.append("g")
-		    .attr("class", "main-focus")
-		    .attr("pointer-events", "all")
-				.attr("width", width)
-				.attr("height", height)
-				.call(zoomer)
-				.on("dblclick.zoom", null)
-				.on("mousedown.zoom", null);
+	function SpecContainer(slide) {
+		x = SpecContainer.xScale();
+		y = SpecContainer.yScale();
+		dispatcher = SpecContainer.dispatcher();
 		
-		
-		/****** Attach functions on svg node ********/
-		focus.node().dispatch_idx =  0; // an index as a namespace for dispacther evernts.
-		focus.node().nSpecs = 0;				// count how many spec-lines are displayed (used for coloring.)
-		focus.node().xScale = x;
-		focus.node().yScale = y;
-		focus.node().range = range;
-		focus.node().addPeaks = function (idx) { //TODO:move peaks to line
-			focus.select(".peaks").node().addpeaks(data.subset(idx));			
-			focus.select(".peaks").on("_regionchange")({xdomain:true});
-			focus.select(".peaks").on("_redraw")({x:true});			
-		};
-		focus.node().addSpec = function(spec_data, crosshair, overwrite){
-			if(arguments.length < 2)
-				crosshair = true;
-			
-			var elem;
-			if(overwrite) console.log("overwrite size:", overwrite.size());
-			
-			if(!overwrite || overwrite.size() == 0){
-				elem = spec.d2.spec2d()
-					.datum(spec_data["data"])
-					.xScale(x)
-					.yScale(y)
-					.s_id(spec_data["s_id"])
-					.range({x:spec_data["x_domain"], y:spec_data["y_domain"]})
-					.crosshair(crosshair)
-					.dispatcher(dispatcher)
-					(focus);
-			}else{
-				console.log("overwriting spec");
-				elem = overwrite;
-				elem.node().setData(spec_data['data']);
-				if(spec_data['s_id']) elem.node().s_id(spec_data['s_id']);
-			}
-			
-			var xdomain = x.domain(), ydomain = y.domain();
-			
-			console.log("domains: ",spec_data["x_domain"], spec_data["y_domain"])
-			focus.on("_rangechange")({x:spec_data["x_domain"], y:spec_data["y_domain"], norender: focus.node().nSpecs > 0});
-			
-			if(focus.node().nSpecs > 0)
-				focus.on("_regionchange")({xdomain:xdomain, ydomain:ydomain});
-			
-			focus.node().nSpecs++;
-			return elem;
-		};
-		focus.node().addSpecLine = focus.node().addSpec;
-		focus.node().nd = 2;
-		focus.node().getThreshold = function (callback) {
-			focus.call(
-				spec.d1.threshold()
-					.xScale(x).yScale(y)
-					.dispatcher(dispatcher)
-					.callback(callback)
-			);	
-		};
-		//focus.node().getThreshold(null);
+		focus = source(slide)
+	    .attr("pointer-events", "all")
+			.attr('clip-path', "url(#" + slide.clipId() + ")")
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
+			.call(zoomer)
+			.on("dblclick.zoom", null)
+			.on("mousedown.zoom", null);
+				
 		
 		/*********** Handling Events **************/
 		focus
@@ -483,25 +433,26 @@ spec.d2.main_focus = function () {
 			})
 			.on("_rangechange", function(e){
 				if(e.x)
-					range.x = e.x;
+					{range.x = e.x;}
 				if(e.y)
-					range.y = e.y;
+					{range.y = e.y;}
 			
 				dispatcher.rangechange(e);
 				
-				if(!e.norender)
+				if(!e.norender){
 					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
+				} 
 			})
 			.on("mouseenter", dispatcher.mouseenter)
 			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(e){
+			.on("mousemove", function(){
 				var new_e = d3.event;
 				new_e.xcoor = d3.mouse(this)[0];
 				new_e.ycoor = d3.mouse(this)[1];
 			
 				dispatcher.mousemove(new_e);
 			})
-			.on("mousedown", function (e) {	// Why?! because no brush when cursor on path?
+			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
 			  var new_click_event = new Event('mousedown');
 			  new_click_event.pageX = d3.event.pageX;
 			  new_click_event.clientX = d3.event.clientX;
@@ -510,207 +461,222 @@ spec.d2.main_focus = function () {
 			  focus.select(".main-brush").node()
 					.dispatchEvent(new_click_event);
 			})
-			.on("click", function(e){
+			.on("click", function(){
 				var new_e = d3.event;
 				new_e.xcoor = d3.mouse(this)[0];
 				new_e.ycoor = d3.mouse(this)[1];
 		
-				dispatcher.click(new_e)
+				dispatcher.click(new_e);
 			})
 			.on("dblclick", dispatcher.regionfull);
 
 		dispatcher.on("regionfull",function () {
 			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
 		});
-			
-		// overlay rectangle for mouse events to be dispatched.
-		/*focus.append("rect")
-			.attr("width", width)
-			.attr("height", height)
-			.style("fill", "none");
-		*/
 		
-		focus.node().addSpec(data);
+		//spectral lines
+		for (var i = 0; i < specs.length; i++) {
+			render_spec(specs[i]);
+		}
 		//brushes
-		focus.call(
-			spec.d1.mainBrush()
-				.xScale(x)
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);
-    
+		main_brush
+			.xScale(x)
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
 		
+	}
+	function render_spec(s) {
+		if(!focus){return;}
+		console.log(s);
+		s.xScale(x).yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+				
+		update_range();
+	}
+	function update_range() {
+		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
 		
-		//peak picker	
-		/*focus.call(
-			spec.d1.pp()
-				.xScale(x)
-				.yScale(y)
-				.dispatcher(dispatcher)
-		);*/
+
+		var xdomain = x.domain(), ydomain = y.domain();
+		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
+
+		if(specs.length > 1){
+			focus.on("_regionchange")({xdomain:xdomain, ydomain:ydomain});
+		}
 	}
 	
-  _main.datum = function(_){
-    if (!arguments.length) return data;
+	SpecContainer.addSpec = function(spec_data, crosshair){
+		if (!arguments.length) {
+			throw new Error("appendSlide: No data provided.");
+		} 
+		
+		if(typeof crosshair === 'undefined'){
+			crosshair = true;
+		}
+		var s = specs.filter(function (e) {
+			return e.s_id() === spec_data["s_id"];
+		}	);
+		
+		if ( s.length === 0 ){
+			s = spec.d2.spec2d()
+				.datum(spec_data["data"])
+				.s_id(spec_data["s_id"])
+				.crosshair(crosshair)
+				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
+			
+			console.log(s);	
+			specs.push(s);
+		}else{
+			s = s[0];
+			s.datum(spec_data)
+				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
+		}
+		render_spec(s);
+		return s;
+	};
+	SpecContainer.changeRegion = function (_) {
+		if( focus ){
+			focus.on('_regionchange')(_);
+		}
+	};
+	SpecContainer.nd = function(){
+		return 2;
+	};
+	SpecContainer.spectra = function () {
+		return specs;
+	};
+	SpecContainer.range = function(){
+		return range;
+  };
+  SpecContainer.datum = function(_){
+    if (!arguments.length) {return data;}
     data = _;
-    return _main;
+		
+		SpecContainer.addSpec(_);
+    return SpecContainer;
   };
-  _main.dispatcher = function(_) {
-  	if (!arguments.length) return dispatcher;
-  	dispatcher = _;
-  	return _main;
-  };
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  };
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-  _main.width = function(_){
-    if (!arguments.length) return width;
-    width = _;
-    return _main;
-  };
-  _main.height = function(_){
-    if (!arguments.length) return height;
-    height = _;
-    return _main;
-  };
-	return _main;	
+	return SpecContainer;	
 };
 spec.d2.spec2d = function () {
-	var data, x, y, s_id, dispatcher, range={}, svg_elem, hasCrosshair = true;
+	var core = require('./src/elem');
+	var source = core.SVGElem().class('spec-img');
+	core.inherit(_main, source);
 	
-	function _main(svg) {
-		var _crosshair, segments = [], scale_factor = 1;
+	var data, s_id, spec_label, _crosshair;	//initiailized by parent at generation
+	var x, y, dispatcher;								//initiailized by parent at rendering
+	var svg_elem, img_elem, range={};		//initiailized by self at rendering
+	
+	function _main(spec_container) {
+		x = _main.xScale();
+		y = _main.yScale();
+		dispatcher = _main.dispatcher();
 		
-		var width = svg.attr("width"),
-				height = svg.attr("height");
+		svg_elem = source(spec_container);
 		
-		svg_elem = svg.append("g")
-			.attr("class", "spec-img");
-		
-		svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
+		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
 
-		var img_elem = svg_elem.append("g")
+		img_elem = svg_elem.append("g")
 			.attr("filter", "url(#2dColorFilter)")
 			.append("svg:image")
-			  .attr('width', width)
-			  .attr('height', height)
+			  .attr('width', spec_container.width())
+			  .attr('height', spec_container.height())
 			  .attr('xlink:href', "data:image/ png;base64," + data)
 			  .attr("preserveAspectRatio", "none");	
 				
-
-		svg_elem.node().range = range;
 		
 		/*** TODO: 2D dataset vis *****
-		
-		var line_idx = d3.select(".main-focus").node().nSpecs;
-		var path_elem = svg_elem.append("path")
-      .datum(data)
-			.attr("class", "line clr"+ line_idx)
-		
 		******************************/
 		
-		if(hasCrosshair)
-			_crosshair = (spec.d2.crosshair() 
-				.xScale(x)
-				.yScale(y)
+		if(_crosshair){
+			_crosshair 
+				.xScale(x).yScale(y)
 				.dispatcher(dispatcher)
-			)(svg_elem);
+				(svg_elem);
+		}
+			
+		
 		// TODO: 2D integration
 		
 		svg_elem
-			.on("_redraw", function(e){				
-				console.log("scale & range: ",x, range.x)
-				var orignial_xscale = x.copy().domain(range.x),
-					orignial_yscale = y.copy().domain(range.y);
-			
-				//zooming on 2d picture by first translating, then scaling.
-				var translate_coor = [-Math.min(orignial_xscale(x.domain()[1]), orignial_xscale(x.domain()[0])),
-					 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
-		
-				var	scale_coor = [ Math.abs((range.x[0]-range.x[1])/(x.domain()[0]-x.domain()[1])),
-								   Math.abs((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]))];
-
-				img_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+			.on("_redraw", redraw)
+			.on("_regionchange", function(){
 			})
-			.on("_regionchange", function(e){				
+			.on("_integrate", function(){
 			})
-			.on("_integrate", function(e){
+			.on("_segment", function () {
 			})
-			.on("_segment", function (e) {
+			.on('_remove', function () {
+				dispatcher.on("regionchange.line."+dispatch_idx, null);
+				dispatcher.on("redraw.line."+dispatch_idx, null);
+				data = null;
+				if(_crosshair){_crosshair.remove();}
 			});
 		
 		// Register event listeners
 		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
 		dispatcher.on("redraw.line."+dispatch_idx, svg_elem.on("_redraw"));
-		//dispatcher.on("integrate.line."+dispatch_idx, svg_elem.on("_integrate"));
-		
-		svg_elem.node().specData = function () { return data;	};
-		svg_elem.node().setData = function (_) {
-			data = _;
-			img_elem.attr('xlink:href', "data:image/ png;base64," + data)
-			svg_elem.on("_redraw")();
-		};
-		svg_elem.node().specRange = function () { return range;	};
-		svg_elem.node().s_id = function () { return s_id;	};
-		
-		svg_elem.node().remove = function () {
-			dispatcher.on("regionchange.line."+dispatch_idx, null);
-			dispatcher.on("redraw.line."+dispatch_idx, null);
-			//dispatcher.on("integrate.line."+dispatch_idx, null);
-			data = null;
-			/*if(hasCrosshair)
-				_crosshair.node().remove();*/
-			svg_elem.remove();
-		};
-		
+				
 		return svg_elem;									
+	}
+	function redraw() {
+		if (!img_elem) {return;}
+		
+		var orignial_xscale = x.copy().domain(range.x),
+			orignial_yscale = y.copy().domain(range.y);
+
+		//zooming on 2d picture by first translating, then scaling.
+		var translate_coor = [-Math.min(orignial_xscale(x.domain()[1]), orignial_xscale(x.domain()[0])),
+			 				-Math.min(orignial_yscale(y.domain()[1]), orignial_yscale(y.domain()[0]) )];
+
+		var	scale_coor = [ Math.abs((range.x[0]-range.x[1])/(x.domain()[0]-x.domain()[1])),
+						   Math.abs((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]))];
+
+		img_elem.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
+	}
+	function render_data() {
+		if (!img_elem) {return;}
+		
+		img_elem.attr('xlink:href', "data:image/ png;base64," + data);
+		redraw();
 	}
 	
   _main.datum = function(_){
-    if (!arguments.length) return data;		
+    if (!arguments.length) {return data;}
 		data = _;
+		
+		render_data();
 		return _main;
   };
   _main.range = function(_){
-    if (!arguments.length) return range;		
+		if (!arguments.length) {return range;}
 		range = _;
 		return _main;
   };
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
-    return _main;
-  };
   _main.crosshair = function(_){
-    if (!arguments.length) return hasCrosshair;
-    hasCrosshair = _;
-    return _main;
+    if (!arguments.length) {return _crosshair;}
+
+		if(_){
+			_crosshair = spec.d2.crosshair();
+		} else {
+			_crosshair = false;
+		}    return _main;
   };
   _main.s_id = function(_){
-    if (!arguments.length) return s_id;
+    if (!arguments.length) {return s_id;}
     s_id = _;
     return _main;
   };
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
+  _main.label = function(_){
+    if (!arguments.length) {return spec_label;}
+    spec_label = _;
     return _main;
   };
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-	
 	return _main;
 };
 
@@ -1025,7 +991,7 @@ spec.slide = function(){
 			}
 		});
 		
-		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/main_focus')();
+		spec_container = two_d ? spec.d2.main_focus() : require('./src/d1/spec-container-1d')();
 		//Spec-Container
 		spec_container
 			.datum(data)
@@ -1278,7 +1244,7 @@ pro.plugins = function (app) {
 	console.log("specdraw:"+ spec.version);
 })();
 
-},{"./src/d1/main_focus":9,"./src/d1/scale-brush":12,"./src/elem":14,"./src/events":15,"./src/menu/menu":18,"./src/modals":22,"./src/pro/ajax":23,"./src/pro/process_data":24,"./src/utils":26}],5:[function(require,module,exports){
+},{"./src/d1/main-brush":8,"./src/d1/scale-brush":11,"./src/d1/spec-container-1d":12,"./src/elem":14,"./src/events":15,"./src/menu/menu":18,"./src/modals":22,"./src/pro/ajax":23,"./src/pro/process_data":24,"./src/utils":26}],5:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -1874,7 +1840,7 @@ module.exports = function () {
 	return SpecLine;
 };
 
-},{"../elem":14,"./crosshair":5,"./integration-elem":6,"./path-simplify":10}],8:[function(require,module,exports){
+},{"../elem":14,"./crosshair":5,"./integration-elem":6,"./path-simplify":9}],8:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -1977,258 +1943,6 @@ module.exports = function (){
 
 },{"../elem":14}],9:[function(require,module,exports){
 module.exports = function () {
-	var core = require('../elem');
-	var source = core.SVGElem().class('main-focus');
-	core.inherit(SpecContainer, source);
-	
-	
-	var focus, x, y, dispatcher, data, range = {};
-	var specs = core.ElemArray();
-	var peak_picker = require('./peak-picker')();
-	var main_brush = require('./main-brush')();
-
-	var zoomer = d3.behavior.zoom()
-		.on("zoom", function () {
-			/* * When a y brush is applied, the scaled region should go both up and down.*/
-			var new_range = range.y[1]/zoomer.scale() - range.y[0];
-			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2;
-		
-			var new_region = [];
-			if(y.domain()[0] === range.y[0]) { new_region[0] = range.y[0]; }
-			else{new_region[0] = Math.max(y.domain()[0]-addition, range.y[0]);}
-			new_region[1] = new_region[0] + new_range;
-			
-			focus.on("_regionchange")(
-				{zoom:true,	ydomain:new_region}
-			);
-		});
-
-	
-	function SpecContainer(slide) {
-		x = SpecContainer.xScale();
-		y = SpecContainer.yScale();
-		dispatcher = SpecContainer.dispatcher();
-		
-		focus = source(slide)
-	    .attr("pointer-events", "all")
-			.attr('clip-path', "url(#" + slide.clipId() + ")")
-			.attr("width", SpecContainer.width())
-			.attr("height", SpecContainer.height())
-			.call(zoomer)
-			.on("dblclick.zoom", null)
-			.on("mousedown.zoom", null);
-		
-		
-		/*********** Handling Events **************/
-		focus
-			.on("_redraw", function(e){
-				dispatcher.redraw(e);
-			})
-			.on("_regionchange", function(e){
-				// If the change is in X
-				if(e.xdomain){
-					x.domain(e.xdomain);	
-				}				
-				dispatcher.regionchange({xdomain:e.xdomain});
-							
-				if(e.ydomain){
-					y.domain(e.ydomain);
-					if(!e.zoom){//If y domain is changed by brush, adjust zoom scale
-						zoomer.scale((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]));						
-					} 
-				}else{
-					//modify range.y  and reset the zoom scale
-					var y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-						y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
-					var y_limits = (y1-y0);
-					y0 = y0 - (0.05 * y_limits);
-					y1 = y1 + (0.05 * y_limits);
-					
-					
-					range.y = [y0,y1];
-					y.domain(range.y);
-					dispatcher.rangechange({y:range.y});
-					zoomer.scale(1);
-				}
-			
-				dispatcher.regionchange({ydomain:y.domain()});
-				focus.on("_redraw")({x:e.xdomain, y:true});
-			})
-			.on("_rangechange", function(e){
-				if(e.x) { range.x = e.x; }	
-				if(e.y) { range.y = e.y; }
-			
-				dispatcher.rangechange(e);
-				
-				if(!e.norender){
-					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
-				} 
-			})
-			.on("mouseenter", dispatcher.mouseenter)
-			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
-			
-				dispatcher.mousemove(new_e);
-			})
-			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
-			  var new_click_event = new Event('mousedown');
-			  new_click_event.pageX = d3.event.pageX;
-			  new_click_event.clientX = d3.event.clientX;
-			  new_click_event.pageY = d3.event.pageY;
-			  new_click_event.clientY = d3.event.clientY;
-			  focus.select(".main-brush").node()
-					.dispatchEvent(new_click_event);
-			})
-			.on("click", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
-		
-				dispatcher.click(new_e);
-			})
-			.on("dblclick", dispatcher.regionfull);
-
-		dispatcher.on("regionfull",function () {
-			focus.on("_regionchange")({xdomain:range.x});		
-		});
-			
-		// overlay rectangle for mouse events to be dispatched.
-		focus.append("rect")
-			.attr("width", SpecContainer.width())
-			.attr("height", SpecContainer.height())
-			.style("fill", "none");
-
-		//brushes
-		main_brush.xScale(x)
-			.dispatcher(dispatcher)
-			(SpecContainer);
-		
-
-		//spectral lines
-		for (var i = 0; i < specs.length; i++) {
-			render_spec(specs[i]);
-		}
-		
-		//peak picker	
-		peak_picker.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
-	}
-	function update_range() {
-		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
-			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
-			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
-
-		// Add 5% margin to top and bottom (easier visualization).
-		var y_limits = (y1-y0);
-		y0 = y0 - (0.05 * y_limits);
-		y1 = y1 + (0.05 * y_limits);
-
-		var xdomain = x.domain();
-
-		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
-
-		if(specs.length > 1){
-			focus.on("_regionchange")({xdomain:xdomain});	
-		}
-	}
-	
-	function render_spec(s) {
-		if(!focus){return;}
-		
-		s.xScale(x).yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
-				
-		update_range();
-	}
-	
-	SpecContainer.changeRegion = function (_) {
-		if( focus ){
-			focus.on('_regionchange')(_);
-		}
-	};
-	SpecContainer.addSpec = function(spec_data, crosshair){
-		if (!arguments.length) {
-			throw new Error("appendSlide: No data provided.");
-		} 
-		
-		if(typeof crosshair === 'undefined'){
-			crosshair = true;
-		}
-		
-		// TODO: s_id is only present in 'connected' mode.
-		var s_id = null;
-		var spec_label = 'spec'+specs.length;
-		console.log(spec_data['label']);
-
-		if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
-		if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
-		spec_data = spec_data["data"];
-		
-		// Find the spectrum with the same s_id.
-		// If it is present, overwrite it.
-		// Otherwise, create a new spectrum.
-		var s = specs.filter(function (e) {
-			return e.s_id() === s_id;
-		}	);
-		
-		if ( s.length === 0 ){
-		 	s = require('./line')()
-				.datum(spec_data)
-				.crosshair(crosshair)
-				.s_id(s_id)
-				.label(spec_label);
-			
-			specs.push(s);
-		}else{
-			s = s[0];
-			s.datum(spec_data);//TODO: setData!!
-		}
-		
-		render_spec(s);
-		return s;
-	};
-	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
-		if(!focus){return;}
-		focus.select(".peaks").node().addpeaks(data.subset(idx));			
-		focus.select(".peaks").on("_regionchange")({xdomain:true});
-		focus.select(".peaks").on("_redraw")({x:true});			
-	};
-	SpecContainer.nd = function(){
-		return 1;
-	};
-	SpecContainer.spectra = function () {
-		return specs;
-	};
-	SpecContainer.peakPicker = function () {
-		return peak_picker;
-	};
-	SpecContainer.mainBrush = function () {
-		return main_brush;
-	};
-	SpecContainer.range = function(){
-		return range;
-  };
-  SpecContainer.datum = function(_){
-    if (!arguments.length) {return data;}
-    data = _;
-		
-		//TODO: Clear all spectra first.
-		SpecContainer.addSpec(_);
-    return SpecContainer;
-  };
-	
-	
-	return SpecContainer;
-};
-},{"../elem":14,"./line":7,"./main-brush":8,"./peak-picker":11}],10:[function(require,module,exports){
-module.exports = function () {
 	var utils = require('../utils');
 	var core = require('../elem');
 	var source = core.ResponsiveElem('path');
@@ -2294,7 +2008,7 @@ module.exports = function () {
 	return PathElem;
 };
 
-},{"../elem":14,"../utils":26}],11:[function(require,module,exports){
+},{"../elem":14,"../utils":26}],10:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -2512,7 +2226,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":14,"d3-context-menu":1}],12:[function(require,module,exports){
+},{"../elem":14,"d3-context-menu":1}],11:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -2614,7 +2328,261 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":14}],13:[function(require,module,exports){
+},{"../elem":14}],12:[function(require,module,exports){
+
+module.exports = function () {
+	var core = require('../elem');
+	var source = core.SVGElem().class('main-focus');
+	core.inherit(SpecContainer, source);
+	
+	
+	var focus, x, y, dispatcher, data, range = {};
+	var specs = core.ElemArray();
+	var peak_picker = require('./peak-picker')();
+	var main_brush = require('./main-brush')();
+
+	var zoomer = d3.behavior.zoom()
+		.on("zoom", function () {
+			/* * When a y brush is applied, the scaled region should go both up and down.*/
+			var new_range = range.y[1]/zoomer.scale() - range.y[0];
+			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2;
+		
+			var new_region = [];
+			if(y.domain()[0] === range.y[0]) { new_region[0] = range.y[0]; }
+			else{new_region[0] = Math.max(y.domain()[0]-addition, range.y[0]);}
+			new_region[1] = new_region[0] + new_range;
+			
+			focus.on("_regionchange")(
+				{zoom:true,	ydomain:new_region}
+			);
+		});
+
+	
+	function SpecContainer(slide) {
+		x = SpecContainer.xScale();
+		y = SpecContainer.yScale();
+		dispatcher = SpecContainer.dispatcher();
+		
+		focus = source(slide)
+	    .attr("pointer-events", "all")
+			.attr('clip-path', "url(#" + slide.clipId() + ")")
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
+			.call(zoomer)
+			.on("dblclick.zoom", null)
+			.on("mousedown.zoom", null);
+		
+		
+		// overlay rectangle for mouse events to be dispatched.
+		focus.append("rect")
+			.attr("width", SpecContainer.width())
+			.attr("height", SpecContainer.height())
+			.style("fill", "none");
+		
+		/*********** Handling Events **************/
+		focus
+			.on("_redraw", function(e){
+				dispatcher.redraw(e);
+			})
+			.on("_regionchange", function(e){
+				// If the change is in X
+				if(e.xdomain){
+					x.domain(e.xdomain);	
+				}				
+				dispatcher.regionchange({xdomain:e.xdomain});
+							
+				if(e.ydomain){
+					y.domain(e.ydomain);
+					if(!e.zoom){//If y domain is changed by brush, adjust zoom scale
+						zoomer.scale((range.y[0]-range.y[1])/(y.domain()[0]-y.domain()[1]));						
+					} 
+				}else{
+					//modify range.y  and reset the zoom scale
+					var y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
+						y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+					var y_limits = (y1-y0);
+					y0 = y0 - (0.05 * y_limits);
+					y1 = y1 + (0.05 * y_limits);
+					
+					
+					range.y = [y0,y1];
+					y.domain(range.y);
+					dispatcher.rangechange({y:range.y});
+					zoomer.scale(1);
+				}
+			
+				dispatcher.regionchange({ydomain:y.domain()});
+				focus.on("_redraw")({x:e.xdomain, y:true});
+			})
+			.on("_rangechange", function(e){
+				if(e.x) { range.x = e.x; }	
+				if(e.y) { range.y = e.y; }
+			
+				dispatcher.rangechange(e);
+				
+				if(!e.norender){
+					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
+				} 
+			})
+			.on("mouseenter", dispatcher.mouseenter)
+			.on("mouseleave", dispatcher.mouseleave)
+			.on("mousemove", function(){
+				var new_e = d3.event;
+				new_e.xcoor = d3.mouse(this)[0];
+				new_e.ycoor = d3.mouse(this)[1];
+			
+				dispatcher.mousemove(new_e);
+			})
+			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
+			  var new_click_event = new Event('mousedown');
+			  new_click_event.pageX = d3.event.pageX;
+			  new_click_event.clientX = d3.event.clientX;
+			  new_click_event.pageY = d3.event.pageY;
+			  new_click_event.clientY = d3.event.clientY;
+			  focus.select(".main-brush").node()
+					.dispatchEvent(new_click_event);
+			})
+			.on("click", function(){
+				var new_e = d3.event;
+				new_e.xcoor = d3.mouse(this)[0];
+				new_e.ycoor = d3.mouse(this)[1];
+		
+				dispatcher.click(new_e);
+			})
+			.on("dblclick", dispatcher.regionfull);
+
+		dispatcher.on("regionfull",function () {
+			focus.on("_regionchange")({xdomain:range.x});		
+		});
+			
+		//brushes
+		main_brush.xScale(x)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+	
+
+		//spectral lines
+		for (var i = 0; i < specs.length; i++) {
+			render_spec(specs[i]);
+		}
+	
+		//peak picker	
+		peak_picker.xScale(x)
+			.yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+		
+	}
+	function update_range() {
+		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+
+		// Add 5% margin to top and bottom (easier visualization).
+		var y_limits = (y1-y0);
+		y0 = y0 - (0.05 * y_limits);
+		y1 = y1 + (0.05 * y_limits);
+
+		var xdomain = x.domain();
+
+		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
+
+		if(specs.length > 1){
+			focus.on("_regionchange")({xdomain:xdomain});	
+		}
+	}
+	
+	function render_spec(s) {
+		if(!focus){return;}
+		
+		s.xScale(x).yScale(y)
+			.dispatcher(dispatcher)
+			(SpecContainer);
+				
+		update_range();
+	}
+	
+	SpecContainer.changeRegion = function (_) {
+		if( focus ){
+			focus.on('_regionchange')(_);
+		}
+	};
+	SpecContainer.addSpec = function(spec_data, crosshair){
+		if (!arguments.length) {
+			throw new Error("appendSlide: No data provided.");
+		} 
+		
+		if(typeof crosshair === 'undefined'){
+			crosshair = true;
+		}
+		
+		// TODO: s_id is only present in 'connected' mode.
+		var s_id = null;
+		var spec_label = 'spec'+specs.length;
+		console.log(spec_data['label']);
+
+		if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
+		if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
+		spec_data = spec_data["data"];
+		
+		// Find the spectrum with the same s_id.
+		// If it is present, overwrite it.
+		// Otherwise, create a new spectrum.
+		var s = specs.filter(function (e) {
+			return e.s_id() === s_id;
+		}	);
+		
+		if ( s.length === 0 ){
+		 	s = require('./line')()
+				.datum(spec_data)
+				.crosshair(crosshair)
+				.s_id(s_id)
+				.label(spec_label);
+			
+			specs.push(s);
+		}else{
+			s = s[0];
+			s.datum(spec_data);//TODO: setData!!
+		}
+		
+		render_spec(s);
+		return s;
+	};
+	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
+		if(!focus){return;}
+		focus.select(".peaks").node().addpeaks(data.subset(idx));			
+		focus.select(".peaks").on("_regionchange")({xdomain:true});
+		focus.select(".peaks").on("_redraw")({x:true});			
+	};
+	SpecContainer.nd = function(){
+		return 1;
+	};
+	SpecContainer.spectra = function () {
+		return specs;
+	};
+	SpecContainer.peakPicker = function () {
+		return peak_picker;
+	};
+	SpecContainer.mainBrush = function () {
+		return main_brush;
+	};
+	SpecContainer.range = function(){
+		return range;
+  };
+  SpecContainer.datum = function(_){
+    if (!arguments.length) {return data;}
+    data = _;
+		
+		//TODO: Clear all spectra first.
+		SpecContainer.addSpec(_);
+    return SpecContainer;
+  };
+	
+	
+	return SpecContainer;
+};
+},{"../elem":14,"./line":7,"./main-brush":8,"./peak-picker":10}],13:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -4357,4 +4325,4 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":3}]},{},[4,23,22,14,15,26,25,24,5,8,12,13,11,10]);
+},{"simplify":3}]},{},[4,23,22,14,15,26,25,24,5,8,11,13,10,9]);
