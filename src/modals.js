@@ -1,11 +1,13 @@
 require('nanoModal');
+console.log(require('nanoModal')());
+var nanoModal = window.nanoModal;
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
 	defaultHide();
 };
 
 function app_modals(app){
-	var modals = {}
+	var modals = {};
 	
 	modals.proto = function (title, content, ok_fun, cancel_fun) {	
 		var nano = nanoModal(
@@ -32,8 +34,8 @@ function app_modals(app){
 			return;
 		}
 		//TODO: define spec-app;
-		app.append(function () {return nano.overlay.el});
-		app.append(function () {return nano.modal.el});
+		app.append(function () {return nano.overlay.el;});
+		app.append(function () {return nano.modal.el;});
 	
 		var el = d3.select(nano.modal.el);
 	
@@ -61,15 +63,15 @@ function app_modals(app){
 			var drag = d3.behavior.drag()
 				.on("drag", function () {
 			    el.style("top", d3.event.sourceEvent.pageY+"px")
-			      .style("left", d3.event.sourceEvent.pageX+"px")				
+						.style("left", d3.event.sourceEvent.pageX+"px");
 				});
-			d3.select(nano.modal.el).select(".title").call(drag)
+			d3.select(nano.modal.el).select(".title").call(drag);
 			d3.select(nano.modal.el).select(".cancelBtn").node().focus();
 		
 			//{display: flex,flex-direction: column}
 		});
 		return nano;
-	}
+	};
 
 	modals.error = function (title, message) {
 		var nano = modals.proto('Error: ' + title, message);
@@ -81,9 +83,9 @@ function app_modals(app){
 
 	modals.range = function (text, _range, callback, _curr_val){
 		var range;
-		if(_range[0]>_range[1])
+		if(_range[0]>_range[1]){
 			range = [_range[1], _range[0]];
-		else{
+		}else{
 			range = _range;
 		}
 		range = [d3.round(range[0],3), d3.round(range[1],3)];
@@ -92,7 +94,7 @@ function app_modals(app){
 			_curr_val = range;
 		}else{
 			if(_curr_val[0]>_curr_val[1])
-				_curr_val = [_curr_val[1], _curr_val[0]];
+				{_curr_val = [_curr_val[1], _curr_val[0]];}
 		
 			_curr_val = [d3.round(_curr_val[0],3), d3.round(_curr_val[1],3)];
 		}
@@ -108,14 +110,14 @@ function app_modals(app){
 	      var input_range = d3.select(modal.modal.el)
 					.selectAll("input")[0].map(function(e){ return +e.value; });
 			
-				if (input_range[0] < range[0] || input_range[0] > range[1]
-					|| input_range[1] < range[0] || input_range[1] > range[1]
-					|| input_range[0] > input_range[1])
+				if (input_range[0] < range[0] || input_range[0] > range[1] ||
+					input_range[1] < range[0] || input_range[1] > range[1] ||
+					input_range[0] > input_range[1]) {
 					nanoModal("Invalid input."+input_range).show();
-				else{
-					if(_range[0]>_range[1])
+				}else{
+					if(_range[0]>_range[1]){
 						callback(input_range.reverse());
-					else{
+					}else{
 						callback(input_range);
 					}
 				}
@@ -165,7 +167,7 @@ function app_modals(app){
 			function(modal) {
 				modal.hide();
 	    },
-			function (modal) {
+			function () {
 				callback(0);
 			});
 	
@@ -189,7 +191,7 @@ function app_modals(app){
 	modals.methods = function (fun ,args, title, specSelector, has_preview) {
 		var el;
 		var preview = true;
-		var plugins = pro.plugins(app.node());
+		
 	
 		var ok_fun = function (modal) {
 			preview = false;
@@ -208,26 +210,26 @@ function app_modals(app){
 	      .filter(function () {
 	        return this.id !== '';
 	      })
-	      .each(function (e) {
+	      .each(function () {
 	        form_data[this.id] = this.getValue();
 	      });
 		
-			if(timer)
-				clearTimeout(timer);		
+			if(timer) { clearTimeout(timer); }
+				
 		
 			if(preview === false || 
 				d3.event.target === el ||
 				form_data['prev_btn'] === true){
-				plugins.request(fun, form_data, form_data['s_id'], preview);
+				app.pluginRequest(fun, form_data, form_data['s_id'], preview);
 			}else	if(form_data['prev_auto'] === true){
 				timer = setTimeout(function () {
-					plugins.request(fun, form_data, form_data['s_id'], true);
+					app.pluginRequest(fun, form_data, form_data['s_id'], true);
 				}, 300);
 			}
 		});
 	
 		var inp = require('./input_elem');
-		el.append(inp.spectrumSelector());
+		el.append(inp.spectrumSelector(app));
 		el.append(inp.div(args, app));
 		el.append(inp.preview(true));
 		return nano.show;

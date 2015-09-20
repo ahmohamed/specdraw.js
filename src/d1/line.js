@@ -2,14 +2,15 @@ function calcReductionFactor(spec_container) {
 	var seg_len = [];
 	var specs = spec_container.spectra();
 	for (var i = 0; i < specs.length; i++) {
-		var segs = specs[i].segments();
-		for (var j = 0; j < segs.length; j++) {
-			var len = Math.abs(segs[j].segment()[0] - segs[j].segment()[1]);
-			seg_len.push(len);
-		}
+		seg_len = seg_len.concat(
+			specs[i].segments(true).map(
+			function (s) {
+				return s.integValue();
+			})
+		);
 	}
 	
-	var red = d3.max( seg_len ) / 0.5;
+	var red = d3.max( seg_len ) / (spec_container.yScale().domain()[1]*0.5);
 	
 	spec_container.spectra().forEach(function (s) {
 		s.segments(true).forEach(function (seg) {
@@ -44,6 +45,7 @@ module.exports = function () {
 	var i_to_pixel; 										//a scale to convert data point to pixel position
 	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
 	
+	var selected = true;
 	var data_slice, scale_factor = 1;
 	var peaks = [], segments = core.ElemArray();
 	
@@ -55,14 +57,18 @@ module.exports = function () {
 		i_to_pixel = x.copy();
 		
 		//var width = spec_container.width();
-		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
+		svg_elem = source(spec_container)
+			.classed('selected', selected)
+			.classed('clr'+line_idx, true);
+		
+		
 				
 		path_elem.datum(data)
 			.xScale(x)
 			.yScale(y)
-			.simplify(2)
-			.class("line clr"+ line_idx)
+			.simplify(1)
+			.class("line")
 			(svg_elem);
 		
 		if(typeof _crosshair === 'undefined'){
@@ -85,7 +91,8 @@ module.exports = function () {
 					path_elem.redraw().sel()
 						.attr("transform", 'scale(1,1)translate(0,0)');
 					
-					//svg_elem.selectAll(".segment").attr("d", path);
+					//integration
+					calcReductionFactor(spec_container);
 				}else{ //change is in the Y axis only.
 					var orignial_yscale = y.copy().domain(spec_container.range().y);
 					
@@ -96,8 +103,6 @@ module.exports = function () {
 					  Math.abs((spec_container.range().y[0]-spec_container.range().y[1])/(y.domain()[0]-y.domain()[1]))];
 				
 					path_elem.sel()
-						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
-					svg_elem.selectAll(".segment")
 						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 				}
 			})
@@ -176,17 +181,17 @@ module.exports = function () {
 		});
 	};
 	SpecLine.segments = function (visible) {
-		return segments;
-		/*var idx = segments;
+		var idx = segments;
 		if(visible){ //get only peaks in the visible range (within dataSlice)
-			idx = idx.filter(function (e) {
+			idx = idx.filter(function (s) {
+				var e = s.segment();
 				return e[0] > data_slice[0] && 
 					e[0] < data_slice[1] &&
 					e[1] > data_slice[0] && 
 					e[1] < data_slice[1];
 			});
 		}
-		return idx;*/
+		return idx;
 	};
 	SpecLine.addPeaks = function (idx) {
 		peaks = peaks.concat(idx);
@@ -251,14 +256,14 @@ module.exports = function () {
 		range.x = [data[0].x, data[data.length-1].x];
 		range.y = d3.extent(data.map(function(d) { return d.y; }));
 		
-		//TODO: Update peaks, integrate, segments to match new data.
-		if(_crosshair){
-			_crosshair.datum(data);
-		}
 		ppm_to_i = d3.scale.linear()
 			.range([0, data.length])
 			.domain([ data[0].x, data[data.length-1].x ]);
 		
+		//TODO: Update peaks, integrate, segments to match new data.
+		if(dispatcher)
+			{dispatcher.specDataChange(SpecLine);}
+
 		render_data();
     return SpecLine;
   };
@@ -283,7 +288,11 @@ module.exports = function () {
     s_id = _;
     return SpecLine;
   };	
-  
+  SpecLine.selected = function(_){
+    if (!arguments.length) {return selected;}
+    selected = _;
+    return SpecLine;
+  };
 	SpecLine.lineIdx = function () {
 		return line_idx;
 	};

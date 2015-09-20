@@ -2,39 +2,17 @@ module.exports = function(grunt) {
     "use strict";
     grunt.initConfig({
         pkg: grunt.file.readJSON("package.json"),
-        concat: {
-            dist: {
-                src: [
-									'src/start.js','src/main_app.js','src/pro/read_menu.js','src/pro/output.js','src/pro/plugins.js','src/end.js'
-								],
-                dest: "<%= pkg.name %>.js"
-            }
-        },
         browserify: {
             dist: {
                 files: {
-                    "<%= pkg.name %>.js": ["<%= pkg.name %>.js",
-										'src/pro/ajax.js',
-										'src/modals.js',
-										'src/elem.js',
-										'src/menu.js',
-										'src/events.js',
-										'src/utils.js',
-										'src/pro/worker.js',
-										'src/pro/process_data.js',
-										'src/d1/crosshair.js',
-										'src/d1/main-brush.js',
-										'src/d1/scale-brush.js',
-										'src/d1/threshold.js',
-										'src/d1/peak-picker.js',
-										'src/d1/path-simplify.js',
-										'src/d2/crosshair_2d.js',
-										'src/d2/spec-container-2d.js',
-										'src/d2/spec2d.js',
-										'src/slide.js'
-										]
+                    "<%= pkg.name %>.js": ["src/index.js"]
                 }
-            }
+            },
+						options: {
+								browserifyOptions: {
+							      standalone: '<%= pkg.name %>'
+								}
+						}
         },
         uglify: {
             options: {
@@ -46,12 +24,18 @@ module.exports = function(grunt) {
                 }
             }
         },
+				jshint: {
+				    all: ['Gruntfile.js', 'src/**/*.js'],
+						options: {
+						    reporter: require('jshint-stylish')
+						}
+			  },
     });
 
-    grunt.loadNpmTasks("grunt-contrib-concat");
     grunt.loadNpmTasks("grunt-contrib-uglify");
 		grunt.loadNpmTasks("grunt-browserify");
+		grunt.loadNpmTasks('grunt-contrib-jshint');
 
-    grunt.registerTask("dev", ["concat", "browserify"]);
+    grunt.registerTask("dev", ["browserify"]);
     grunt.registerTask("default", ["dev", "uglify"]);
 };

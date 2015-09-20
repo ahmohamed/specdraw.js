@@ -81,12 +81,10 @@ module.exports = function (){
 		var modals = IntegElem.parentApp().modals();
 		
 		text_g.on("mouseenter", function () {
-			text_rect.classed("highlight", true);
-			path_elem.classed("highlight", true);
+			svg_elem.classed("highlight", true);
 		})
 		.on("mouseleave", function () {
-			text_rect.classed("highlight", false);
-			path_elem.classed("highlight", false);
+			svg_elem.classed("highlight", false);
 		})
 		.on("click", d3.contextMenu(
 		  [{
@@ -121,6 +119,17 @@ module.exports = function (){
 		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("redraw.integ."+dispatch_idx, svg_elem.on("_redraw"));
 		dispatcher.on("integ_refactor."+dispatch_idx, svg_elem.on("_refactor"));
+		dispatcher.on("specDataChange.integ."+dispatch_idx, function (s) {
+			if(s === IntegElem.parent()){
+				if(integ_factor === integ_val){ // if the integral is equal to 1.00, keep it.
+					IntegElem.updateData();
+					integ_factor = integ_val;
+					dispatcher.integ_refactor(integ_factor);
+				}else{
+					IntegElem.updateData();
+				}				
+			}
+		});
 	}
 	
 		
@@ -148,7 +157,12 @@ module.exports = function (){
 		
 		return IntegElem;
 	};
-	
+	IntegElem.integValue = function (_) {
+		if (!arguments.length) {return integ_val;}
+		integ_val = _;
+		
+		return IntegElem;
+	};
 	IntegElem.reductionFactor = function (_) {
 		if (!arguments.length) {return reduction_factor;}
 		reduction_factor = _;

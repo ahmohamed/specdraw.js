@@ -10,6 +10,7 @@ module.exports = function(){
 	// Event dispatcher to group all listeners in one place.
 	var dispatcher = d3.dispatch(
 		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+		'specDataChange',
 		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
 		"keyboard",																//Keyboard
 		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
@@ -40,7 +41,6 @@ module.exports = function(){
 		var width = svg_width - margin.left - margin.right,
         height = svg_height - margin.top - margin.bottom;
 		
-		console.log('slide w,h ', svg_width, svg_height);
     var x = d3.scale.linear().range([0, width]),
     y = d3.scale.linear().range([height, 0]);
   
@@ -58,7 +58,6 @@ module.exports = function(){
 		var two_d = (data["nd"] && data["nd"] === 2);
 		dispatcher.idx = 0;
 		
-		console.log(app);
 		svg_selection = app.append('svg')
 			.classed('spec-slide', true)
 			.attr({
@@ -95,6 +94,10 @@ module.exports = function(){
 		*/
 	
 		if(two_d){
+			var slope = 1;
+			if (require('bowser').safari) {
+			  slope *= 2;
+			}
 			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
@@ -105,12 +108,12 @@ module.exports = function(){
 	
 			fe_component_transfer.append("feFuncR")
 				.attr("type","linear")
-				.attr("slope","-1")
+				.attr("slope",-slope)
 				.attr("intercept","0.5");
 				
 			fe_component_transfer.append("feFuncB")
 				.attr("type","linear")
-				.attr("slope","1")
+				.attr("slope",slope)
 				.attr("intercept","-0.5");
 	
 			fe_component_transfer = svg_filter.append("feComponentTransfer")

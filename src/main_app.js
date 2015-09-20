@@ -1,5 +1,5 @@
-spec.app = function(){
-	var core = require('./src/elem');
+module.exports = function(){
+	var core = require('./elem');
 	var source = core.Elem().class('spec-app');
 	core.inherit(App, source);
 	
@@ -37,11 +37,11 @@ spec.app = function(){
 		
 		svg_width -= 50; //deduct 50px for column menu.
 		
-		modals = require('./src/modals')(App);
-		require('./src/menu/menu')(App);
+		modals = require('./modals')(App);
+		require('./menu/menu')(App);
 
 		/**** Keyboard events and logger ****/
-		require('./src/events').registerKeyboard(App);
+		require('./events').registerKeyboard(App);
 		
 		selection.node().appendToCurrentSlide = function (data) {
 			var current_slide = selection.select('.spec-slide.active').node();
@@ -91,12 +91,13 @@ spec.app = function(){
 	App.modals = function () {
 		return modals;
 	};
+	App.pluginRequest = require('./pro/plugins')(App);
 	App.appendSlide = function(data){
 		if (!arguments.length){
 			throw new Error("appendSlide: No data provided.");
 		} 
 		
-		var s = require('./src/slide')().datum(data);
+		var s = require('./slide')().datum(data);
 		slides.push(s);
 		render_slide(s);
 		return App;

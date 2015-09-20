@@ -1,8 +1,9 @@
 var utils = require('../utils');
+var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
-function create_menu (app){	
-	function toggle(e){
-	  if(d3.event.target !== this) return;
+module.exports = function (app){	
+	function toggle(){
+	  if(d3.event.target !== this) {return;}
   
 	  var button = d3.select(this).toggleClass('opened');
 	  button.select('.tooltip')
@@ -12,9 +13,10 @@ function create_menu (app){
 	var main_menu = require('./main_menu')(app),
 		spectra = require('./spectra')(app),
 		slides = require('./slides')(app),
-		menu_data = require('./menu_data')(app);
+		menu_data = require('./menu_data')(app),
+		serverside_menu = require('./serverside-menu');
 	
-	var column_menu_buttons = [
+		var column_menu_buttons = [
 	  ['open-menu', 'Menu'],
 	  ['open-spec-legend', 'Spectra'],
 	  ['open-slides', 'Slides'],
@@ -30,8 +32,8 @@ function create_menu (app){
 	elem.selectAll('div')
 	  .data(column_menu_buttons).enter()
 	  .append('div')
-	  .attr('class', function(d){return d[0]})
-	  .attr('title', function(d){return d[1]})
+	  .attr('class', function(d){return d[0];})
+	  .attr('title', function(d){return d[1];})
 	  .call(bootstrap.tooltip().placement('right'))
 	  .on('click', toggle);
 	
@@ -43,7 +45,7 @@ function create_menu (app){
 	
 	// Full screen manipulation
 	elem.select('.open-fullscreen')
-		.on('click', function (e) {
+		.on('click', function () {
 			utils.fullScreen.toggle(app.node());
 			toggle.apply(this);
 		});
@@ -58,7 +60,7 @@ function create_menu (app){
 	});
 	app_dispatcher.on('slideChange.menu', function (s) {
 		//TODO: hide parent menu-item when all children are hidden
-		var two_d_slide = s.nd == 2;
+		var two_d_slide = s.nd === 2;
 		elem.select('.open-menu')
 			.classed('d1', !two_d_slide)
 			.classed('d2', two_d_slide);
@@ -69,8 +71,6 @@ function create_menu (app){
 		elem.select('.open-spec-legend').call( spectra );
 	});
 	
-	pro.read_menu(app, menu_data); //read menu from server.
+	serverside_menu(app, menu_data); //read menu from server.
 	return elem;									
-}
-
-module.exports = create_menu;
+};

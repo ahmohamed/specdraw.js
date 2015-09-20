@@ -131,6 +131,8 @@
   border-width: 3px 13px 3px 0px; /* increase right_b for a bigger triangle */
   border-right-color: #000;
   transform: rotate(-45deg);
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
 }
 
 .tooltip.bottom-right .tooltip-arrow {
@@ -310,22 +312,43 @@ svg {
 	pointer-events: visiblestroke;
 }
 
-.spec-slide .dimmed .spec-line:not(.highlighted) .line{
+.spec-line .line{
+	stroke-opacity:0.2;
+}
+.spec-line.selected .line{
+  stroke-opacity:1;
+}
+
+
+.spec-app .dimmed .spec-line:not(.highlighted) .line{
 	stroke-opacity:0.2;
 }
 .highlighted .line{
   stroke-width: 2;
-}
-.spec-line.selected .line{
-  stroke-width: 3;
+	stroke-opacity:1;
 }
 
 .threshold.line{
 	stroke:black;
 }
 .integration .line {
-  stroke: green;
+  stroke-dasharray: 4 1;
 }
+.integration.highlight .line {
+	stroke-width:2;
+  stroke-dasharray: 0;
+}
+.integration-text rect {
+	stroke-width:0;
+	fill: none;
+}
+.integration.highlight rect {
+  stroke-width:1;
+  fill: #fff;
+  opacity: .7;
+}
+
+
 .segment {
   stroke: green;
   stroke-width: 3;
@@ -333,15 +356,7 @@ svg {
   shape-rendering: optimizeSpeed;
 }
 
-.integration .line.highlight {
-  stroke:red;
-}
 
-.integration-text rect {
-  fill: #fff;
-  stroke: green;
-  opacity: .7;
-}
 
 .crosshair circle {
   fill: none;

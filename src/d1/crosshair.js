@@ -25,6 +25,9 @@ module.exports = function (){
 				dispatcher.on("mousemove"+suff, svg_elem.on("_mousemove"));	
 			}
 		}
+		dispatcher.on("specDataChange"+suff, function (s) {
+			if(s === _main.parent()){_main.datum(s.datum());}
+		});
 		dispatcher.on("crosshairEnable"+suff, _main.enable);
 	}
 	

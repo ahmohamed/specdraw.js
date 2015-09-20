@@ -6,8 +6,8 @@ function add_li(sel) {
 		.append("li")
 		.text(function(d){return d.label;})
 		.classed('menu-item', true)
-		.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0 })
-		.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0 });
+		.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0; })
+		.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0; });
   
 	return sel;		
 }
@@ -18,7 +18,7 @@ function recursive_add(sel){
 		//.attr('tabindex', 1)
 		.append("div").append("ul")
 		.selectAll("li")
-			.data(function(d){return d.children})
+			.data(function(d){return d.children;})
 			.call(add_li);
 	
 	if(new_sel.filter(function(d){return d.children;}).size() > 0){
@@ -26,7 +26,7 @@ function recursive_add(sel){
 	}
 }
 
-function main_menu (app) {
+function main_menu () {
 	var menu_data;
 	function _main(div) {
 		div.select('.menu-container').remove();
@@ -56,10 +56,10 @@ function main_menu (app) {
 
 	}
 	_main.data = function (_) {
-		if (!arguments.length) return menu_data;
+		if (!arguments.length) {return menu_data;}
 		menu_data = _;
 		return _main;
-	}
+	};
 	return _main;
 }
 

@@ -201,7 +201,7 @@ module.exports = function () {
 		var s = specs.filter(function (e) {
 			return e.s_id() === s_id;
 		}	);
-		
+		console.log('addspec', s, s_id);
 		if ( s.length === 0 ){
 		 	s = require('./line')()
 				.datum(spec_data)
@@ -210,12 +210,13 @@ module.exports = function () {
 				.label(spec_label);
 			
 			specs.push(s);
+			render_spec(s);
 		}else{
 			s = s[0];
 			s.datum(spec_data);//TODO: setData!!
-		}
+			update_range();
+		}		
 		
-		render_spec(s);
 		return s;
 	};
 	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
@@ -227,11 +228,13 @@ module.exports = function () {
 	SpecContainer.nd = function(){
 		return 1;
 	};
-	SpecContainer.spectra = function () {
-		return specs;
+	SpecContainer.spectra = function (selected) {
+		if (!selected){return specs;}
+		
+		return  specs.filter( function (s) { return s.selected(); } );
 	};
 	SpecContainer.highlightSpec = function (_) {
-		s_idx = specs.indexOf(_);
+		var s_idx = specs.indexOf(_);
 		if(s_idx < 0){ //no spectrum to highlight
 			specs.sel().classed('dimmed', false)
 				.classed('highlighted', false);

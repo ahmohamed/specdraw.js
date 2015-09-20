@@ -1,32 +1,26 @@
-pro.read_menu = function (app, menu_data) {
-	var plugins = pro.plugins(app.node());
-	//var plugins = require('./pro/plugins');
-	
-	var find_menu_item = function (menu, item) {
-		console.log(menu, item)
+module.exports = function (app, menu_data) {
+	function find_menu_item (menu, item) {
 		for (var i = menu.length - 1; i >= 0; i--) {
-			if(menu[i].label == item){
-				if(!menu[i].children) menu[i].children = [];
+			if(menu[i].label === item){
+				if(!menu[i].children) {menu[i].children = [];}
 				return menu[i];
 			}
 		}
 		menu.push({label:item, children:[]});
 		return menu[menu.length-1];
-	};
-	var plugin_functor = function (c) {
+	}
+	function plugin_functor (c) {
 		if(c["args"]){
 			return function() {
 				app.modals().methods(c["fun"], c["args"], c["title"])();
 			};
 		}else{
-			return function () { plugins.request (c["fun"]) };
+			return function () { app.pluginRequest (c["fun"]); };
 		}
-	};
+	}
 	
-	//var ajax = pro.ajax();
-	var ajax = require('./src/pro/ajax');
+	var ajax = require('../pro/ajax');
 	ajax.getJSON('/nmr/test', function (response) {
-		console.log(menu_data)
 		var c = response;
 		for (var i = 0; i < response.length; i++) {
 			var path = find_menu_item(menu_data, c[i]['menu_path'][0]);
@@ -39,7 +33,6 @@ pro.read_menu = function (app, menu_data) {
 			path.nd = c[i]['nd'];			
 	
 		}		
-		console.log(menu_data)
 		app.dispatcher().menuUpdate();
 
 	});

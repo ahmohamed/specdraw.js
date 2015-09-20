@@ -143,18 +143,20 @@ module.exports = function () {
 			s = require('./spec2d')()
 				.datum(spec_data["data"])
 				.s_id(spec_data["s_id"])
+				.label(spec_data["label"])
 				.crosshair(crosshair)
 				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
 				
 			specs.push(s);
 		}else{
 			s = s[0];
-			s.datum(spec_data)
+			s.datum(spec_data["data"])
 				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
 		}
 		render_spec(s);
 		return s;
 	};
+	SpecContainer.hightlightSpec = function(){};
 	SpecContainer.changeRegion = function (_) {
 		if( focus ){
 			focus.on('_regionchange')(_);

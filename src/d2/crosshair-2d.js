@@ -44,17 +44,12 @@ module.exports = function(){
 		var crosslines = svg_elem.append("g")
 			.attr("class", "crosshair line");
 		
-		crosslines.append("path")
-			.attr("class", "crosshair line x")
-			.attr('d', d3.svg.line()(
-				[[-x.range()[1], 0], [x.range()[1], 0]]
-			));
 		
-		crosslines.append("path")
-			.attr("class", "crosshair line y")
-			.attr('d', d3.svg.line()(
-				[[0, -y.range()[0]], [0, y.range()[0]]]
-			));
+		var xline = crosslines.append("path")
+			.attr("class", "crosshair line x");
+		
+		var yline = crosslines.append("path")
+			.attr("class", "crosshair line y");
 		
 		var cross_circle = svg_elem.append("circle")
 			.attr("r", 4.5);
@@ -69,10 +64,17 @@ module.exports = function(){
 				var data_point = [x.invert(e.xcoor), y.invert(e.ycoor)];
 				
 				svg_elem.datum(data_point);
-				svg_elem.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
+				cross_circle.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
 				tip.text(
 					d3.round(data_point[0],2) + ', ' + d3.round(data_point[1],2)
 				).show(cross_circle.node());
+				
+				xline.attr('d', d3.svg.line()
+					( [[x.range()[0], e.ycoor], [x.range()[1], e.ycoor]] )
+				);
+				yline.attr('d', d3.svg.line()
+					( [[e.xcoor, y.range()[0]], [e.xcoor, y.range()[1]]] )
+				);
 			})
 			.on('remove', function () {
 				_main.enabled(false);

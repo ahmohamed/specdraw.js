@@ -22,7 +22,6 @@
     "devel":true,
     
     "globals": {
-        "spec": true,
         "d3": false
     }
 

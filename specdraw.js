@@ -1,4 +1,482 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.specdraw = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(exports) {
+
+  var bootstrap = (typeof exports.bootstrap === "object") ?
+    exports.bootstrap :
+    (exports.bootstrap = {});
+
+  bootstrap.tooltip = function() {
+
+    var tooltip = function(selection) {
+        selection.each(setup);
+      },
+      animation = d3.functor(false),
+      html = d3.functor(false),
+      title = function() {
+        var title = this.getAttribute("data-original-title");
+        if (title) {
+          return title;
+        } else {
+          title = this.getAttribute("title");
+          this.removeAttribute("title");
+          this.setAttribute("data-original-title", title);
+        }
+        return title;
+      },
+      over = "mouseenter.tooltip",
+      out = "mouseleave.tooltip",
+      placements = "top left bottom right".split(" "),
+      placement = d3.functor("top");
+
+    tooltip.title = function(_) {
+      if (arguments.length) {
+        title = d3.functor(_);
+        return tooltip;
+      } else {
+        return title;
+      }
+    };
+
+    tooltip.html = function(_) {
+      if (arguments.length) {
+        html = d3.functor(_);
+        return tooltip;
+      } else {
+        return html;
+      }
+    };
+
+    tooltip.placement = function(_) {
+      if (arguments.length) {
+        placement = d3.functor(_);
+        return tooltip;
+      } else {
+        return placement;
+      }
+    };
+
+    tooltip.show = function(selection) {
+      selection.each(show);
+    };
+
+    tooltip.hide = function(selection) {
+      selection.each(hide);
+    };
+
+    tooltip.toggle = function(selection) {
+      selection.each(toggle);
+    };
+
+    tooltip.destroy = function(selection) {
+      selection
+        .on(over, null)
+        .on(out, null)
+        .attr("title", function() {
+          return this.getAttribute("data-original-title") || this.getAttribute("title");
+        })
+        .attr("data-original-title", null)
+        .select(".tooltip")
+        .remove();
+    };
+
+    function setup() {
+      var root = d3.select(this),
+          animate = animation.apply(this, arguments),
+          tip = root.append("div")
+            .attr("class", "tooltip");
+
+      if (animate) {
+        tip.classed("fade", true);
+      }
+
+      // TODO "inside" checks?
+
+      tip.append("div")
+        .attr("class", "tooltip-arrow");
+      tip.append("div")
+        .attr("class", "tooltip-inner");
+
+      var place = placement.apply(this, arguments);
+      tip.classed(place, true);
+
+      root.on(over, show);
+      root.on(out, hide);
+    }
+
+    function show() {
+      var root = d3.select(this),
+          content = title.apply(this, arguments),
+          tip = root.select(".tooltip")
+            .classed("in", true),
+          markup = html.apply(this, arguments),
+          innercontent = tip.select(".tooltip-inner")[markup ? "html" : "text"](content),
+          place = placement.apply(this, arguments),
+          pos = root.style("position"),
+          outer = getPosition(root.node()),
+          inner = getPosition(tip.node()),
+          style;
+
+      if (pos === "absolute" || pos === "relative") {
+          outer.x = outer.y = 0;
+      }
+
+      var style;
+      switch (place) {
+        case "top":
+          style = {x: outer.x + (outer.w - inner.w) / 2, y: outer.y - inner.h};
+          break;
+        case "right":
+          style = {x: outer.x + outer.w, y: outer.y + (outer.h - inner.h) / 2};
+          break;
+        case "left":
+          style = {x: outer.x - inner.w, y: outer.y + (outer.h - inner.h) / 2};
+          break;
+        case "bottom":
+          style = {x: Math.max(0, outer.x + (outer.w - inner.w) / 2), y: outer.y + outer.h};
+          break;
+      }
+
+      tip.style(style ?
+        {left: ~~style.x + "px", top: ~~style.y + "px"} :
+        {left: null, top: null});
+
+      this.tooltipVisible = true;
+    }
+
+    function hide() {
+      d3.select(this).select(".tooltip")
+        .classed("in", false);
+
+      this.tooltipVisible = false;
+    }
+
+    function toggle() {
+      if (this.tooltipVisible) {
+        hide.apply(this, arguments);
+      } else {
+        show.apply(this, arguments);
+      }
+    }
+
+    return tooltip;
+  };
+
+  function getPosition(node) {
+    var mode = d3.select(node).style('position');
+    if (mode === 'absolute' || mode === 'static') {
+      return {
+        x: node.offsetLeft,
+        y: node.offsetTop,
+        w: node.offsetWidth,
+        h: node.offsetHeight
+      };
+    } else {
+      return {
+        x: 0,
+        y: 0,
+        w: node.offsetWidth,
+        h: node.offsetHeight
+      };
+    }
+  }
+
+})(this);
+
+
+},{}],2:[function(require,module,exports){
+/*!
+  * Bowser - a browser detector
+  * https://github.com/ded/bowser
+  * MIT License | (c) Dustin Diaz 2015
+  */
+
+!function (name, definition) {
+  if (typeof module != 'undefined' && module.exports) module.exports = definition()
+  else if (typeof define == 'function' && define.amd) define(definition)
+  else this[name] = definition()
+}('bowser', function () {
+  /**
+    * See useragents.js for examples of navigator.userAgent
+    */
+
+  var t = true
+
+  function detect(ua) {
+
+    function getFirstMatch(regex) {
+      var match = ua.match(regex);
+      return (match && match.length > 1 && match[1]) || '';
+    }
+
+    function getSecondMatch(regex) {
+      var match = ua.match(regex);
+      return (match && match.length > 1 && match[2]) || '';
+    }
+
+    var iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase()
+      , likeAndroid = /like android/i.test(ua)
+      , android = !likeAndroid && /android/i.test(ua)
+      , chromeBook = /CrOS/.test(ua)
+      , edgeVersion = getFirstMatch(/edge\/(\d+(\.\d+)?)/i)
+      , versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i)
+      , tablet = /tablet/i.test(ua)
+      , mobile = !tablet && /[^-]mobi/i.test(ua)
+      , result
+
+    if (/opera|opr/i.test(ua)) {
+      result = {
+        name: 'Opera'
+      , opera: t
+      , version: versionIdentifier || getFirstMatch(/(?:opera|opr)[\s\/](\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/yabrowser/i.test(ua)) {
+      result = {
+        name: 'Yandex Browser'
+      , yandexbrowser: t
+      , version: versionIdentifier || getFirstMatch(/(?:yabrowser)[\s\/](\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/windows phone/i.test(ua)) {
+      result = {
+        name: 'Windows Phone'
+      , windowsphone: t
+      }
+      if (edgeVersion) {
+        result.msedge = t
+        result.version = edgeVersion
+      }
+      else {
+        result.msie = t
+        result.version = getFirstMatch(/iemobile\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/msie|trident/i.test(ua)) {
+      result = {
+        name: 'Internet Explorer'
+      , msie: t
+      , version: getFirstMatch(/(?:msie |rv:)(\d+(\.\d+)?)/i)
+      }
+    } else if (chromeBook) {
+      result = {
+        name: 'Chrome'
+      , chromeBook: t
+      , chrome: t
+      , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
+      }
+    } else if (/chrome.+? edge/i.test(ua)) {
+      result = {
+        name: 'Microsoft Edge'
+      , msedge: t
+      , version: edgeVersion
+      }
+    }
+    else if (/chrome|crios|crmo/i.test(ua)) {
+      result = {
+        name: 'Chrome'
+      , chrome: t
+      , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (iosdevice) {
+      result = {
+        name : iosdevice == 'iphone' ? 'iPhone' : iosdevice == 'ipad' ? 'iPad' : 'iPod'
+      }
+      // WTF: version is not part of user agent in web apps
+      if (versionIdentifier) {
+        result.version = versionIdentifier
+      }
+    }
+    else if (/sailfish/i.test(ua)) {
+      result = {
+        name: 'Sailfish'
+      , sailfish: t
+      , version: getFirstMatch(/sailfish\s?browser\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/seamonkey\//i.test(ua)) {
+      result = {
+        name: 'SeaMonkey'
+      , seamonkey: t
+      , version: getFirstMatch(/seamonkey\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/firefox|iceweasel/i.test(ua)) {
+      result = {
+        name: 'Firefox'
+      , firefox: t
+      , version: getFirstMatch(/(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i)
+      }
+      if (/\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i.test(ua)) {
+        result.firefoxos = t
+      }
+    }
+    else if (/silk/i.test(ua)) {
+      result =  {
+        name: 'Amazon Silk'
+      , silk: t
+      , version : getFirstMatch(/silk\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (android) {
+      result = {
+        name: 'Android'
+      , version: versionIdentifier
+      }
+    }
+    else if (/phantom/i.test(ua)) {
+      result = {
+        name: 'PhantomJS'
+      , phantom: t
+      , version: getFirstMatch(/phantomjs\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/blackberry|\bbb\d+/i.test(ua) || /rim\stablet/i.test(ua)) {
+      result = {
+        name: 'BlackBerry'
+      , blackberry: t
+      , version: versionIdentifier || getFirstMatch(/blackberry[\d]+\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/(web|hpw)os/i.test(ua)) {
+      result = {
+        name: 'WebOS'
+      , webos: t
+      , version: versionIdentifier || getFirstMatch(/w(?:eb)?osbrowser\/(\d+(\.\d+)?)/i)
+      };
+      /touchpad\//i.test(ua) && (result.touchpad = t)
+    }
+    else if (/bada/i.test(ua)) {
+      result = {
+        name: 'Bada'
+      , bada: t
+      , version: getFirstMatch(/dolfin\/(\d+(\.\d+)?)/i)
+      };
+    }
+    else if (/tizen/i.test(ua)) {
+      result = {
+        name: 'Tizen'
+      , tizen: t
+      , version: getFirstMatch(/(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i) || versionIdentifier
+      };
+    }
+    else if (/safari/i.test(ua)) {
+      result = {
+        name: 'Safari'
+      , safari: t
+      , version: versionIdentifier
+      }
+    }
+    else {
+      result = {
+        name: getFirstMatch(/^(.*)\/(.*) /),
+        version: getSecondMatch(/^(.*)\/(.*) /)
+     };
+   }
+
+    // set webkit or gecko flag for browsers based on these engines
+    if (!result.msedge && /(apple)?webkit/i.test(ua)) {
+      result.name = result.name || "Webkit"
+      result.webkit = t
+      if (!result.version && versionIdentifier) {
+        result.version = versionIdentifier
+      }
+    } else if (!result.opera && /gecko\//i.test(ua)) {
+      result.name = result.name || "Gecko"
+      result.gecko = t
+      result.version = result.version || getFirstMatch(/gecko\/(\d+(\.\d+)?)/i)
+    }
+
+    // set OS flags for platforms that have multiple browsers
+    if (!result.msedge && (android || result.silk)) {
+      result.android = t
+    } else if (iosdevice) {
+      result[iosdevice] = t
+      result.ios = t
+    }
+
+    // OS version extraction
+    var osVersion = '';
+    if (result.windowsphone) {
+      osVersion = getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i);
+    } else if (iosdevice) {
+      osVersion = getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i);
+      osVersion = osVersion.replace(/[_\s]/g, '.');
+    } else if (android) {
+      osVersion = getFirstMatch(/android[ \/-](\d+(\.\d+)*)/i);
+    } else if (result.webos) {
+      osVersion = getFirstMatch(/(?:web|hpw)os\/(\d+(\.\d+)*)/i);
+    } else if (result.blackberry) {
+      osVersion = getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i);
+    } else if (result.bada) {
+      osVersion = getFirstMatch(/bada\/(\d+(\.\d+)*)/i);
+    } else if (result.tizen) {
+      osVersion = getFirstMatch(/tizen[\/\s](\d+(\.\d+)*)/i);
+    }
+    if (osVersion) {
+      result.osversion = osVersion;
+    }
+
+    // device type extraction
+    var osMajorVersion = osVersion.split('.')[0];
+    if (tablet || iosdevice == 'ipad' || (android && (osMajorVersion == 3 || (osMajorVersion == 4 && !mobile))) || result.silk) {
+      result.tablet = t
+    } else if (mobile || iosdevice == 'iphone' || iosdevice == 'ipod' || android || result.blackberry || result.webos || result.bada) {
+      result.mobile = t
+    }
+
+    // Graded Browser Support
+    // http://developer.yahoo.com/yui/articles/gbs
+    if (result.msedge ||
+        (result.msie && result.version >= 10) ||
+        (result.yandexbrowser && result.version >= 15) ||
+        (result.chrome && result.version >= 20) ||
+        (result.firefox && result.version >= 20.0) ||
+        (result.safari && result.version >= 6) ||
+        (result.opera && result.version >= 10.0) ||
+        (result.ios && result.osversion && result.osversion.split(".")[0] >= 6) ||
+        (result.blackberry && result.version >= 10.1)
+        ) {
+      result.a = t;
+    }
+    else if ((result.msie && result.version < 10) ||
+        (result.chrome && result.version < 20) ||
+        (result.firefox && result.version < 20.0) ||
+        (result.safari && result.version < 6) ||
+        (result.opera && result.version < 10.0) ||
+        (result.ios && result.osversion && result.osversion.split(".")[0] < 6)
+        ) {
+      result.c = t
+    } else result.x = t
+
+    return result
+  }
+
+  var bowser = detect(typeof navigator !== 'undefined' ? navigator.userAgent : '')
+
+  bowser.test = function (browserList) {
+    for (var i = 0; i < browserList.length; ++i) {
+      var browserItem = browserList[i];
+      if (typeof browserItem=== 'string') {
+        if (browserItem in bowser) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /*
+   * Set our detect method to the main bowser object so we can
+   * reuse it to test other user agents.
+   * This is needed to implement future tests.
+   */
+  bowser._detect = detect;
+
+  return bowser
+});
+
+},{}],3:[function(require,module,exports){
 (function(root, factory) {
 	if (typeof module === 'object' && module.exports) {
 		module.exports = function(d3) {
@@ -60,9 +538,9 @@
 	}
 ));
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
-},{}],3:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /*
  Copyright (c) 2012, Vladimir Agafonkin
  Simplify.js is a high-performance polyline simplification library
@@ -235,346 +713,7 @@ function simplify(points, tolerance, highestQuality) {
   return points;
 };
 
-},{}],4:[function(require,module,exports){
-(function () { "use strict";
-  var spec = {version: "0.5.2"}; // semver
-	var pro = {};
-	spec.globals = {};
-	spec.globals.render = true;
-	
-spec.app = function(){
-	var core = require('./src/elem');
-	var source = core.Elem().class('spec-app');
-	core.inherit(App, source);
-	
-  var selection, svg_width, svg_height;
-	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
-	var modals;
-	var slides = core.ElemArray(), current_slide;
-	
-  function App(div){
-		svg_width = App.width();
-		svg_height = App.height();
-		
-    /* * Check size definitions**/
-		if (typeof svg_width === 'undefined' ||
-			typeof svg_height === 'undefined' ||
-			isNaN(svg_width) || isNaN(svg_height)
-		){
-				var parent_svg = div.node();
-				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
-					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
-				
-				svg_width = dimensions[0]; //deduct 50px for column menu.
-				svg_height = dimensions[1];
-		}
-		
-    if (svg_width < 400 || svg_height < 400){
-      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
-    }
-		
-		selection = source(div)
-			.style({
-				width:svg_width,
-				height:svg_height				
-			});
-		
-		svg_width -= 50; //deduct 50px for column menu.
-		
-		modals = require('./src/modals')(App);
-		require('./src/menu/menu')(App);
-
-		/**** Keyboard events and logger ****/
-		require('./src/events').registerKeyboard(App);
-		
-		selection.node().appendToCurrentSlide = function (data) {
-			var current_slide = selection.select('.spec-slide.active').node();
-			if(!current_slide){
-				selection.node().appendSlide(data);
-			}	else{
-				current_slide.addSpec(data);
-				app_dispatcher.slideContentChange();
-			}
-		};
-		
-		//selection.node().options = App.options;
-		app_dispatcher.on('slideChange.app', function (s) {
-			if (current_slide !== s) { App.currentSlide(s);	}
-		});
-		
-		for (var i = 0; i < slides.length; i++) {
-			render_slide(slides[i]);
-		}
-	}
-	function render_slide(s) {
-		if(! selection){ return; }
-		s.width(svg_width).height(svg_height)
-			(App);
-		
-		App.currentSlide(s);
-	}
-	
-	App.slides = function () {
-		return slides;
-	};
-	App.currentSlide = function (s) {
-		if (!arguments.length) { return current_slide; }
-		if (current_slide) { // When the first slide is added, no current_slide.
-			current_slide.show(false);
-		}
-		s.show(true);
-		current_slide = s;
-		app_dispatcher.slideChange(s);
-	};
-	App.dispatcher = function () {
-		return app_dispatcher;
-	};
-	App.slideDispatcher = function () {
-		return current_slide.slideDispatcher();
-	};
-	App.modals = function () {
-		return modals;
-	};
-	App.appendSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendSlide: No data provided.");
-		} 
-		
-		var s = require('./src/slide')().datum(data);
-		slides.push(s);
-		render_slide(s);
-		return App;
-	};
-	App.appendToCurrentSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendToCurrentSlide: No data provided.");
-		} 
-		
-		if (selection){
-			selection.node().appendToCurrentSlide(data);
-		} else{
-			if(slides.length === 0){ //No slides available; create a new one
-				return App.appendSlide(data);
-			}
-			//Otherwise, append data to last slide.
-			var current_slide = slides[slides.length-1].slide;
-			//TODO: BUG
-			//We don't know if the array in slide is a data array 
-			// or an array of data arrays (i.e dataset)
-			current_slide.push(data);
-			
-			return App;
-		}
-	};
-	App.options = {
-		grid:{x:false, y:false}
-	};
-	return App;
-};
-
-//TODO: remove Elements
-
-pro.read_menu = function (app, menu_data) {
-	var plugins = pro.plugins(app.node());
-	//var plugins = require('./pro/plugins');
-	
-	var find_menu_item = function (menu, item) {
-		console.log(menu, item)
-		for (var i = menu.length - 1; i >= 0; i--) {
-			if(menu[i].label == item){
-				if(!menu[i].children) menu[i].children = [];
-				return menu[i];
-			}
-		}
-		menu.push({label:item, children:[]});
-		return menu[menu.length-1];
-	};
-	var plugin_functor = function (c) {
-		if(c["args"]){
-			return function() {
-				app.modals().methods(c["fun"], c["args"], c["title"])();
-			};
-		}else{
-			return function () { plugins.request (c["fun"]) };
-		}
-	};
-	
-	//var ajax = pro.ajax();
-	var ajax = require('./src/pro/ajax');
-	ajax.getJSON('/nmr/test', function (response) {
-		console.log(menu_data)
-		var c = response;
-		for (var i = 0; i < response.length; i++) {
-			var path = find_menu_item(menu_data, c[i]['menu_path'][0]);
-	
-			for (var j = 1; j < c[i]['menu_path'].length; j++) {
-				path = find_menu_item(path.children, c[i]['menu_path'][j]);
-			}
-			path.children = null;
-			path.fun = plugin_functor(c[i]);
-			path.nd = c[i]['nd'];			
-	
-		}		
-		console.log(menu_data)
-		app.dispatcher().menuUpdate();
-
-	});
-};
-
-
-
-pro.output = {};
-pro.output.overwriteSpec = function (new_data, s_id) {
-	if(typeof s_id === 'undefined' && 
-		typeof new_data['s_id'] !== 'undefined'){
-		s_id = new_data['s_id'];
-	}
-	
-	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
-	
-	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
-	var overwrite_spec = _main_focus.selectAll(classname)
-	.filter(function(e){ return this.s_id()==s_id; });
-	
-	_main_focus.node().addSpecLine(new_data, true, overwrite_spec);
-};
-pro.output.preview = function (new_data) {
-	if(d3.select(".preview-spec").size() > 0){
-		d3.select(".preview-spec").node().setData(new_data);
-	}else{
-		d3.select(".spec-slide.active").select(".main-focus").node()
-			.addSpecLine(new_data, false)
-			.classed("preview-spec", true);		
-	}
-};
-pro.output.newSpec = function (new_data) {
-	d3.select(".spec-slide.active").select(".main-focus").node().addSpecLine(new_data);
-};
-pro.output.newSlide = function (new_data) {
-	
-};
-
-pro.analysis = {};
-pro.analysis.addPeaks = function (json) {
-	var s_id = json['s_id'];
-	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
-	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
-	var spec = _main_focus.selectAll(classname)
-		.filter(function(e){ return this.s_id() === s_id; });
-	
-	console.log(spec);
-	if (spec.size() != 1){
-		var modals = require('./src/modals');
-		modals.error('Incompatible server response', 
-		'Can\'t find spectrum with s_id:'+s_id)
-	}
-	spec.node().addPeaks(json['peaks']);		
-};
-pro.analysis.addSegments = function (json) {
-	var s_id = json['s_id'];
-	var _main_focus = d3.select(".spec-slide.active").select(".main-focus");
-	var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img";
-	var spec = _main_focus.selectAll(classname)
-		.filter(function(e){ return this.s_id() === s_id; });
-	
-	if (spec.size() != 1) {
-		var modals = require('./src/modals');
-		modals.error('Incompatible server response', 
-		'Can\'t find spectrum with s_id:'+s_id)
-	}
-	
-	spec.node().addSegmentByIndex(json['segs']);
-};
-
-pro.plugins = function (app) {
-	var out = {};
-	var get_selected_spec = function () {
-		var _main_focus = d3.select(app).select(".spec-slide.active").select(".main-focus");
-		var classname = _main_focus.node().nd == 1 ? ".spec-line" : ".spec-img"
-	
-		var s_id = _main_focus.selectAll(classname+".selected")[0].map(function(d){return d.s_id();});
-		if(s_id.length == 0)
-			s_id = _main_focus.selectAll(classname)[0].map(function(d){return d.s_id();});
-	
-		return s_id;
-	};
-	
-	var handle_spectrum = function(json, preview){
-		var output_fun = json["output"]? pro.output[ json["output"] ]: pro.output.overwriteSpec;
-		require('./src/pro/process_data').process_spectrum(json, output_fun);
-		return;
-	};
-
-	var handle_spec_feature = function(json, preview){
-		if (json['peaks'] !== undefined){
-			pro.analysis.addPeaks(json);
-		}
-		if (json['segs'] !== undefined){
-			pro.analysis.addSegments(json);
-		}
-	};
-	
-	out.request = function (fun, params, s_id, preview) {
-		if(!params) params = {};
-	
-		if(!params['sid']){
-			if(s_id){
-				params['sid'] = s_id;
-			}else{
-				params['sid'] = get_selected_spec();
-			}
-		}
-		if(params['sid'].length === 0)
-			error('No Spectra selected', 'Please select one or more spectra!');
-		
-		var prefix = fun+'_';
-		var params_str = 'sid=' + 
-			JSON.stringify(params['sid']) + '&preview=' + (+preview) +'&'+ prefix + '=null';
-	
-		for(var key in params){
-			if(key === 'sid') continue;
-			if(params_str.length>0) params_str +='&';
-		
-			params_str += prefix + key+'='+params[key];
-		}
-	
-		var url = '/nmr/plugins?'+params_str;
-		//var ajax = pro.ajax();
-		var ajax = require('./src/pro/ajax');
-		ajax.getJSON(url, function (response) {
-				out.response(response, preview);
-		});
-	};
-	
-	out.response = function (json, preview) {
-		if (json.constructor === Array) {
-			for (var i = json.length - 1; i >= 0; i--) {
-				out.response(json[i]);
-			}
-			return;
-		}
-		if (json['data_type'] === undefined || json['data_type'] === 'spectrum'){
-			return handle_spectrum(json, preview);
-		}
-		if(json['data_type'] === 'spec_feature'){
-			handle_spec_feature(json, preview);
-			return;
-		}
-		if(json['data_type'] === 'spec_like'){
-			handle_spec_like(json, preview);
-			return;
-		}
-	};
-	return out;
-};
-
-	pro.get_spectrum = require('./src/pro/process_data').get_spectrum;
-  window.spec = spec;
-	window.pro = pro;
-	console.log("specdraw:"+ spec.version);
-})();
-
-},{"./src/elem":17,"./src/events":18,"./src/menu/menu":21,"./src/modals":25,"./src/pro/ajax":26,"./src/pro/process_data":27,"./src/slide":29}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -602,6 +741,9 @@ module.exports = function (){
 				dispatcher.on("mousemove"+suff, svg_elem.on("_mousemove"));	
 			}
 		}
+		dispatcher.on("specDataChange"+suff, function (s) {
+			if(s === _main.parent()){_main.datum(s.datum());}
+		});
 		dispatcher.on("crosshairEnable"+suff, _main.enable);
 	}
 	
@@ -706,7 +848,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":17}],6:[function(require,module,exports){
+},{"../elem":18}],7:[function(require,module,exports){
 function integrate(data){
 	var _cumsum = data.map(function(d) { return d.y; }).cumsum();
 	
@@ -790,12 +932,10 @@ module.exports = function (){
 		var modals = IntegElem.parentApp().modals();
 		
 		text_g.on("mouseenter", function () {
-			text_rect.classed("highlight", true);
-			path_elem.classed("highlight", true);
+			svg_elem.classed("highlight", true);
 		})
 		.on("mouseleave", function () {
-			text_rect.classed("highlight", false);
-			path_elem.classed("highlight", false);
+			svg_elem.classed("highlight", false);
 		})
 		.on("click", d3.contextMenu(
 		  [{
@@ -830,6 +970,17 @@ module.exports = function (){
 		var dispatch_idx = ++dispatcher.idx;
 		dispatcher.on("redraw.integ."+dispatch_idx, svg_elem.on("_redraw"));
 		dispatcher.on("integ_refactor."+dispatch_idx, svg_elem.on("_refactor"));
+		dispatcher.on("specDataChange.integ."+dispatch_idx, function (s) {
+			if(s === IntegElem.parent()){
+				if(integ_factor === integ_val){ // if the integral is equal to 1.00, keep it.
+					IntegElem.updateData();
+					integ_factor = integ_val;
+					dispatcher.integ_refactor(integ_factor);
+				}else{
+					IntegElem.updateData();
+				}				
+			}
+		});
 	}
 	
 		
@@ -857,7 +1008,12 @@ module.exports = function (){
 		
 		return IntegElem;
 	};
-	
+	IntegElem.integValue = function (_) {
+		if (!arguments.length) {return integ_val;}
+		integ_val = _;
+		
+		return IntegElem;
+	};
 	IntegElem.reductionFactor = function (_) {
 		if (!arguments.length) {return reduction_factor;}
 		reduction_factor = _;
@@ -870,19 +1026,20 @@ module.exports = function (){
 	return IntegElem;
 };
 
-},{"../elem":17}],7:[function(require,module,exports){
+},{"../elem":18}],8:[function(require,module,exports){
 function calcReductionFactor(spec_container) {
 	var seg_len = [];
 	var specs = spec_container.spectra();
 	for (var i = 0; i < specs.length; i++) {
-		var segs = specs[i].segments();
-		for (var j = 0; j < segs.length; j++) {
-			var len = Math.abs(segs[j].segment()[0] - segs[j].segment()[1]);
-			seg_len.push(len);
-		}
+		seg_len = seg_len.concat(
+			specs[i].segments(true).map(
+			function (s) {
+				return s.integValue();
+			})
+		);
 	}
 	
-	var red = d3.max( seg_len ) / 0.5;
+	var red = d3.max( seg_len ) / (spec_container.yScale().domain()[1]*0.5);
 	
 	spec_container.spectra().forEach(function (s) {
 		s.segments(true).forEach(function (seg) {
@@ -917,6 +1074,7 @@ module.exports = function () {
 	var i_to_pixel; 										//a scale to convert data point to pixel position
 	var ppm_to_i; 											//a scale to convert ppm to data point (reverse of data[i].x)
 	
+	var selected = true;
 	var data_slice, scale_factor = 1;
 	var peaks = [], segments = core.ElemArray();
 	
@@ -928,14 +1086,18 @@ module.exports = function () {
 		i_to_pixel = x.copy();
 		
 		//var width = spec_container.width();
-		svg_elem = source(spec_container);
 		line_idx = spec_container.spectra().indexOf(SpecLine);
+		svg_elem = source(spec_container)
+			.classed('selected', selected)
+			.classed('clr'+line_idx, true);
+		
+		
 				
 		path_elem.datum(data)
 			.xScale(x)
 			.yScale(y)
-			.simplify(2)
-			.class("line clr"+ line_idx)
+			.simplify(1)
+			.class("line")
 			(svg_elem);
 		
 		if(typeof _crosshair === 'undefined'){
@@ -958,7 +1120,8 @@ module.exports = function () {
 					path_elem.redraw().sel()
 						.attr("transform", 'scale(1,1)translate(0,0)');
 					
-					//svg_elem.selectAll(".segment").attr("d", path);
+					//integration
+					calcReductionFactor(spec_container);
 				}else{ //change is in the Y axis only.
 					var orignial_yscale = y.copy().domain(spec_container.range().y);
 					
@@ -969,8 +1132,6 @@ module.exports = function () {
 					  Math.abs((spec_container.range().y[0]-spec_container.range().y[1])/(y.domain()[0]-y.domain()[1]))];
 				
 					path_elem.sel()
-						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
-					svg_elem.selectAll(".segment")
 						.attr("transform","scale("+scale_coor+")"+"translate("+ translate_coor +")");
 				}
 			})
@@ -1049,17 +1210,17 @@ module.exports = function () {
 		});
 	};
 	SpecLine.segments = function (visible) {
-		return segments;
-		/*var idx = segments;
+		var idx = segments;
 		if(visible){ //get only peaks in the visible range (within dataSlice)
-			idx = idx.filter(function (e) {
+			idx = idx.filter(function (s) {
+				var e = s.segment();
 				return e[0] > data_slice[0] && 
 					e[0] < data_slice[1] &&
 					e[1] > data_slice[0] && 
 					e[1] < data_slice[1];
 			});
 		}
-		return idx;*/
+		return idx;
 	};
 	SpecLine.addPeaks = function (idx) {
 		peaks = peaks.concat(idx);
@@ -1124,14 +1285,14 @@ module.exports = function () {
 		range.x = [data[0].x, data[data.length-1].x];
 		range.y = d3.extent(data.map(function(d) { return d.y; }));
 		
-		//TODO: Update peaks, integrate, segments to match new data.
-		if(_crosshair){
-			_crosshair.datum(data);
-		}
 		ppm_to_i = d3.scale.linear()
 			.range([0, data.length])
 			.domain([ data[0].x, data[data.length-1].x ]);
 		
+		//TODO: Update peaks, integrate, segments to match new data.
+		if(dispatcher)
+			{dispatcher.specDataChange(SpecLine);}
+
 		render_data();
     return SpecLine;
   };
@@ -1156,7 +1317,11 @@ module.exports = function () {
     s_id = _;
     return SpecLine;
   };	
-  
+  SpecLine.selected = function(_){
+    if (!arguments.length) {return selected;}
+    selected = _;
+    return SpecLine;
+  };
 	SpecLine.lineIdx = function () {
 		return line_idx;
 	};
@@ -1170,7 +1335,7 @@ module.exports = function () {
 	return SpecLine;
 };
 
-},{"../elem":17,"./crosshair":5,"./integration-elem":6,"./path-simplify":9}],8:[function(require,module,exports){
+},{"../elem":18,"./crosshair":6,"./integration-elem":7,"./path-simplify":10}],9:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -1271,7 +1436,7 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":17}],9:[function(require,module,exports){
+},{"../elem":18}],10:[function(require,module,exports){
 module.exports = function () {
 	var utils = require('../utils');
 	var core = require('../elem');
@@ -1338,7 +1503,7 @@ module.exports = function () {
 	return PathElem;
 };
 
-},{"../elem":17,"../utils":30}],10:[function(require,module,exports){
+},{"../elem":18,"../utils":36}],11:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -1556,7 +1721,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":17,"d3-context-menu":1}],11:[function(require,module,exports){
+},{"../elem":18,"d3-context-menu":3}],12:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -1658,7 +1823,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":17}],12:[function(require,module,exports){
+},{"../elem":18}],13:[function(require,module,exports){
 
 module.exports = function () {
 	var core = require('../elem');
@@ -1862,7 +2027,7 @@ module.exports = function () {
 		var s = specs.filter(function (e) {
 			return e.s_id() === s_id;
 		}	);
-		
+		console.log('addspec', s, s_id);
 		if ( s.length === 0 ){
 		 	s = require('./line')()
 				.datum(spec_data)
@@ -1871,12 +2036,13 @@ module.exports = function () {
 				.label(spec_label);
 			
 			specs.push(s);
+			render_spec(s);
 		}else{
 			s = s[0];
 			s.datum(spec_data);//TODO: setData!!
-		}
+			update_range();
+		}		
 		
-		render_spec(s);
 		return s;
 	};
 	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
@@ -1888,11 +2054,13 @@ module.exports = function () {
 	SpecContainer.nd = function(){
 		return 1;
 	};
-	SpecContainer.spectra = function () {
-		return specs;
+	SpecContainer.spectra = function (selected) {
+		if (!selected){return specs;}
+		
+		return  specs.filter( function (s) { return s.selected(); } );
 	};
 	SpecContainer.highlightSpec = function (_) {
-		s_idx = specs.indexOf(_);
+		var s_idx = specs.indexOf(_);
 		if(s_idx < 0){ //no spectrum to highlight
 			specs.sel().classed('dimmed', false)
 				.classed('highlighted', false);
@@ -1922,7 +2090,7 @@ module.exports = function () {
 	
 	return SpecContainer;
 };
-},{"../elem":17,"./line":7,"./main-brush":8,"./peak-picker":10}],13:[function(require,module,exports){
+},{"../elem":18,"./line":8,"./main-brush":9,"./peak-picker":11}],14:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -1952,7 +2120,7 @@ module.exports = function () {
 
 	return _main;	
 };
-},{"../elem":17}],14:[function(require,module,exports){
+},{"../elem":18}],15:[function(require,module,exports){
 module.exports = function(){
 	function registerDispatcher() {
 		var suff = ".line."+dispatch_idx;
@@ -1999,17 +2167,12 @@ module.exports = function(){
 		var crosslines = svg_elem.append("g")
 			.attr("class", "crosshair line");
 		
-		crosslines.append("path")
-			.attr("class", "crosshair line x")
-			.attr('d', d3.svg.line()(
-				[[-x.range()[1], 0], [x.range()[1], 0]]
-			));
 		
-		crosslines.append("path")
-			.attr("class", "crosshair line y")
-			.attr('d', d3.svg.line()(
-				[[0, -y.range()[0]], [0, y.range()[0]]]
-			));
+		var xline = crosslines.append("path")
+			.attr("class", "crosshair line x");
+		
+		var yline = crosslines.append("path")
+			.attr("class", "crosshair line y");
 		
 		var cross_circle = svg_elem.append("circle")
 			.attr("r", 4.5);
@@ -2024,10 +2187,17 @@ module.exports = function(){
 				var data_point = [x.invert(e.xcoor), y.invert(e.ycoor)];
 				
 				svg_elem.datum(data_point);
-				svg_elem.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
+				cross_circle.attr("transform", "translate(" + e.xcoor + "," + e.ycoor + ")");
 				tip.text(
 					d3.round(data_point[0],2) + ', ' + d3.round(data_point[1],2)
 				).show(cross_circle.node());
+				
+				xline.attr('d', d3.svg.line()
+					( [[x.range()[0], e.ycoor], [x.range()[1], e.ycoor]] )
+				);
+				yline.attr('d', d3.svg.line()
+					( [[e.xcoor, y.range()[0]], [e.xcoor, y.range()[1]]] )
+				);
 			})
 			.on('remove', function () {
 				_main.enabled(false);
@@ -2061,7 +2231,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":17}],15:[function(require,module,exports){
+},{"../elem":18}],16:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
@@ -2207,18 +2377,20 @@ module.exports = function () {
 			s = require('./spec2d')()
 				.datum(spec_data["data"])
 				.s_id(spec_data["s_id"])
+				.label(spec_data["label"])
 				.crosshair(crosshair)
 				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
 				
 			specs.push(s);
 		}else{
 			s = s[0];
-			s.datum(spec_data)
+			s.datum(spec_data["data"])
 				.range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
 		}
 		render_spec(s);
 		return s;
 	};
+	SpecContainer.hightlightSpec = function(){};
 	SpecContainer.changeRegion = function (_) {
 		if( focus ){
 			focus.on('_regionchange')(_);
@@ -2242,7 +2414,7 @@ module.exports = function () {
   };
 	return SpecContainer;	
 };
-},{"../d1/main-brush":8,"../elem":17,"./spec2d":16}],16:[function(require,module,exports){
+},{"../d1/main-brush":9,"../elem":18,"./spec2d":17}],17:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('spec-img');
@@ -2367,7 +2539,7 @@ module.exports = function () {
 	return _main;
 };
 
-},{"../elem":17,"./crosshair-2d":14}],17:[function(require,module,exports){
+},{"../elem":18,"./crosshair-2d":15}],18:[function(require,module,exports){
 
 function inherit(target, source){
   for (var f in source){
@@ -2512,7 +2684,7 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2621,7 +2793,15 @@ function editText(evt){
 }*/
 
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
+module.exports = {};
+module.exports.App = require('./main_app');
+module.exports.hooks = {};
+module.exports.hooks.readers = require('./pro/plugin-hooks');
+module.exports.get_spectrum = require('./pro/process_data').get_spectrum;
+module.exports.version = "0.5.2";
+//console.log("specdraw:"+ spec.version);
+},{"./main_app":22,"./pro/plugin-hooks":31,"./pro/process_data":33}],21:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils').fireEvent;
 
@@ -2642,7 +2822,7 @@ inp.num = function (label, val, _min, _max, step, unit) {
 	elem.node().getValue = function(){ 
 		return elem.select('input').node().value;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 
 inp.checkbox = function (label, val) {
@@ -2664,7 +2844,7 @@ inp.checkbox = function (label, val) {
 	elem.node().getValue = function(){ 
 		return elem.select('input').node().checked;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 inp.checkbox_toggle = function (label, val, div_data) {
 	var elem = d3.select(document.createElement('div'))
@@ -2701,7 +2881,7 @@ inp.select = function (label, options, val) {
 	elem.node().getValue = function(){ 
 		return select_elem.node().value;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 
 inp.select_multi = function (label, options) {
@@ -2725,7 +2905,7 @@ inp.select_multi = function (label, options) {
 		.data(options).enter()
 		.append('li')
 			.each(function(d){
-        d3.select(this).append(inp.checkbox(d, true))
+        d3.select(this).append(inp.checkbox(d, true));
       });
 	
 	elem.node().getValue = function(){ 
@@ -2737,9 +2917,8 @@ inp.select_multi = function (label, options) {
 				return typeof(e.value) !== 'undefined' ? e.value
 					: d3.select(e).select('.label').text();
 			});
-		return elem.select('input').node().value;
 	};
-	return function () { return elem.node()	}
+	return function () { return elem.node();	};
 };
 
 inp.select_toggle = function (label, options) {
@@ -2764,7 +2943,7 @@ inp.select_toggle = function (label, options) {
 
 		if( Object.keys( options[select_elem.value][1]).length > 0 ){
 			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ))
+				.append(inp.div( options[select_elem.value][1] ));
 				//.appened('legend', 'Parameters');
 		}
     
@@ -2786,7 +2965,7 @@ inp.button = function (label) {
 		.classed('param btn', true)
 		.attr('type', 'button')
 		.attr('value', label)
-		.on("click", function(){ fireEvent(this, 'input') });
+		.on("click", function(){ fireEvent(this, 'input'); });
 	
 	elem.node().getValue = function(){ 
 		return d3.event && d3.event.target === elem.node();
@@ -2798,7 +2977,7 @@ inp.threshold = function (label, axis, app) {
 	var elem = d3.select(document.createElement('div'))
 	.classed('param threshold', true);
 	
-	var input = elem.append("input").attr("type", "hidden")
+	var input = elem.append("input").attr("type", "hidden");
 
 	var val = elem.append("input")
 		.attr("type", "text")
@@ -2810,7 +2989,7 @@ inp.threshold = function (label, axis, app) {
 				.style('display', 'none');
 			
 			//TODO: app-specific.
-			th_fun = require('./d1/threshold')();
+			var th_fun = require('./d1/threshold')();
 			
 			th_fun(app.currentSlide().specContainer(), function (t) {
 				val.attr('value', t.toExponential(2));
@@ -2823,7 +3002,7 @@ inp.threshold = function (label, axis, app) {
 	elem.node().getValue = function () {
 		return input.node().value;
 	};
-	return function(){return elem.node()}
+	return function() { return elem.node(); };
 };
 /* parses the GUI data into a div HTML element.
 	 @param div_data object containing parameter names as keys
@@ -2838,7 +3017,7 @@ inp.div = function (div_data, app) {
 	var div = d3.select(document.createElement('div'));
   for (var key in div_data){
 		var p = div_data[key];
-		if(typeof p == 'function') continue; //Exclude Array prototype functions.
+		if(typeof p === 'function') {continue;} //Exclude Array prototype functions.
 		div.append(parseInputElem.apply(null, p.concat(app)))
 			.node().id = key;
   }
@@ -2852,7 +3031,7 @@ var parseInputElem = function (label, type, details, app) {
 		inp.checkbox_toggle, inp.button, inp.threshold
 	][type];
 	
-	var args = [label].concat(details)
+	var args = [label].concat(details);
 	args = type === 6 ? args.concat(app) : args;
 	return f.apply(null, args);
 };
@@ -2910,15 +3089,149 @@ inp.popover = function (title) {
 		.classed('popover right', true);
 	
 	div.append('div').classed('arrow', true);
-	var inner = div.append('div').classed('popover-inner', true)
+	var inner = div.append('div').classed('popover-inner', true);
 	inner.append('h3').classed('popover-title', true).text(title);
 	inner.append('div').classed('popover-content', true);
 	
 	return function() {return div.node();};
-}
+};
 
 module.exports = inp;
-},{"./d1/threshold":13,"./utils":30}],20:[function(require,module,exports){
+},{"./d1/threshold":14,"./utils":36}],22:[function(require,module,exports){
+module.exports = function(){
+	var core = require('./elem');
+	var source = core.Elem().class('spec-app');
+	core.inherit(App, source);
+	
+  var selection, svg_width, svg_height;
+	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
+	var modals;
+	var slides = core.ElemArray(), current_slide;
+	
+  function App(div){
+		svg_width = App.width();
+		svg_height = App.height();
+		
+    /* * Check size definitions**/
+		if (typeof svg_width === 'undefined' ||
+			typeof svg_height === 'undefined' ||
+			isNaN(svg_width) || isNaN(svg_height)
+		){
+				var parent_svg = div.node();
+				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
+					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
+				
+				svg_width = dimensions[0]; //deduct 50px for column menu.
+				svg_height = dimensions[1];
+		}
+		
+    if (svg_width < 400 || svg_height < 400){
+      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
+    }
+		
+		selection = source(div)
+			.style({
+				width:svg_width,
+				height:svg_height				
+			});
+		
+		svg_width -= 50; //deduct 50px for column menu.
+		
+		modals = require('./modals')(App);
+		require('./menu/menu')(App);
+
+		/**** Keyboard events and logger ****/
+		require('./events').registerKeyboard(App);
+		
+		selection.node().appendToCurrentSlide = function (data) {
+			var current_slide = selection.select('.spec-slide.active').node();
+			if(!current_slide){
+				selection.node().appendSlide(data);
+			}	else{
+				current_slide.addSpec(data);
+				app_dispatcher.slideContentChange();
+			}
+		};
+		
+		//selection.node().options = App.options;
+		app_dispatcher.on('slideChange.app', function (s) {
+			if (current_slide !== s) { App.currentSlide(s);	}
+		});
+		
+		for (var i = 0; i < slides.length; i++) {
+			render_slide(slides[i]);
+		}
+	}
+	function render_slide(s) {
+		if(! selection){ return; }
+		s.width(svg_width).height(svg_height)
+			(App);
+		
+		App.currentSlide(s);
+	}
+	
+	App.slides = function () {
+		return slides;
+	};
+	App.currentSlide = function (s) {
+		if (!arguments.length) { return current_slide; }
+		if (current_slide) { // When the first slide is added, no current_slide.
+			current_slide.show(false);
+		}
+		s.show(true);
+		current_slide = s;
+		app_dispatcher.slideChange(s);
+	};
+	App.dispatcher = function () {
+		return app_dispatcher;
+	};
+	App.slideDispatcher = function () {
+		return current_slide.slideDispatcher();
+	};
+	App.modals = function () {
+		return modals;
+	};
+	App.pluginRequest = require('./pro/plugins')(App);
+	App.appendSlide = function(data){
+		if (!arguments.length){
+			throw new Error("appendSlide: No data provided.");
+		} 
+		
+		var s = require('./slide')().datum(data);
+		slides.push(s);
+		render_slide(s);
+		return App;
+	};
+	App.appendToCurrentSlide = function(data){
+		if (!arguments.length){
+			throw new Error("appendToCurrentSlide: No data provided.");
+		} 
+		
+		if (selection){
+			selection.node().appendToCurrentSlide(data);
+		} else{
+			if(slides.length === 0){ //No slides available; create a new one
+				return App.appendSlide(data);
+			}
+			//Otherwise, append data to last slide.
+			var current_slide = slides[slides.length-1].slide;
+			//TODO: BUG
+			//We don't know if the array in slide is a data array 
+			// or an array of data arrays (i.e dataset)
+			current_slide.push(data);
+			
+			return App;
+		}
+	};
+	App.options = {
+		grid:{x:false, y:false}
+	};
+	return App;
+};
+
+//TODO: remove Elements
+
+},{"./elem":18,"./events":19,"./menu/menu":24,"./modals":29,"./pro/plugins":32,"./slide":35}],23:[function(require,module,exports){
 var inp = require('../input_elem');
 var utils = require('../utils');
 
@@ -2927,8 +3240,8 @@ function add_li(sel) {
 		.append("li")
 		.text(function(d){return d.label;})
 		.classed('menu-item', true)
-		.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0 })
-		.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0 });
+		.classed('not1d', function(d){ return d.nd && d.nd.indexOf(1) < 0; })
+		.classed('not2d', function(d){ return d.nd && d.nd.indexOf(2) < 0; });
   
 	return sel;		
 }
@@ -2939,7 +3252,7 @@ function recursive_add(sel){
 		//.attr('tabindex', 1)
 		.append("div").append("ul")
 		.selectAll("li")
-			.data(function(d){return d.children})
+			.data(function(d){return d.children;})
 			.call(add_li);
 	
 	if(new_sel.filter(function(d){return d.children;}).size() > 0){
@@ -2947,7 +3260,7 @@ function recursive_add(sel){
 	}
 }
 
-function main_menu (app) {
+function main_menu () {
 	var menu_data;
 	function _main(div) {
 		div.select('.menu-container').remove();
@@ -2977,20 +3290,21 @@ function main_menu (app) {
 
 	}
 	_main.data = function (_) {
-		if (!arguments.length) return menu_data;
+		if (!arguments.length) {return menu_data;}
 		menu_data = _;
 		return _main;
-	}
+	};
 	return _main;
 }
 
 module.exports = main_menu;
-},{"../input_elem":19,"../utils":30}],21:[function(require,module,exports){
+},{"../input_elem":21,"../utils":36}],24:[function(require,module,exports){
 var utils = require('../utils');
+var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
-function create_menu (app){	
-	function toggle(e){
-	  if(d3.event.target !== this) return;
+module.exports = function (app){	
+	function toggle(){
+	  if(d3.event.target !== this) {return;}
   
 	  var button = d3.select(this).toggleClass('opened');
 	  button.select('.tooltip')
@@ -3000,9 +3314,10 @@ function create_menu (app){
 	var main_menu = require('./main_menu')(app),
 		spectra = require('./spectra')(app),
 		slides = require('./slides')(app),
-		menu_data = require('./menu_data')(app);
+		menu_data = require('./menu_data')(app),
+		serverside_menu = require('./serverside-menu');
 	
-	var column_menu_buttons = [
+		var column_menu_buttons = [
 	  ['open-menu', 'Menu'],
 	  ['open-spec-legend', 'Spectra'],
 	  ['open-slides', 'Slides'],
@@ -3018,8 +3333,8 @@ function create_menu (app){
 	elem.selectAll('div')
 	  .data(column_menu_buttons).enter()
 	  .append('div')
-	  .attr('class', function(d){return d[0]})
-	  .attr('title', function(d){return d[1]})
+	  .attr('class', function(d){return d[0];})
+	  .attr('title', function(d){return d[1];})
 	  .call(bootstrap.tooltip().placement('right'))
 	  .on('click', toggle);
 	
@@ -3031,7 +3346,7 @@ function create_menu (app){
 	
 	// Full screen manipulation
 	elem.select('.open-fullscreen')
-		.on('click', function (e) {
+		.on('click', function () {
 			utils.fullScreen.toggle(app.node());
 			toggle.apply(this);
 		});
@@ -3046,7 +3361,7 @@ function create_menu (app){
 	});
 	app_dispatcher.on('slideChange.menu', function (s) {
 		//TODO: hide parent menu-item when all children are hidden
-		var two_d_slide = s.nd == 2;
+		var two_d_slide = s.nd === 2;
 		elem.select('.open-menu')
 			.classed('d1', !two_d_slide)
 			.classed('d2', two_d_slide);
@@ -3057,12 +3372,11 @@ function create_menu (app){
 		elem.select('.open-spec-legend').call( spectra );
 	});
 	
-	pro.read_menu(app, menu_data); //read menu from server.
+	serverside_menu(app, menu_data); //read menu from server.
 	return elem;									
-}
+};
 
-module.exports = create_menu;
-},{"../utils":30,"./main_menu":20,"./menu_data":22,"./slides":23,"./spectra":24}],22:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../utils":36,"./main_menu":23,"./menu_data":25,"./serverside-menu":26,"./slides":27,"./spectra":28}],25:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3131,7 +3445,50 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":18}],23:[function(require,module,exports){
+},{"../events":19}],26:[function(require,module,exports){
+module.exports = function (app, menu_data) {
+	function find_menu_item (menu, item) {
+		for (var i = menu.length - 1; i >= 0; i--) {
+			if(menu[i].label === item){
+				if(!menu[i].children) {menu[i].children = [];}
+				return menu[i];
+			}
+		}
+		menu.push({label:item, children:[]});
+		return menu[menu.length-1];
+	}
+	function plugin_functor (c) {
+		if(c["args"]){
+			return function() {
+				app.modals().methods(c["fun"], c["args"], c["title"])();
+			};
+		}else{
+			return function () { app.pluginRequest (c["fun"]); };
+		}
+	}
+	
+	var ajax = require('../pro/ajax');
+	ajax.getJSON('/nmr/test', function (response) {
+		var c = response;
+		for (var i = 0; i < response.length; i++) {
+			var path = find_menu_item(menu_data, c[i]['menu_path'][0]);
+	
+			for (var j = 1; j < c[i]['menu_path'].length; j++) {
+				path = find_menu_item(path.children, c[i]['menu_path'][j]);
+			}
+			path.children = null;
+			path.fun = plugin_functor(c[i]);
+			path.nd = c[i]['nd'];			
+	
+		}		
+		app.dispatcher().menuUpdate();
+
+	});
+};
+
+
+
+},{"../pro/ajax":30}],27:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -3158,7 +3515,7 @@ module.exports = function (app) {
 };
 
 
-},{"../input_elem":19}],24:[function(require,module,exports){
+},{"../input_elem":21}],28:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -3188,15 +3545,17 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":19}],25:[function(require,module,exports){
+},{"../input_elem":21}],29:[function(require,module,exports){
 require('nanoModal');
+console.log(require('nanoModal')());
+var nanoModal = window.nanoModal;
 nanoModal.customHide = function(defaultHide, modalAPI) {
 	modalAPI.modal.el.style.display = 'block';
 	defaultHide();
 };
 
 function app_modals(app){
-	var modals = {}
+	var modals = {};
 	
 	modals.proto = function (title, content, ok_fun, cancel_fun) {	
 		var nano = nanoModal(
@@ -3223,8 +3582,8 @@ function app_modals(app){
 			return;
 		}
 		//TODO: define spec-app;
-		app.append(function () {return nano.overlay.el});
-		app.append(function () {return nano.modal.el});
+		app.append(function () {return nano.overlay.el;});
+		app.append(function () {return nano.modal.el;});
 	
 		var el = d3.select(nano.modal.el);
 	
@@ -3252,15 +3611,15 @@ function app_modals(app){
 			var drag = d3.behavior.drag()
 				.on("drag", function () {
 			    el.style("top", d3.event.sourceEvent.pageY+"px")
-			      .style("left", d3.event.sourceEvent.pageX+"px")				
+						.style("left", d3.event.sourceEvent.pageX+"px");
 				});
-			d3.select(nano.modal.el).select(".title").call(drag)
+			d3.select(nano.modal.el).select(".title").call(drag);
 			d3.select(nano.modal.el).select(".cancelBtn").node().focus();
 		
 			//{display: flex,flex-direction: column}
 		});
 		return nano;
-	}
+	};
 
 	modals.error = function (title, message) {
 		var nano = modals.proto('Error: ' + title, message);
@@ -3272,9 +3631,9 @@ function app_modals(app){
 
 	modals.range = function (text, _range, callback, _curr_val){
 		var range;
-		if(_range[0]>_range[1])
+		if(_range[0]>_range[1]){
 			range = [_range[1], _range[0]];
-		else{
+		}else{
 			range = _range;
 		}
 		range = [d3.round(range[0],3), d3.round(range[1],3)];
@@ -3283,7 +3642,7 @@ function app_modals(app){
 			_curr_val = range;
 		}else{
 			if(_curr_val[0]>_curr_val[1])
-				_curr_val = [_curr_val[1], _curr_val[0]];
+				{_curr_val = [_curr_val[1], _curr_val[0]];}
 		
 			_curr_val = [d3.round(_curr_val[0],3), d3.round(_curr_val[1],3)];
 		}
@@ -3299,14 +3658,14 @@ function app_modals(app){
 	      var input_range = d3.select(modal.modal.el)
 					.selectAll("input")[0].map(function(e){ return +e.value; });
 			
-				if (input_range[0] < range[0] || input_range[0] > range[1]
-					|| input_range[1] < range[0] || input_range[1] > range[1]
-					|| input_range[0] > input_range[1])
+				if (input_range[0] < range[0] || input_range[0] > range[1] ||
+					input_range[1] < range[0] || input_range[1] > range[1] ||
+					input_range[0] > input_range[1]) {
 					nanoModal("Invalid input."+input_range).show();
-				else{
-					if(_range[0]>_range[1])
+				}else{
+					if(_range[0]>_range[1]){
 						callback(input_range.reverse());
-					else{
+					}else{
 						callback(input_range);
 					}
 				}
@@ -3356,7 +3715,7 @@ function app_modals(app){
 			function(modal) {
 				modal.hide();
 	    },
-			function (modal) {
+			function () {
 				callback(0);
 			});
 	
@@ -3380,7 +3739,7 @@ function app_modals(app){
 	modals.methods = function (fun ,args, title, specSelector, has_preview) {
 		var el;
 		var preview = true;
-		var plugins = pro.plugins(app.node());
+		
 	
 		var ok_fun = function (modal) {
 			preview = false;
@@ -3399,26 +3758,26 @@ function app_modals(app){
 	      .filter(function () {
 	        return this.id !== '';
 	      })
-	      .each(function (e) {
+	      .each(function () {
 	        form_data[this.id] = this.getValue();
 	      });
 		
-			if(timer)
-				clearTimeout(timer);		
+			if(timer) { clearTimeout(timer); }
+				
 		
 			if(preview === false || 
 				d3.event.target === el ||
 				form_data['prev_btn'] === true){
-				plugins.request(fun, form_data, form_data['s_id'], preview);
+				app.pluginRequest(fun, form_data, form_data['s_id'], preview);
 			}else	if(form_data['prev_auto'] === true){
 				timer = setTimeout(function () {
-					plugins.request(fun, form_data, form_data['s_id'], true);
+					app.pluginRequest(fun, form_data, form_data['s_id'], true);
 				}, 300);
 			}
 		});
 	
 		var inp = require('./input_elem');
-		el.append(inp.spectrumSelector());
+		el.append(inp.spectrumSelector(app));
 		el.append(inp.div(args, app));
 		el.append(inp.preview(true));
 		return nano.show;
@@ -3428,7 +3787,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":19,"./utils":30,"nanoModal":2}],26:[function(require,module,exports){
+},{"./input_elem":21,"./utils":36,"nanoModal":4}],30:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3502,7 +3861,111 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":25}],27:[function(require,module,exports){
+},{"../modals":29}],31:[function(require,module,exports){
+function handle_peaks (app, json) {
+	var spec = app.currentSlide().spectra().filter(function (s) {
+		return s.s_id() === json['s_id'];
+	});
+	
+	if (spec.length === 0){
+		app.modals.error('Incompatible server response', 
+		'Can\'t find spectrum with s_id:' + json['s_id']);
+	}
+	spec[0].addPeaks(json['peaks']);
+}
+
+function handle_segs (app, json) {
+	var spec = app.currentSlide().spectra().filter(function (s) {
+		return s.s_id() === json['s_id'];
+	});
+	
+	if (spec.length === 0){
+		app.modals.error('Incompatible server response', 
+		'Can\'t find spectrum with s_id:' + json['s_id']);
+	}
+	
+	for (var i = 0; i < json['segs'].length; i++) {
+		spec[0].addSegmentl( json['segs'][i] );
+	}
+}
+
+
+function handle_spec_feature (app, json, preview){
+	if (json['peaks'] !== undefined){
+		handle_peaks(app, json, preview);
+	}
+	if (json['segs'] !== undefined){
+		handle_segs(app, json, preview);
+	}
+}
+
+function handle_spectrum (app, json, preview){
+	require('./process_data')
+		.process_spectrum(json, app.currentSlide().addSpec);
+}
+
+module.exports.spectrum = handle_spectrum;
+module.exports.spec_feature = handle_spec_feature;
+},{"./process_data":33}],32:[function(require,module,exports){
+module.exports = function (app) {
+	function request (fun, params, s_id, preview) {
+		params = params || {};
+	
+		if(!params['sid']){
+			if(s_id){
+				params['sid'] = s_id;
+			}else{
+				var sel = app.currentSlide().spectra(true);
+				params['sid'] = sel.map(function (s) { return s.s_id(); });
+			}
+		}
+		if(params['sid'].length === 0)
+			{app.modals.error('No Spectra selected', 'Please select one or more spectra!');}
+		
+		var prefix = fun+'_';
+		var params_str = 'sid=' + 
+			JSON.stringify(params['sid']) + '&preview=' + (+preview) +'&'+ prefix + '=null';
+	
+		for(var key in params){
+			if(key === 'sid') {continue;}
+			if(params_str.length>0) {params_str +='&';}
+		
+			params_str += prefix + key+'='+params[key];
+		}
+	
+		var url = '/nmr/plugins?'+params_str;
+		//var ajax = pro.ajax();
+		var ajax = require('./ajax');
+		ajax.getJSON(url, function (response) {
+				respond(response, preview);
+		});
+	}
+	
+	 function respond (json, preview) {
+		if (json.constructor === Array) {
+			for (var i = json.length - 1; i >= 0; i--) {
+				respond(json[i]);
+			}
+			return;
+		}
+		var hooks = require('./plugin-hooks');
+		
+		var type = json['data_type'];
+		if (type === undefined){ //if no data_type, it is assumed as spectrum
+			type = 'spectrum';
+		}
+		if(typeof hooks[type] === 'function'){
+			hooks[type](app, json, preview);
+		}else{
+			app.modals.error('Unsupported data-type', 
+				'Couldn\'t find suitable function to read "'+type+'" data');
+		}
+		
+	}
+	return request;
+};
+
+},{"./ajax":30,"./plugin-hooks":31}],33:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -3720,7 +4183,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":26,"./worker":28}],28:[function(require,module,exports){
+},{"./ajax":30,"./worker":34}],34:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -3806,7 +4269,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],29:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = function(){
 	var core = require('./elem');
 	var source = core.Elem('g');
@@ -3819,6 +4282,7 @@ module.exports = function(){
 	// Event dispatcher to group all listeners in one place.
 	var dispatcher = d3.dispatch(
 		"rangechange", "regionchange", "regionfull", "redraw",  	//redrawing events
+		'specDataChange',
 		"mouseenter", "mouseleave", "mousemove", "click", 	//mouse events
 		"keyboard",																//Keyboard
 		"peakpickEnable", "peakdelEnable", "peakpick", "peakdel",		//Peak picking events
@@ -3849,7 +4313,6 @@ module.exports = function(){
 		var width = svg_width - margin.left - margin.right,
         height = svg_height - margin.top - margin.bottom;
 		
-		console.log('slide w,h ', svg_width, svg_height);
     var x = d3.scale.linear().range([0, width]),
     y = d3.scale.linear().range([height, 0]);
   
@@ -3867,7 +4330,6 @@ module.exports = function(){
 		var two_d = (data["nd"] && data["nd"] === 2);
 		dispatcher.idx = 0;
 		
-		console.log(app);
 		svg_selection = app.append('svg')
 			.classed('spec-slide', true)
 			.attr({
@@ -3904,6 +4366,10 @@ module.exports = function(){
 		*/
 	
 		if(two_d){
+			var slope = 1;
+			if (require('bowser').safari) {
+			  slope *= 2;
+			}
 			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
@@ -3914,12 +4380,12 @@ module.exports = function(){
 	
 			fe_component_transfer.append("feFuncR")
 				.attr("type","linear")
-				.attr("slope","-1")
+				.attr("slope",-slope)
 				.attr("intercept","0.5");
 				
 			fe_component_transfer.append("feFuncB")
 				.attr("type","linear")
-				.attr("slope","1")
+				.attr("slope",slope)
 				.attr("intercept","-0.5");
 	
 			fe_component_transfer = svg_filter.append("feComponentTransfer")
@@ -4039,7 +4505,7 @@ module.exports = function(){
 	return Slide;
 };
 
-},{"./d1/scale-brush":11,"./d1/spec-container-1d":12,"./d2/spec-container-2d":15,"./elem":17,"./utils":30}],30:[function(require,module,exports){
+},{"./d1/scale-brush":12,"./d1/spec-container-1d":13,"./d2/spec-container-2d":16,"./elem":18,"./utils":36,"bowser":2}],36:[function(require,module,exports){
 var setCookie = function(cname, cvalue, exdays) {
   var d = new Date();
   d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -4317,4 +4783,5 @@ module.exports.simplify = resample;
 module.exports.sliceData = getSlicedData;
 module.exports.sliceDataIdx = sliceDataIdx;
 
-},{"simplify":3}]},{},[4,26,25,17,18,30,28,27,5,8,11,13,10,9,15,16,29]);
+},{"simplify":5}]},{},[20])(20)
+});
