@@ -24,7 +24,7 @@ module.exports = function(){
 				svg_width = dimensions[0]; //deduct 50px for column menu.
 				svg_height = dimensions[1];
 		}
-		
+		console.log(svg_width);
     if (svg_width < 400 || svg_height < 400){
       throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
     }

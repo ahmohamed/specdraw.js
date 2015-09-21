@@ -1,5 +1,5 @@
 module.exports = function () {
-	var utils = require('../utils');
+	var simplify = require('../utils/simplify-line');
 	var core = require('../elem');
 	var source = core.ResponsiveElem('path');
 	core.inherit(PathElem, source);
@@ -35,7 +35,7 @@ module.exports = function () {
 		if ( !svg_elem ){return PathElem;}
 		
 		if(simplify_val){
-			data_resample = utils.simplify(data, x, simplify_val);
+			data_resample = simplify(data, x, simplify_val);
 			console.log('simplify', data_resample.length);
 		}else{
 			data_resample = data;

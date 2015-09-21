@@ -1,3 +1,4 @@
+require('./utils/array');
 module.exports = {};
 module.exports.App = require('./main_app');
 module.exports.hooks = {};

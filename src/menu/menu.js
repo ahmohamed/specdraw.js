@@ -1,4 +1,4 @@
-var utils = require('../utils');
+var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
 module.exports = function (app){	
@@ -46,12 +46,12 @@ module.exports = function (app){
 	// Full screen manipulation
 	elem.select('.open-fullscreen')
 		.on('click', function () {
-			utils.fullScreen.toggle(app.node());
+			fullscreen.toggle(app.node());
 			toggle.apply(this);
 		});
 	
 	d3.select(window).on('resize.fullscreenbutton', function () {
-		elem.select('.open-fullscreen').classed('opened', utils.fullScreen.isFull() );
+		elem.select('.open-fullscreen').classed('opened', fullscreen.isFull() );
 	});
 	/**************************/
 	

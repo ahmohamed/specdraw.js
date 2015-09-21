@@ -4,7 +4,7 @@ module.exports = function(){
 	core.inherit(Slide, source);
 	
 	var data, slide_selection, svg_selection, svg_width, svg_height;
-	var clip_id = require('./utils').guid();
+	var clip_id = require('./utils/guid')();
 	var parent_app, spec_container;
 	
 	// Event dispatcher to group all listeners in one place.

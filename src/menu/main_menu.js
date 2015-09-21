@@ -1,5 +1,5 @@
 var inp = require('../input_elem');
-var utils = require('../utils');
+var fireEvent = require('../utils/event');
 
 function add_li(sel) {
 	sel.enter()
@@ -47,7 +47,7 @@ function main_menu () {
     nav.selectAll('li')
       .on("click", function(d){
         if(d.fun){
-          utils.fireEvent(div.node(), 'click'); //close the menu.
+          fireEvent(div.node(), 'click'); //close the menu.
           d.fun();
         }else{
         	this.focus();

@@ -195,7 +195,7 @@ function app_modals(app){
 	
 		var ok_fun = function (modal) {
 			preview = false;
-			require('./utils').fireEvent(el.node(), 'input');
+			require('./utils/event')(el.node(), 'input');
 			modal.hide();
 		};
 	

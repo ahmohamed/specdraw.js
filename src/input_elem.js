@@ -1,5 +1,5 @@
 var inp = {};
-var fireEvent = require('./utils').fireEvent;
+var fireEvent = require('./utils/event');
 
 inp.num = function (label, val, _min, _max, step, unit) {
 	var elem = d3.select(document.createElement("label"));
