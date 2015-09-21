@@ -320,7 +320,7 @@ svg {
 }
 
 
-.spec-app .dimmed .spec-line:not(.highlighted) .line{
+.spec-app .spec-line.dimmed:not(.highlighted) .line{
 	stroke-opacity:0.2;
 }
 .highlighted .line{
@@ -635,10 +635,18 @@ body {
   pointer-events:all;
 }
 .main-menu .nav li.openable:after{
-  content:'▶';
-  float:right;
-  margin-left:10px;
-  margin-right:-5px;
+  content:' ';
+	margin-left: 10px;
+  margin-right: -5px;
+  position: relative;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  top: 10px;
+  right: 5px;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #ddd;
 }
 .main-menu .nav li:hover{
   color:#fff;

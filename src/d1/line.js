@@ -108,7 +108,13 @@ module.exports = function () {
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					data_slice = e.xdomain.map(SpecLine.ppmToi);
+					var new_slice = e.xdomain.map(SpecLine.ppmToi);
+					if (data_slice && new_slice[0] === data_slice[0] && new_slice[1] === data_slice[1]){
+						return;
+					}else{
+						data_slice = new_slice;
+					}
+						
 					i_to_pixel.domain( data_slice );
 					
 					//TODO: resample factors both x and y dimensions.

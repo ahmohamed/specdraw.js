@@ -13,8 +13,8 @@ module.exports = function (node) {
 		cs_height = getComputedStyle(node).height;
 	}
 	
-	var width = d3.max(clientwidth, br_width, cs_width),
-		height = d3.max(clientheight, br_height, cs_height);
+	var width = d3.max([clientwidth, br_width, cs_width]),
+		height = d3.max([clientheight, br_height, cs_height]);
 	
 	return [width, height];
 };

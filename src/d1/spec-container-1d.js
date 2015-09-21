@@ -217,6 +217,9 @@ module.exports = function () {
 			update_range();
 		}		
 		
+		if(SpecContainer.parentApp()){
+			SpecContainer.parentApp().dispatcher().slideContentChange();
+		}		
 		return s;
 	};
 	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
@@ -239,7 +242,7 @@ module.exports = function () {
 			specs.sel().classed('dimmed', false)
 				.classed('highlighted', false);
 		}else{
-			specs.sel().classed('dimmed', false);
+			specs.sel().classed('dimmed', true);
 			_.sel().classed('highlighted', true);
 		}		
 	};

@@ -778,12 +778,10 @@ module.exports = function (){
 				spec_line.sel().toggleClass("selected");
 			})
 			.on("mouseenter",function(){
-				spec_line.sel().selectP('.main-focus').classed('dimmed', true);
-				spec_line.sel().classed('highlighted', true);
+				spec_line.parent().highlightSpec(spec_line);
 			})
 			.on("mouseleave",function(){
-				spec_line.sel().selectP('.main-focus').classed('dimmed', false);
-				spec_line.sel().classed('highlighted', false);
+				spec_line.parent().highlightSpec();
 			});
 
 		svg_elem
@@ -1137,7 +1135,13 @@ module.exports = function () {
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					data_slice = e.xdomain.map(SpecLine.ppmToi);
+					var new_slice = e.xdomain.map(SpecLine.ppmToi);
+					if (data_slice && new_slice[0] === data_slice[0] && new_slice[1] === data_slice[1]){
+						return;
+					}else{
+						data_slice = new_slice;
+					}
+						
 					i_to_pixel.domain( data_slice );
 					
 					//TODO: resample factors both x and y dimensions.
@@ -1503,7 +1507,7 @@ module.exports = function () {
 	return PathElem;
 };
 
-},{"../elem":18,"../utils/simplify-line":40}],11:[function(require,module,exports){
+},{"../elem":18,"../utils/simplify-line":42}],11:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -2043,6 +2047,9 @@ module.exports = function () {
 			update_range();
 		}		
 		
+		if(SpecContainer.parentApp()){
+			SpecContainer.parentApp().dispatcher().slideContentChange();
+		}		
 		return s;
 	};
 	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
@@ -2065,7 +2072,7 @@ module.exports = function () {
 			specs.sel().classed('dimmed', false)
 				.classed('highlighted', false);
 		}else{
-			specs.sel().classed('dimmed', false);
+			specs.sel().classed('dimmed', true);
 			_.sel().classed('highlighted', true);
 		}		
 	};
@@ -2802,6 +2809,7 @@ module.exports.hooks.readers = require('./pro/plugin-hooks');
 module.exports.get_spectrum = require('./pro/process_data').get_spectrum;
 module.exports.version = "0.5.2";
 //console.log("specdraw:"+ spec.version);
+
 },{"./main_app":22,"./pro/plugin-hooks":31,"./pro/process_data":33,"./utils/array":36}],21:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils/event');
@@ -3098,7 +3106,7 @@ inp.popover = function (title) {
 };
 
 module.exports = inp;
-},{"./d1/threshold":14,"./utils/event":37}],22:[function(require,module,exports){
+},{"./d1/threshold":14,"./utils/event":38}],22:[function(require,module,exports){
 module.exports = function(){
 	var core = require('./elem');
 	var source = core.Elem().class('spec-app');
@@ -3108,26 +3116,44 @@ module.exports = function(){
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
 	var modals;
 	var slides = core.ElemArray(), current_slide;
-	
-  function App(div){
+	function check_size(divnode) {
 		svg_width = App.width();
 		svg_height = App.height();
-		
-    /* * Check size definitions**/
 		if (typeof svg_width === 'undefined' ||
 			typeof svg_height === 'undefined' ||
 			isNaN(svg_width) || isNaN(svg_height)
 		){
-				var parent_svg = div.node();
-				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
-					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
-				
-				svg_width = dimensions[0]; //deduct 50px for column menu.
-				svg_height = dimensions[1];
+			var size = require('./utils/get-size')(divnode);
+			svg_width = size[0];
+			svg_height = size[1];
+			if (typeof svg_width === 'undefined' ||
+				typeof svg_height === 'undefined'){
+					return false;
+				}
 		}
-		console.log(svg_width);
-    if (svg_width < 400 || svg_height < 400){
-      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
+		if (svg_width < 400 || svg_height < 400){return false;}
+		return true;
+	}
+	
+	function App(div) {
+		if(!check_size(div.node())){
+			require('./utils/docready')(function () {	render(div); });
+			return;
+		}		
+		render(div);
+	}
+	
+  function render(div){
+    if ( !check_size(div.node()) ){
+			if(div.node().tagName.toLowerCase() === 'specdraw-js'){
+				// When web components are used, the element's dimensions are not
+				// set even when the DOM is ready. However, the container div is set.
+				if (!check_size(div.node().parentNode)){
+					throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
+				}
+			}else{
+				throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");	
+			}
     }
 		
 		selection = source(div)
@@ -3175,7 +3201,7 @@ module.exports = function(){
 		return slides;
 	};
 	App.currentSlide = function (s) {
-		if (!arguments.length) { return current_slide; }
+		if (!arguments.length) { return current_slide || slides[slides.length -1]; }
 		if (current_slide) { // When the first slide is added, no current_slide.
 			current_slide.show(false);
 		}
@@ -3227,12 +3253,27 @@ module.exports = function(){
 	App.options = {
 		grid:{x:false, y:false}
 	};
+	App.data = function (url, s_per_slide) {
+		if(typeof s_per_slide === 'undefined'){
+			s_per_slide = 5;
+		}
+		var callback = function (data) {
+			if(!App.currentSlide() || App.currentSlide().spectra().length  > s_per_slide - 1){
+				App.appendSlide(data);
+			}else{
+				App.currentSlide().addSpec(data);
+			}
+		};
+		
+		require('./pro/process_data').get_spectrum(url,	callback);
+		return App;
+	};
 	return App;
 };
 
 //TODO: remove Elements
 
-},{"./elem":18,"./events":19,"./menu/menu":24,"./modals":29,"./pro/plugins":32,"./slide":35}],23:[function(require,module,exports){
+},{"./elem":18,"./events":19,"./menu/menu":24,"./modals":29,"./pro/plugins":32,"./pro/process_data":33,"./slide":35,"./utils/docready":37,"./utils/get-size":40}],23:[function(require,module,exports){
 var inp = require('../input_elem');
 var fireEvent = require('../utils/event');
 
@@ -3299,17 +3340,23 @@ function main_menu () {
 }
 
 module.exports = main_menu;
-},{"../input_elem":21,"../utils/event":37}],24:[function(require,module,exports){
+},{"../input_elem":21,"../utils/event":38}],24:[function(require,module,exports){
 var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
 module.exports = function (app){	
-	function toggle(){
+	function toggle(callback){
 	  if(d3.event.target !== this) {return;}
   
 	  var button = d3.select(this).toggleClass('opened');
-	  button.select('.tooltip')
-	    .style('display', button.classed('opened')? 'none': null);
+		var opened = button.classed('opened');
+		button.select('.tooltip')
+	    .style('display', opened ? 'none': null);
+		
+		if (opened && typeof callback === 'function'){
+			button.call(callback);
+		}
+		return opened;
 	}
 	// Import needed modules for sub-menus
 	var main_menu = require('./main_menu')(app),
@@ -3339,8 +3386,16 @@ module.exports = function (app){
 	  .call(bootstrap.tooltip().placement('right'))
 	  .on('click', toggle);
 	
-	elem.select('.open-menu').call( main_menu.data(menu_data) ); 
 	
+	elem.select('.open-menu').on('click', function(){
+		toggle.apply(this, main_menu.data(menu_data));
+	});
+	elem.select('.open-spec-legend').on('click', function(){
+		toggle.apply(this, spectra);
+	});
+	elem.select('.open-slides').on('click', function(){
+		toggle.apply(this, slides);
+	});
 	
 	var app_dispatcher = app.dispatcher();
 	
@@ -3358,7 +3413,7 @@ module.exports = function (app){
 	/**************************/
 	
 	app_dispatcher.on('menuUpdate.menu', function () {
-		elem.select('.open-menu').call( main_menu );
+		elem.select('.open-menu').call( main_menu.data(menu_data) );
 	});
 	app_dispatcher.on('slideChange.menu', function (s) {
 		//TODO: hide parent menu-item when all children are hidden
@@ -3377,7 +3432,7 @@ module.exports = function (app){
 	return elem;									
 };
 
-},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":38,"./main_menu":23,"./menu_data":25,"./serverside-menu":26,"./slides":27,"./spectra":28}],25:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":39,"./main_menu":23,"./menu_data":25,"./serverside-menu":26,"./slides":27,"./spectra":28}],25:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3788,7 +3843,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":21,"./utils/event":37,"nanoModal":4}],30:[function(require,module,exports){
+},{"./input_elem":21,"./utils/event":38,"nanoModal":4}],30:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -4478,7 +4533,9 @@ module.exports = function(){
 		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
 	Slide.show = function (_) {
-		svg_selection.classed('active', _);
+		if(svg_selection){
+			svg_selection.classed('active', _);	
+		}		
 	};
 	Slide.nd = function(){
 		if (!data){ //TODO: empty slide?
@@ -4506,7 +4563,7 @@ module.exports = function(){
 	return Slide;
 };
 
-},{"./d1/scale-brush":12,"./d1/spec-container-1d":13,"./d2/spec-container-2d":16,"./elem":18,"./utils/guid":39,"bowser":2}],36:[function(require,module,exports){
+},{"./d1/scale-brush":12,"./d1/spec-container-1d":13,"./d2/spec-container-2d":16,"./elem":18,"./utils/guid":41,"bowser":2}],36:[function(require,module,exports){
 Array.prototype.subset =function(arr){
 	var ret = [];
 	for (var i = arr.length - 1; i >= 0; i--){
@@ -4570,6 +4627,76 @@ d3.selection.prototype.size = function() {
   return n;
 };
 },{}],37:[function(require,module,exports){
+"use strict";
+// The public function name defaults to window.docReady
+// but you can modify the last line of this function to pass in a different object or method name
+// if you want to put them in a different namespace and those will be used instead of 
+// window.docReady(...)
+var funcName = funcName || "docReady";
+var readyList = [];
+var readyFired = false;
+var readyEventHandlersInstalled = false;
+    
+// call this when the document is ready
+// this function protects itself against being called more than once
+function ready() {
+	if (!readyFired) {
+		// this must be set to true before we start calling callbacks
+		readyFired = true;
+		for (var i = 0; i < readyList.length; i++) {
+			// if a callback here happens to add new ready handlers,
+			// the docReady() function will see that it already fired
+			// and will schedule the callback to run right after
+			// this event loop finishes so all handlers will still execute
+			// in order and no new ones will be added to the readyList
+			// while we are processing the list
+			readyList[i].fn.call(window, readyList[i].ctx);
+		}
+		// allow any closures held by these functions to free
+		readyList = [];
+	}
+}
+    
+function readyStateChange() {
+	if ( document.readyState === "complete" ) {
+		ready();
+	}
+}
+    
+// This is the one public interface
+// docReady(fn, context);
+// the context argument is optional - if present, it will be passed
+// as an argument to the callback
+module.exports = function(callback, context) {
+	// if ready has already fired, then just schedule the callback
+	// to fire asynchronously, but right away
+	if (readyFired) {
+		setTimeout(function() {callback(context);}, 1);
+		return;
+	} else {
+		// add the function and context to the list
+		readyList.push({fn: callback, ctx: context});
+	}
+	// if document already ready to go, schedule the ready function to run
+	// IE only safe when readyState is "complete", others safe when readyState is "interactive"
+	if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
+		setTimeout(ready, 1);
+	} else if (!readyEventHandlersInstalled) {
+		// otherwise if we don't have event handlers installed, install them
+		if (document.addEventListener) {
+			// first choice is DOMContentLoaded event
+			document.addEventListener("DOMContentLoaded", ready, false);
+			// backup is window load event
+			window.addEventListener("load", ready, false);
+		} else {
+			// must be IE
+			document.attachEvent("onreadystatechange", readyStateChange);
+			window.attachEvent("onload", ready);
+		}
+		readyEventHandlersInstalled = true;
+	}
+};
+},{}],38:[function(require,module,exports){
 module.exports = function(element,event){
 	var evt;
 	if (document.createEventObject){
@@ -4584,7 +4711,7 @@ module.exports = function(element,event){
   }
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 function launchFullScreen(element) {
 	if (element.requestFullscreen)
 		{ element.requestFullscreen(); }
@@ -4621,7 +4748,28 @@ module.exports.launch = launchFullScreen;
 module.exports.toggle = toggleFullScreen;
 module.exports.isFull = isFullScreen;
 
-},{}],39:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
+module.exports = function (node) {
+	var clientwidth = node.clientWidth,
+	clientheight = node.clientHeight;
+	
+	var br_width, br_height;
+	if(typeof node.getBoundingClientRect === 'function'){
+		br_width = node.getBoundingClientRect().width;
+		br_height = node.getBoundingClientRect().height;
+	}
+	var cs_width, cs_height;
+	if(typeof getComputedStyle === 'function'){
+		cs_width = getComputedStyle(node).width;
+		cs_height = getComputedStyle(node).height;
+	}
+	
+	var width = d3.max([clientwidth, br_width, cs_width]),
+		height = d3.max([clientheight, br_height, cs_height]);
+	
+	return [width, height];
+};
+},{}],41:[function(require,module,exports){
 module.exports = function (){
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
 		/[xy]/g, function(c) {
@@ -4631,7 +4779,7 @@ module.exports = function (){
 	);
 };
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = function (data, xscale, tolerance) {
 	var ppm_range = Math.abs(xscale.domain()[0] - xscale.domain()[1]);
 	var pixels = Math.abs(xscale.range()[0] - xscale.range()[1]);

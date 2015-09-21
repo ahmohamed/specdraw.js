@@ -2,12 +2,18 @@ var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
 module.exports = function (app){	
-	function toggle(){
+	function toggle(callback){
 	  if(d3.event.target !== this) {return;}
   
 	  var button = d3.select(this).toggleClass('opened');
-	  button.select('.tooltip')
-	    .style('display', button.classed('opened')? 'none': null);
+		var opened = button.classed('opened');
+		button.select('.tooltip')
+	    .style('display', opened ? 'none': null);
+		
+		if (opened && typeof callback === 'function'){
+			button.call(callback);
+		}
+		return opened;
 	}
 	// Import needed modules for sub-menus
 	var main_menu = require('./main_menu')(app),
@@ -37,8 +43,16 @@ module.exports = function (app){
 	  .call(bootstrap.tooltip().placement('right'))
 	  .on('click', toggle);
 	
-	elem.select('.open-menu').call( main_menu.data(menu_data) ); 
 	
+	elem.select('.open-menu').on('click', function(){
+		toggle.apply(this, main_menu.data(menu_data));
+	});
+	elem.select('.open-spec-legend').on('click', function(){
+		toggle.apply(this, spectra);
+	});
+	elem.select('.open-slides').on('click', function(){
+		toggle.apply(this, slides);
+	});
 	
 	var app_dispatcher = app.dispatcher();
 	
@@ -56,7 +70,7 @@ module.exports = function (app){
 	/**************************/
 	
 	app_dispatcher.on('menuUpdate.menu', function () {
-		elem.select('.open-menu').call( main_menu );
+		elem.select('.open-menu').call( main_menu.data(menu_data) );
 	});
 	app_dispatcher.on('slideChange.menu', function (s) {
 		//TODO: hide parent menu-item when all children are hidden

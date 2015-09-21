@@ -205,7 +205,9 @@ module.exports = function(){
 		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
 	Slide.show = function (_) {
-		svg_selection.classed('active', _);
+		if(svg_selection){
+			svg_selection.classed('active', _);	
+		}		
 	};
 	Slide.nd = function(){
 		if (!data){ //TODO: empty slide?

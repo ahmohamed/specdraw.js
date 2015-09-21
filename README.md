@@ -17,3 +17,6 @@ To see the package in action, visit my [codepen](http://codepen.io/collection/ng
 
 ### Contribution
 All contributions, suggestions, feature requests are exetremely welcome. Just create an issue or a pull request, or email me @ mohamed [at] kuicr.kyoto-u.ac.jp 
+
+## Known issues
+ - Firefox bug causes 2D spectra to disappear when zoomed. Apparently the filters conflict with transform attributes applied. 

@@ -62,12 +62,10 @@ module.exports = function (){
 				spec_line.sel().toggleClass("selected");
 			})
 			.on("mouseenter",function(){
-				spec_line.sel().selectP('.main-focus').classed('dimmed', true);
-				spec_line.sel().classed('highlighted', true);
+				spec_line.parent().highlightSpec(spec_line);
 			})
 			.on("mouseleave",function(){
-				spec_line.sel().selectP('.main-focus').classed('dimmed', false);
-				spec_line.sel().classed('highlighted', false);
+				spec_line.parent().highlightSpec();
 			});
 
 		svg_elem
