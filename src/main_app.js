@@ -79,6 +79,9 @@ module.exports = function(){
 		for (var i = 0; i < slides.length; i++) {
 			render_slide(slides[i]);
 		}
+		if(slides.length === 0){
+			App.appendSlide();
+		}
 	}
 	function render_slide(s) {
 		if(! selection){ return; }
@@ -111,35 +114,10 @@ module.exports = function(){
 	};
 	App.pluginRequest = require('./pro/plugins')(App);
 	App.appendSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendSlide: No data provided.");
-		} 
-		
 		var s = require('./slide')().datum(data);
 		slides.push(s);
 		render_slide(s);
 		return App;
-	};
-	App.appendToCurrentSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendToCurrentSlide: No data provided.");
-		} 
-		
-		if (selection){
-			selection.node().appendToCurrentSlide(data);
-		} else{
-			if(slides.length === 0){ //No slides available; create a new one
-				return App.appendSlide(data);
-			}
-			//Otherwise, append data to last slide.
-			var current_slide = slides[slides.length-1].slide;
-			//TODO: BUG
-			//We don't know if the array in slide is a data array 
-			// or an array of data arrays (i.e dataset)
-			current_slide.push(data);
-			
-			return App;
-		}
 	};
 	App.options = {
 		grid:{x:false, y:false}

@@ -113,17 +113,10 @@ module.exports = function () {
 						return;
 					}else{
 						data_slice = new_slice;
-					}
+						i_to_pixel.domain( data_slice );
 						
-					i_to_pixel.domain( data_slice );
-					
-					//TODO: resample factors both x and y dimensions.
-					// Both dimension need to have the same unit, i.e. pixels.										
-					path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
-					range.y = path_elem.range().y;
-					range.y[0] *= scale_factor;
-					range.y[1] *= scale_factor;
-					
+						render_data();
+					}
 				}
 			})
 			.on("_integrate", function(e){
@@ -166,7 +159,14 @@ module.exports = function () {
 	function render_data() {
 		//TODO: Update peaks, integrate, segments to match new data.
 		if (!svg_elem){ return; }
-		svg_elem.on("_regionchange")({xdomain:x.domain()});
+
+		//TODO: resample factors both x and y dimensions.
+		// Both dimension need to have the same unit, i.e. pixels.										
+		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
+		range.y = path_elem.range().y;
+		range.y[0] *= scale_factor;
+		range.y[1] *= scale_factor;
+		
 		svg_elem.on("_redraw")({x:true});
 	}
 	
@@ -297,6 +297,9 @@ module.exports = function () {
   SpecLine.selected = function(_){
     if (!arguments.length) {return selected;}
     selected = _;
+		if(svg_elem){
+			svg_elem.classed('selected', _);
+		}
     return SpecLine;
   };
 	SpecLine.lineIdx = function () {

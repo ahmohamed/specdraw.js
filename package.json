@@ -18,6 +18,7 @@
   "dependencies": {
     "bowser": "^1.0.0",
     "d3-context-menu": "0.0.1",
+    "jcampconverter": "^2.1.0",
     "nanomodal": "^5.1.1",
     "simplify": "^1.0.0"
   }

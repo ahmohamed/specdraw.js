@@ -67,8 +67,12 @@ module.exports = function () {
 					} 
 				}else{
 					//modify range.y  and reset the zoom scale
-					var y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-						y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+					var s = SpecContainer.spectra(true);
+					if (s.length === 0){// if no spectra are selected.
+						s = specs;				// use all spectra.
+					}
+					var y0 = d3.min(s.map(function(s){return s.range().y[0];})),
+						y1 = d3.max(s.map(function(s){return s.range().y[1];}));
 					var y_limits = (y1-y0);
 					y0 = y0 - (0.05 * y_limits);
 					y1 = y1 + (0.05 * y_limits);
@@ -143,10 +147,15 @@ module.exports = function () {
 		
 	}
 	function update_range() {
-		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
-			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
-			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+		var s = SpecContainer.spectra(true);
+		if (s.length === 0){// if no spectra are selected.
+			s = specs;				// use all spectra.
+		}
+		
+		var x0 = d3.max(s.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(s.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(s.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(s.map(function(s){return s.range().y[1];}));
 
 		// Add 5% margin to top and bottom (easier visualization).
 		var y_limits = (y1-y0);
@@ -154,7 +163,6 @@ module.exports = function () {
 		y1 = y1 + (0.05 * y_limits);
 
 		var xdomain = x.domain();
-
 		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
 
 		if(specs.length > 1){

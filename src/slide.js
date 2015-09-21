@@ -19,17 +19,29 @@ module.exports = function(){
 		"blindregion",
 		"log"
 	);
-	
+	function create_empty_slide(app) {
+		svg_selection = app.append('div')
+			.text('This slide does not contain any spectra. Click to add one.')
+			.style({
+				width: (svg_width+'px'),
+				'line-height': (svg_height+'px'),
+				'text-align': 'center',
+    		'vertical-align': 'middle'
+			})
+			.classed('spec-slide empty', true)
+			.on('click', require('./pro/open-file')(app) );
+		console.log(Slide.addSpec);
+	}
 	
 	function Slide(app){
 		parent_app = app;
-		if(!data){
-			//create_empty_slide();//TODO
-			return ;
-		}
 		svg_width = Slide.width();
 		svg_height = Slide.height();
 		
+		if(!data){
+			create_empty_slide(app);
+			return ;
+		}
 		var brush_margin = 20;
     var margin = {
         top: 10 + brush_margin,
@@ -231,6 +243,18 @@ module.exports = function(){
   };
 	Slide.parent = function () {
 		return parent_app;
+	};
+	Slide.spectra = function () {
+		// This is called only when spec_container is not present, i.e. empty slide.
+		return [];
+	};
+	Slide.addSpec = function (_) { 
+		// This is called only when spec_container is not present, i.e. empty slide.
+		console.log('first spec', svg_selection.node());
+		svg_selection.remove(); // remove the empty slide.
+		Slide.datum(_)(parent_app);	// call the slide again with the data.
+		if (parent_app.currentSlide() === Slide) { Slide.show(true); }
+		console.log('added spec', svg_selection.node());
 	};
 	return Slide;
 };

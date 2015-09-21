@@ -21,6 +21,19 @@ inp.num = function (label, val, _min, _max, step, unit) {
 	return function () { return elem.node();	};
 };
 
+inp.text = function (label, placeholder) {
+	var elem = d3.select(document.createElement("label"));
+	elem.classed('param text', true)
+		.text(label)
+		.append("input")
+			.attr({
+				type: 'text',
+				placeholder: placeholder || ''
+			});
+	
+	return function () { return elem.node(); };
+};
+
 inp.checkbox = function (label, val) {
 	var elem = d3.select(document.createElement('label'));
 	elem.classed('param checkbox', true)
@@ -233,15 +246,16 @@ var parseInputElem = function (label, type, details, app) {
 };
 
 inp.spectrumSelector = function (app) {
-	var specs = app.currentSlide().spectra();
-	var spec_container = app.currentSlide().specContainer();
+	var specs = app.currentSlide() ? app.currentSlide().spectra(): null;
 	
-	if (specs.length === 0){
+	
+	if ( (!specs) || specs.length === 0){
 		return function () {
 			return d3.select(document.createElement('div')).text('No Spectra to show').node();
 		};
 	} 
-		
+	
+	var spec_container = app.currentSlide().specContainer();		
 	var elem = 	d3.select(
 		inp.select_multi('Select Spectrum', specs)()
 		).classed('spec-selector', true);
@@ -250,6 +264,7 @@ inp.spectrumSelector = function (app) {
 	  	.each(function(s){
 				d3.select(this).select('.checkbox')					
 					.style('color', getComputedStyle(s.select('path').node()).stroke)
+					.style('opacity', getComputedStyle(s.select('path').node()).strokeOpacity)
 					.select('.label').text( s.label() );
 					
 				d3.select(this).on('mouseenter', function () {

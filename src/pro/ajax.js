@@ -21,7 +21,12 @@ var getJSON = function(url, callback, show_progress){
 	var prog = ajaxProgress();
 	request(url, function (response) {
 		prog.stop();
-		var json = JSON.parse(response);
+		var json;
+		try {
+	    json = JSON.parse(response);
+    } catch (e) {
+      json = response.toString()
+    }
 		if(typeof json['error'] === 'undefined'){
 		  callback(json);
 		}else{

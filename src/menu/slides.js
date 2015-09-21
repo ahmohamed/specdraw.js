@@ -17,7 +17,14 @@ module.exports = function (app) {
 				.on('click', function (d) {
 					app.dispatcher().slideChange(d);
 				});
-				
+		
+		nav.select('ul')
+			.append('li')
+				.text('+ New Slide')
+				.on('click', function () {
+					app.appendSlide();
+				});
+			
 		return div;
 	}
 	return _main;

@@ -539,8 +539,753 @@
 ));
 
 },{}],4:[function(require,module,exports){
-var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
+'use strict';
+
+function getConverter() {
+
+    // the following RegExp can only be used for XYdata, some peakTables have values with a "E-5" ...
+    var xyDataSplitRegExp = /[,\t \+-]*(?=[^\d,\t \.])|[ \t]+(?=[\d+\.-])/;
+    var removeCommentRegExp = /\$\$.*/;
+    var peakTableSplitRegExp = /[,\t ]+/;
+    var DEBUG = false;
+
+    var GC_MS_FIELDS = ['TIC', '.RIC', 'SCANNUMBER'];
+
+    function convertToFloatArray(stringArray) {
+        var l = stringArray.length;
+        var floatArray = new Array(l);
+        for (var i = 0; i < l; i++) {
+            floatArray[i] = parseFloat(stringArray[i]);
+        }
+        return floatArray;
+    }
+
+    /*
+     options.keepSpectra: keep the original spectra for a 2D
+     options.xy: true // create x / y array instead of a 1D array
+     options.keepRecordsRegExp: which fields do we keep
+     */
+
+    function convert(jcamp, options) {
+        options = options || {};
+
+        var keepRecordsRegExp=/^[A-Z]+$/;
+        if (options.keepRecordsRegExp) keepRecordsRegExp=options.keepRecordsRegExp;
+
+        var start = new Date();
+
+        var ntuples = {},
+            ldr,
+            dataLabel,
+            dataValue,
+            ldrs,
+            i, ii, position, endLine, infos;
+
+        var result = {};
+        result.profiling = [];
+        result.logs = [];
+        var spectra = [];
+        result.spectra = spectra;
+        result.info = {};
+        var spectrum = {};
+
+        if (!(typeof jcamp === 'string')) return result;
+        // console.time('start');
+
+        if (result.profiling) result.profiling.push({action: 'Before split to LDRS', time: new Date() - start});
+
+        ldrs = jcamp.split(/[\r\n]+##/);
+
+        if (result.profiling) result.profiling.push({action: 'Split to LDRS', time: new Date() - start});
+
+        if (ldrs[0]) ldrs[0] = ldrs[0].replace(/^[\r\n ]*##/, '');
+
+        for (i = 0, ii = ldrs.length; i < ii; i++) {
+            ldr = ldrs[i];
+            // This is a new LDR
+            position = ldr.indexOf('=');
+            if (position > 0) {
+                dataLabel = ldr.substring(0, position);
+                dataValue = ldr.substring(position + 1).trim();
+            } else {
+                dataLabel = ldr;
+                dataValue = '';
+            }
+            dataLabel = dataLabel.replace(/[_ -]/g, '').toUpperCase();
+
+            if (dataLabel === 'DATATABLE') {
+                endLine = dataValue.indexOf('\n');
+                if (endLine === -1) endLine = dataValue.indexOf('\r');
+                if (endLine > 0) {
+                    var xIndex = -1;
+                    var yIndex = -1;
+                    // ##DATA TABLE= (X++(I..I)), XYDATA
+                    // We need to find the variables
+
+                    infos = dataValue.substring(0, endLine).split(/[ ,;\t]+/);
+                    if (infos[0].indexOf('++') > 0) {
+                        var firstVariable = infos[0].replace(/.*\(([a-zA-Z0-9]+)\+\+.*/, '$1');
+                        var secondVariable = infos[0].replace(/.*\.\.([a-zA-Z0-9]+).*/, '$1');
+                        xIndex = ntuples.symbol.indexOf(firstVariable);
+                        yIndex = ntuples.symbol.indexOf(secondVariable);
+                    }
+
+                    if (xIndex === -1) xIndex = 0;
+                    if (yIndex === -1) yIndex = 0;
+
+                    if (ntuples.first) {
+                        if (ntuples.first.length > xIndex) spectrum.firstX = ntuples.first[xIndex];
+                        if (ntuples.first.length > yIndex) spectrum.firstY = ntuples.first[yIndex];
+                    }
+                    if (ntuples.last) {
+                        if (ntuples.last.length > xIndex) spectrum.lastX = ntuples.last[xIndex];
+                        if (ntuples.last.length > yIndex) spectrum.lastY = ntuples.last[yIndex];
+                    }
+                    if (ntuples.vardim && ntuples.vardim.length > xIndex) {
+                        spectrum.nbPoints = ntuples.vardim[xIndex];
+                    }
+                    if (ntuples.factor) {
+                        if (ntuples.factor.length > xIndex) spectrum.xFactor = ntuples.factor[xIndex];
+                        if (ntuples.factor.length > yIndex) spectrum.yFactor = ntuples.factor[yIndex];
+                    }
+                    if (ntuples.units) {
+                        if (ntuples.units.length > xIndex) spectrum.xUnit = ntuples.units[xIndex];
+                        if (ntuples.units.length > yIndex) spectrum.yUnit = ntuples.units[yIndex];
+                    }
+                    spectrum.datatable = infos[0];
+                    if (infos[1] && infos[1].indexOf('PEAKS') > -1) {
+                        dataLabel = 'PEAKTABLE';
+                    } else if (infos[1] && (infos[1].indexOf('XYDATA') || infos[0].indexOf('++') > 0)) {
+                        dataLabel = 'XYDATA';
+                        spectrum.deltaX = (spectrum.lastX - spectrum.firstX) / (spectrum.nbPoints - 1);
+                    }
+                }
+            }
+
+
+            if (dataLabel === 'TITLE') {
+                spectrum.title = dataValue;
+            } else if (dataLabel === 'DATATYPE') {
+                spectrum.dataType = dataValue;
+                if (dataValue.indexOf('nD') > -1) {
+                    result.twoD = true;
+                }
+            } else if (dataLabel === 'XUNITS') {
+                spectrum.xUnit = dataValue;
+            } else if (dataLabel === 'YUNITS') {
+                spectrum.yUnit = dataValue;
+            } else if (dataLabel === 'FIRSTX') {
+                spectrum.firstX = parseFloat(dataValue);
+            } else if (dataLabel === 'LASTX') {
+                spectrum.lastX = parseFloat(dataValue);
+            } else if (dataLabel === 'FIRSTY') {
+                spectrum.firstY = parseFloat(dataValue);
+            } else if (dataLabel === 'NPOINTS') {
+                spectrum.nbPoints = parseFloat(dataValue);
+            } else if (dataLabel === 'XFACTOR') {
+                spectrum.xFactor = parseFloat(dataValue);
+            } else if (dataLabel === 'YFACTOR') {
+                spectrum.yFactor = parseFloat(dataValue);
+            } else if (dataLabel === 'DELTAX') {
+                spectrum.deltaX = parseFloat(dataValue);
+            } else if (dataLabel === '.OBSERVEFREQUENCY' || dataLabel === '$SFO1') {
+                if (!spectrum.observeFrequency) spectrum.observeFrequency = parseFloat(dataValue);
+            } else if (dataLabel === '.OBSERVENUCLEUS') {
+                if (!spectrum.xType) result.xType = dataValue.replace(/[^a-zA-Z0-9]/g, '');
+            } else if (dataLabel === '$SFO2') {
+                if (!result.indirectFrequency) result.indirectFrequency = parseFloat(dataValue);
+
+            } else if (dataLabel === '$OFFSET') {   // OFFSET for Bruker spectra
+                result.shiftOffsetNum = 0;
+                if (!result.shiftOffsetVal)  result.shiftOffsetVal = parseFloat(dataValue);
+            } else if (dataLabel === '$REFERENCEPOINT') {   // OFFSET for Varian spectra
+
+
+                // if we activate this part it does not work for ACD specmanager
+                //         } else if (dataLabel=='.SHIFTREFERENCE') {   // OFFSET FOR Bruker Spectra
+                //                 var parts = dataValue.split(/ *, */);
+                //                 result.shiftOffsetNum = parseInt(parts[2].trim());
+                //                 result.shiftOffsetVal = parseFloat(parts[3].trim());
+            } else if (dataLabel === 'VARNAME') {
+                ntuples.varname = dataValue.split(/[, \t]{2,}/);
+            } else if (dataLabel === 'SYMBOL') {
+                ntuples.symbol = dataValue.split(/[, \t]{2,}/);
+            } else if (dataLabel === 'VARTYPE') {
+                ntuples.vartype = dataValue.split(/[, \t]{2,}/);
+            } else if (dataLabel === 'VARFORM') {
+                ntuples.varform = dataValue.split(/[, \t]{2,}/);
+            } else if (dataLabel === 'VARDIM') {
+                ntuples.vardim = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+            } else if (dataLabel === 'UNITS') {
+                ntuples.units = dataValue.split(/[, \t]{2,}/);
+            } else if (dataLabel === 'FACTOR') {
+                ntuples.factor = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+            } else if (dataLabel === 'FIRST') {
+                ntuples.first = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+            } else if (dataLabel === 'LAST') {
+                ntuples.last = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+            } else if (dataLabel === 'MIN') {
+                ntuples.min = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+            } else if (dataLabel === 'MAX') {
+                ntuples.max = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+            } else if (dataLabel === '.NUCLEUS') {
+                if (result.twoD) {
+                    result.yType = dataValue.split(/[, \t]{2,}/)[0];
+                }
+            } else if (dataLabel === 'PAGE') {
+                spectrum.page = dataValue.trim();
+                spectrum.pageValue = parseFloat(dataValue.replace(/^.*=/, ''));
+                spectrum.pageSymbol = spectrum.page.replace(/=.*/, '');
+                var pageSymbolIndex = ntuples.symbol.indexOf(spectrum.pageSymbol);
+                var unit = '';
+                if (ntuples.units && ntuples.units[pageSymbolIndex]) {
+                    unit = ntuples.units[pageSymbolIndex];
+                }
+                if (result.indirectFrequency && unit !== 'PPM') {
+                    spectrum.pageValue /= result.indirectFrequency;
+                }
+            } else if (dataLabel === 'RETENTIONTIME') {
+                spectrum.pageValue = parseFloat(dataValue);
+            } else if (dataLabel === 'XYDATA') {
+                prepareSpectrum(result, spectrum);
+                // well apparently we should still consider it is a PEAK TABLE if there are no '++' after
+                if (dataValue.match(/.*\+\+.*/)) {
+                    parseXYData(spectrum, dataValue, result);
+                } else {
+                    parsePeakTable(spectrum, dataValue, result);
+                }
+                spectra.push(spectrum);
+                spectrum = {};
+            } else if (dataLabel === 'PEAKTABLE') {
+                prepareSpectrum(result, spectrum);
+                parsePeakTable(spectrum, dataValue, result);
+                spectra.push(spectrum);
+                spectrum = {};
+            } else if (isMSField(dataLabel)) {
+                spectrum[convertMSFieldToLabel(dataLabel)] = dataValue;
+            } else if (dataLabel.match(keepRecordsRegExp)) {
+                result.info[dataLabel] = dataValue.trim();
+            }
+        }
+
+        // Currently disabled
+        //    if (options && options.lowRes) addLowRes(spectra,options);
+
+        if (result.profiling) result.profiling.push({action: 'Finished parsing', time: new Date() - start});
+
+        if (Object.keys(ntuples).length>0) {
+            var newNtuples=[];
+            var keys=Object.keys(ntuples);
+            for (var i=0; i<keys.length; i++) {
+                var key=keys[i];
+                var values=ntuples[key];
+                for (var j=0; j<values.length; j++) {
+                    if (! newNtuples[j]) newNtuples[j]={};
+                    newNtuples[j][key]=values[j];
+                }
+            }
+            result.ntuples=newNtuples;
+        }
+
+        if (result.twoD) {
+            add2D(result);
+            if (result.profiling) result.profiling.push({
+                action: 'Finished countour plot calculation',
+                time: new Date() - start
+            });
+            if (!options.keepSpectra) {
+                delete result.spectra;
+            }
+        }
+
+
+        // maybe it is a GC (HPLC) / MS. In this case we add a new format
+        if (spectra.length > 1 && (! spectra[0].dataType || spectra[0].dataType.toLowerCase().match(/.*mass./))) {
+            addGCMS(result);
+            if (result.profiling) result.profiling.push({
+                action: 'Finished GCMS calculation',
+                time: new Date() - start
+            });
+        }
+
+
+        if (options.xy) { // the spectraData should not be a oneD array but an object with x and y
+            if (spectra.length > 0) {
+                for (var i=0; i<spectra.length; i++) {
+                    var spectrum=spectra[i];
+                    if (spectrum.data.length>0) {
+                        for (var j=0; j<spectrum.data.length; j++) {
+                            var data=spectrum.data[j];
+                            var newData={x:Array(data.length/2), y:Array(data.length/2)};
+                            for (var k=0; k<data.length; k=k+2) {
+                                newData.x[k/2]=data[k];
+                                newData.y[k/2]=data[k+1];
+                            }
+                            spectrum.data[j]=newData;
+                        }
+
+                    }
+
+                }
+            }
+        }
+
+        if (result.profiling) {
+            result.profiling.push({action: 'Total time', time: new Date() - start});
+        }
+
+        //   console.log(result);
+        //    console.log(JSON.stringify(spectra));
+        return result;
+
+    }
+
+
+    function convertMSFieldToLabel(value) {
+        return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function isMSField(dataLabel) {
+        for (var i = 0; i < GC_MS_FIELDS.length; i++) {
+            if (dataLabel === GC_MS_FIELDS[i]) return true;
+        }
+        return false;
+    }
+
+    function addGCMS(result) {
+        var spectra = result.spectra;
+        var existingGCMSFields = [];
+        var i;
+        for (i = 0; i < GC_MS_FIELDS.length; i++) {
+            var label = convertMSFieldToLabel(GC_MS_FIELDS[i]);
+            if (spectra[0][label]) {
+                existingGCMSFields.push(label);
+            }
+        }
+        if (existingGCMSFields.length===0) return;
+        var gcms = {};
+        gcms.gc = {};
+        gcms.ms = [];
+        for (i = 0; i < existingGCMSFields.length; i++) {
+            gcms.gc[existingGCMSFields[i]] = [];
+        }
+        for (i = 0; i < spectra.length; i++) {
+            var spectrum = spectra[i];
+            for (var j = 0; j < existingGCMSFields.length; j++) {
+                gcms.gc[existingGCMSFields[j]].push(spectrum.pageValue);
+                gcms.gc[existingGCMSFields[j]].push(parseFloat(spectrum[existingGCMSFields[j]]));
+            }
+          if (spectrum.data) gcms.ms[i] = spectrum.data[0];
+
+        }
+        result.gcms = gcms;
+    }
+
+    function prepareSpectrum(result, spectrum) {
+        if (!spectrum.xFactor) spectrum.xFactor = 1;
+        if (!spectrum.yFactor) spectrum.yFactor = 1;
+        if (spectrum.observeFrequency) {
+            if (spectrum.xUnit && spectrum.xUnit.toUpperCase() === 'HZ') {
+                spectrum.xUnit = 'PPM';
+                spectrum.xFactor = spectrum.xFactor / spectrum.observeFrequency;
+                spectrum.firstX = spectrum.firstX / spectrum.observeFrequency;
+                spectrum.lastX = spectrum.lastX / spectrum.observeFrequency;
+                spectrum.deltaX = spectrum.deltaX / spectrum.observeFrequency;
+            }
+        }
+        if (result.shiftOffsetVal) {
+            var shift = spectrum.firstX - result.shiftOffsetVal;
+            spectrum.firstX = spectrum.firstX - shift;
+            spectrum.lastX = spectrum.lastX - shift;
+        }
+    }
+
+    function parsePeakTable(spectrum, value, result) {
+        spectrum.isPeaktable=true;
+        var i, ii, j, jj, values;
+        var currentData = [];
+        spectrum.data = [currentData];
+
+        // counts for around 20% of the time
+        var lines = value.split(/,? *,?[;\r\n]+ */);
+
+        var k = 0;
+        for (i = 1, ii = lines.length; i < ii; i++) {
+            values = lines[i].trim().replace(removeCommentRegExp, '').split(peakTableSplitRegExp);
+            if (values.length % 2 === 0) {
+                for (j = 0, jj = values.length; j < jj; j = j + 2) {
+                    // takes around 40% of the time to add and parse the 2 values nearly exclusively because of parseFloat
+                    currentData[k++] = (parseFloat(values[j]) * spectrum.xFactor);
+                    currentData[k++] = (parseFloat(values[j + 1]) * spectrum.yFactor);
+                }
+            } else {
+                result.logs.push('Format error: ' + values);
+            }
+        }
+    }
+
+    function parseXYData(spectrum, value, result) {
+        // we check if deltaX is defined otherwise we calculate it
+        if (!spectrum.deltaX) {
+            spectrum.deltaX = (spectrum.lastX - spectrum.firstX) / (spectrum.nbPoints - 1);
+        }
+
+        spectrum.isXYdata=true;
+
+        var currentData = [];
+        spectrum.data = [currentData];
+
+        var currentX = spectrum.firstX;
+        var currentY = spectrum.firstY;
+        var lines = value.split(/[\r\n]+/);
+        var lastDif, values, ascii, expectedY;
+        values = [];
+        for (var i = 1, ii = lines.length; i < ii; i++) {
+            //var previousValues=JSON.parse(JSON.stringify(values));
+            values = lines[i].trim().replace(removeCommentRegExp, '').split(xyDataSplitRegExp);
+            if (values.length > 0) {
+                if (DEBUG) {
+                    if (!spectrum.firstPoint) {
+                        spectrum.firstPoint = parseFloat(values[0]);
+                    }
+                    var expectedCurrentX = parseFloat(values[0] - spectrum.firstPoint) * spectrum.xFactor + spectrum.firstX;
+                    if ((lastDif || lastDif === 0)) {
+                        expectedCurrentX += spectrum.deltaX;
+                    }
+                    result.logs.push('Checking X value: currentX: ' + currentX + ' - expectedCurrentX: ' + expectedCurrentX);
+                }
+                for (var j = 1, jj = values.length; j < jj; j++) {
+                    if (j === 1 && (lastDif || lastDif === 0)) {
+                        lastDif = null; // at the beginning of each line there should be the full value X / Y so the diff is always undefined
+                        // we could check if we have the expected Y value
+                        ascii = values[j].charCodeAt(0);
+
+                        if (false) { // this code is just to check the jcamp DIFDUP and the next line repeat of Y value
+                            // + - . 0 1 2 3 4 5 6 7 8 9
+                            if ((ascii === 43) || (ascii === 45) || (ascii === 46) || ((ascii > 47) && (ascii < 58))) {
+                                expectedY = parseFloat(values[j]);
+                            } else
+                            // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
+                            if ((ascii > 63) && (ascii < 74)) {
+                                // we could use parseInt but parseFloat is faster at least in Chrome
+                                expectedY = parseFloat(String.fromCharCode(ascii - 16) + values[j].substring(1));
+                            } else
+                            // negative SQZ digits a b c d e f g h i (ascii 97-105)
+                            if ((ascii > 96) && (ascii < 106)) {
+                                // we could use parseInt but parseFloat is faster at least in Chrome
+                                expectedY = -parseFloat(String.fromCharCode(ascii - 48) + values[j].substring(1));
+                            }
+                            if (expectedY !== currentY) {
+                                result.logs.push('Y value check error: Found: ' + expectedY + ' - Current: ' + currentY);
+                                result.logs.push('Previous values: ' + previousValues.length);
+                                result.logs.push(previousValues);
+                            }
+                        }
+                    } else {
+                        if (values[j].length > 0) {
+                            ascii = values[j].charCodeAt(0);
+                            // + - . 0 1 2 3 4 5 6 7 8 9
+                            if ((ascii === 43) || (ascii === 45) || (ascii === 46) || ((ascii > 47) && (ascii < 58))) {
+                                lastDif = null;
+                                currentY = parseFloat(values[j]);
+                                currentData.push(currentX, currentY * spectrum.yFactor);;
+                                currentX += spectrum.deltaX;
+                            } else
+                            // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
+                            if ((ascii > 63) && (ascii < 74)) {
+                                lastDif = null;
+                                currentY = parseFloat(String.fromCharCode(ascii - 16) + values[j].substring(1));
+                                currentData.push(currentX, currentY * spectrum.yFactor);;
+                                currentX += spectrum.deltaX;
+                            } else
+                            // negative SQZ digits a b c d e f g h i (ascii 97-105)
+                            if ((ascii > 96) && (ascii < 106)) {
+                                lastDif = null;
+                                currentY = -parseFloat(String.fromCharCode(ascii - 48) + values[j].substring(1));
+                                currentData.push(currentX, currentY * spectrum.yFactor);;
+                                currentX += spectrum.deltaX;
+                            } else
+
+
+
+                            // DUP digits S T U V W X Y Z s (ascii 83-90, 115)
+                            if (((ascii > 82) && (ascii < 91)) || (ascii === 115)) {
+                                var dup = parseFloat(String.fromCharCode(ascii - 34) + values[j].substring(1)) - 1;
+                                if (ascii === 115) {
+                                    dup = parseFloat('9' + values[j].substring(1)) - 1;
+                                }
+                                for (var l = 0; l < dup; l++) {
+                                    if (lastDif) {
+                                        currentY = currentY + lastDif;
+                                    }
+                                    currentData.push(currentX, currentY * spectrum.yFactor);;
+                                    currentX += spectrum.deltaX;
+                                }
+                            } else
+                            // positive DIF digits % J K L M N O P Q R (ascii 37, 74-82)
+                            if (ascii === 37) {
+                                lastDif = parseFloat('0' + values[j].substring(1));
+                                currentY += lastDif;
+                                currentData.push(currentX, currentY * spectrum.yFactor);;
+                                currentX += spectrum.deltaX;
+                            } else if ((ascii > 73) && (ascii < 83)) {
+                                lastDif = parseFloat(String.fromCharCode(ascii - 25) + values[j].substring(1));
+                                currentY += lastDif;
+                                currentData.push(currentX, currentY * spectrum.yFactor);;
+                                currentX += spectrum.deltaX;
+                            } else
+                            // negative DIF digits j k l m n o p q r (ascii 106-114)
+                            if ((ascii > 105) && (ascii < 115)) {
+                                lastDif = -parseFloat(String.fromCharCode(ascii - 57) + values[j].substring(1));
+                                currentY += lastDif;
+                                currentData.push(currentX, currentY * spectrum.yFactor);;
+                                currentX += spectrum.deltaX;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    function convertTo3DZ(spectra) {
+        var noise = 0;
+        var minZ = spectra[0].data[0][0];
+        var maxZ = minZ;
+        var ySize = spectra.length;
+        var xSize = spectra[0].data[0].length / 2;
+        var z = new Array(ySize);
+        for (var i = 0; i < ySize; i++) {
+            z[i] = new Array(xSize);
+            for (var j = 0; j < xSize; j++) {
+                z[i][j] = spectra[i].data[0][j * 2 + 1];
+                if (z[i][j] < minZ) minZ = spectra[i].data[0][j * 2 + 1];
+                if (z[i][j] > maxZ) maxZ = spectra[i].data[0][j * 2 + 1];
+                if (i !== 0 && j !== 0) {
+                    noise += Math.abs(z[i][j] - z[i][j - 1]) + Math.abs(z[i][j] - z[i - 1][j]);
+                }
+            }
+        }
+        return {
+            z: z,
+            minX: spectra[0].data[0][0],
+            maxX: spectra[0].data[0][spectra[0].data[0].length - 2],
+            minY: spectra[0].pageValue,
+            maxY: spectra[ySize - 1].pageValue,
+            minZ: minZ,
+            maxZ: maxZ,
+            noise: noise / ((ySize - 1) * (xSize - 1) * 2)
+        };
+
+    }
+
+    function add2D(result) {
+        var zData = convertTo3DZ(result.spectra);
+        result.contourLines = generateContourLines(zData);
+        delete zData.z;
+        result.minMax = zData;
+    }
+
+
+    function generateContourLines(zData, options) {
+        //console.time('generateContourLines');
+        var noise = zData.noise;
+        var z = zData.z;
+        var contourLevels = [];
+        var nbLevels = 7;
+        var povarHeight = new Float32Array(4);
+        var isOver = [];
+        var nbSubSpectra = z.length;
+        var nbPovars = z[0].length;
+        var pAx, pAy, pBx, pBy;
+
+        var x0 = zData.minX;
+        var xN = zData.maxX;
+        var dx = (xN - x0) / (nbPovars - 1);
+        var y0 = zData.minY;
+        var yN = zData.maxY;
+        var dy = (yN - y0) / (nbSubSpectra - 1);
+        var minZ = zData.minZ;
+        var maxZ = zData.maxZ;
+
+        //System.out.prvarln('y0 '+y0+' yN '+yN);
+        // -------------------------
+        // Povars attribution
+        //
+        // 0----1
+        // |  / |
+        // | /  |
+        // 2----3
+        //
+        // ---------------------d------
+
+        var lineZValue;
+        for (var level = 0; level < nbLevels * 2; level++) { // multiply by 2 for positif and negatif
+            var contourLevel = {};
+            contourLevels.push(contourLevel);
+            var side = level % 2;
+            if (side === 0) {
+                lineZValue = (maxZ - 5 * noise) * Math.exp(level / 2 - nbLevels) + 5 * noise;
+            } else {
+                lineZValue = -(maxZ - 5 * noise) * Math.exp(level / 2 - nbLevels) - 5 * noise;
+            }
+            var lines = [];
+            contourLevel.zValue = lineZValue;
+            contourLevel.lines = lines;
+
+            if (lineZValue <= minZ || lineZValue >= maxZ) continue;
+
+            for (var iSubSpectra = 0; iSubSpectra < nbSubSpectra - 1; iSubSpectra++) {
+                for (var povar = 0; povar < nbPovars - 1; povar++) {
+                    povarHeight[0] = z[iSubSpectra][povar];
+                    povarHeight[1] = z[iSubSpectra][povar + 1];
+                    povarHeight[2] = z[(iSubSpectra + 1)][povar];
+                    povarHeight[3] = z[(iSubSpectra + 1)][(povar + 1)];
+
+                    for (var i = 0; i < 4; i++) {
+                        isOver[i] = (povarHeight[i] > lineZValue);
+                    }
+
+                    // Example povar0 is over the plane and povar1 and
+                    // povar2 are below, we find the varersections and add
+                    // the segment
+                    if (isOver[0] !== isOver[1] && isOver[0] !== isOver[2]) {
+                        pAx = povar + (lineZValue - povarHeight[0]) / (povarHeight[1] - povarHeight[0]);
+                        pAy = iSubSpectra;
+                        pBx = povar;
+                        pBy = iSubSpectra + (lineZValue - povarHeight[0]) / (povarHeight[2] - povarHeight[0]);
+                        lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                    }
+                    if (isOver[3] !== isOver[1] && isOver[3] !== isOver[2]) {
+                        pAx = povar + 1;
+                        pAy = iSubSpectra + 1 - (lineZValue - povarHeight[3]) / (povarHeight[1] - povarHeight[3]);
+                        pBx = povar + 1 - (lineZValue - povarHeight[3]) / (povarHeight[2] - povarHeight[3]);
+                        pBy = iSubSpectra + 1;
+                        lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                    }
+                    // test around the diagonal
+                    if (isOver[1] !== isOver[2]) {
+                        pAx = povar + 1 - (lineZValue - povarHeight[1]) / (povarHeight[2] - povarHeight[1]);
+                        pAy = iSubSpectra + (lineZValue - povarHeight[1]) / (povarHeight[2] - povarHeight[1]);
+                        if (isOver[1] !== isOver[0]) {
+                            pBx = povar + 1 - (lineZValue - povarHeight[1]) / (povarHeight[0] - povarHeight[1]);
+                            pBy = iSubSpectra;
+                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                        }
+                        if (isOver[2] !== isOver[0]) {
+                            pBx = povar;
+                            pBy = iSubSpectra + 1 - (lineZValue - povarHeight[2]) / (povarHeight[0] - povarHeight[2]);
+                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                        }
+                        if (isOver[1] !== isOver[3]) {
+                            pBx = povar + 1;
+                            pBy = iSubSpectra + (lineZValue - povarHeight[1]) / (povarHeight[3] - povarHeight[1]);
+                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                        }
+                        if (isOver[2] !== isOver[3]) {
+                            pBx = povar + (lineZValue - povarHeight[2]) / (povarHeight[3] - povarHeight[2]);
+                            pBy = iSubSpectra + 1;
+                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                        }
+                    }
+                }
+            }
+        }
+        // console.timeEnd('generateContourLines');
+        return {
+            minX: zData.minX,
+            maxX: zData.maxX,
+            minY: zData.minY,
+            maxY: zData.maxY,
+            segments: contourLevels
+        };
+        //return contourLevels;
+    }
+
+
+    function addLowRes(spectra, options) {
+        var spectrum;
+        var averageX, averageY;
+        var targetNbPoints = options.lowRes;
+        var highResData;
+        for (var i = 0; i < spectra.length; i++) {
+            spectrum = spectra[i];
+            // we need to find the current higher resolution
+            if (spectrum.data.length > 0) {
+                highResData = spectrum.data[0];
+                for (var j = 1; j < spectrum.data.length; j++) {
+                    if (spectrum.data[j].length > highResData.length) {
+                        highResData = spectrum.data[j];
+                    }
+                }
+
+                if (targetNbPoints > (highResData.length / 2)) return;
+                var i, ii;
+                var lowResData = [];
+                var modulo = Math.ceil(highResData.length / (targetNbPoints * 2));
+                for (i = 0, ii = highResData.length; i < ii; i = i + 2) {
+                    if (i % modulo === 0) {
+                        lowResData.push(highResData[i], highResData[i + 1])
+                    }
+                }
+                spectrum.data.push(lowResData);
+            }
+        }
+    }
+
+    return convert;
+
+}
+
+var convert = getConverter();
+
+function JcampConverter(input, options, useWorker) {
+    if (typeof options === 'boolean') {
+        useWorker = options;
+        options = {};
+    }
+    if (useWorker) {
+        return postToWorker(input, options);
+    } else {
+        return convert(input, options);
+    }
+}
+
+var stamps = {},
+    worker;
+
+function postToWorker(input, options) {
+    if (!worker) {
+        createWorker();
+    }
+    return new Promise(function (resolve) {
+        var stamp = Date.now() + '' + Math.random();
+        stamps[stamp] = resolve;
+        worker.postMessage({stamp: stamp, input: input, options: options});
+    });
+}
+
+function createWorker() {
+    var workerURL = URL.createObjectURL(new Blob([
+        'var getConverter =' + getConverter.toString() + ';var convert = getConverter(); onmessage = function (event) { postMessage({stamp: event.data.stamp, output: convert(event.data.input, event.data.options)}); };'
+    ], {type: 'application/javascript'}));
+    worker = new Worker(workerURL);
+    URL.revokeObjectURL(workerURL);
+    worker.addEventListener('message', function (event) {
+        var stamp = event.data.stamp;
+        if (stamps[stamp]) {
+            stamps[stamp](event.data.output);
+        }
+    });
+}
+
+module.exports = {
+    convert: JcampConverter
+};
 },{}],5:[function(require,module,exports){
+var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
+},{}],6:[function(require,module,exports){
 /*
  Copyright (c) 2012, Vladimir Agafonkin
  Simplify.js is a high-performance polyline simplification library
@@ -713,7 +1458,7 @@ function simplify(points, tolerance, highestQuality) {
   return points;
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -775,7 +1520,7 @@ module.exports = function (){
 			.attr("class", "clr"+ spec_line.lineIdx())
 			.attr("r", 4.5)
 			.on("click",function(){
-				spec_line.sel().toggleClass("selected");
+				spec_line.selected( !spec_line.selected() );
 			})
 			.on("mouseenter",function(){
 				spec_line.parent().highlightSpec(spec_line);
@@ -846,7 +1591,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":18}],7:[function(require,module,exports){
+},{"../elem":19}],8:[function(require,module,exports){
 function integrate(data){
 	var _cumsum = data.map(function(d) { return d.y; }).cumsum();
 	
@@ -1024,7 +1769,7 @@ module.exports = function (){
 	return IntegElem;
 };
 
-},{"../elem":18}],8:[function(require,module,exports){
+},{"../elem":19}],9:[function(require,module,exports){
 function calcReductionFactor(spec_container) {
 	var seg_len = [];
 	var specs = spec_container.spectra();
@@ -1140,17 +1885,10 @@ module.exports = function () {
 						return;
 					}else{
 						data_slice = new_slice;
-					}
+						i_to_pixel.domain( data_slice );
 						
-					i_to_pixel.domain( data_slice );
-					
-					//TODO: resample factors both x and y dimensions.
-					// Both dimension need to have the same unit, i.e. pixels.										
-					path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
-					range.y = path_elem.range().y;
-					range.y[0] *= scale_factor;
-					range.y[1] *= scale_factor;
-					
+						render_data();
+					}
 				}
 			})
 			.on("_integrate", function(e){
@@ -1193,7 +1931,14 @@ module.exports = function () {
 	function render_data() {
 		//TODO: Update peaks, integrate, segments to match new data.
 		if (!svg_elem){ return; }
-		svg_elem.on("_regionchange")({xdomain:x.domain()});
+
+		//TODO: resample factors both x and y dimensions.
+		// Both dimension need to have the same unit, i.e. pixels.										
+		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
+		range.y = path_elem.range().y;
+		range.y[0] *= scale_factor;
+		range.y[1] *= scale_factor;
+		
 		svg_elem.on("_redraw")({x:true});
 	}
 	
@@ -1324,6 +2069,9 @@ module.exports = function () {
   SpecLine.selected = function(_){
     if (!arguments.length) {return selected;}
     selected = _;
+		if(svg_elem){
+			svg_elem.classed('selected', _);
+		}
     return SpecLine;
   };
 	SpecLine.lineIdx = function () {
@@ -1339,7 +2087,7 @@ module.exports = function () {
 	return SpecLine;
 };
 
-},{"../elem":18,"./crosshair":6,"./integration-elem":7,"./path-simplify":10}],9:[function(require,module,exports){
+},{"../elem":19,"./crosshair":7,"./integration-elem":8,"./path-simplify":11}],10:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -1440,7 +2188,7 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":18}],10:[function(require,module,exports){
+},{"../elem":19}],11:[function(require,module,exports){
 module.exports = function () {
 	var simplify = require('../utils/simplify-line');
 	var core = require('../elem');
@@ -1507,7 +2255,7 @@ module.exports = function () {
 	return PathElem;
 };
 
-},{"../elem":18,"../utils/simplify-line":42}],11:[function(require,module,exports){
+},{"../elem":19,"../utils/simplify-line":44}],12:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -1725,7 +2473,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":18,"d3-context-menu":3}],12:[function(require,module,exports){
+},{"../elem":19,"d3-context-menu":3}],13:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -1827,7 +2575,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":18}],13:[function(require,module,exports){
+},{"../elem":19}],14:[function(require,module,exports){
 
 module.exports = function () {
 	var core = require('../elem');
@@ -1897,8 +2645,12 @@ module.exports = function () {
 					} 
 				}else{
 					//modify range.y  and reset the zoom scale
-					var y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-						y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+					var s = SpecContainer.spectra(true);
+					if (s.length === 0){// if no spectra are selected.
+						s = specs;				// use all spectra.
+					}
+					var y0 = d3.min(s.map(function(s){return s.range().y[0];})),
+						y1 = d3.max(s.map(function(s){return s.range().y[1];}));
 					var y_limits = (y1-y0);
 					y0 = y0 - (0.05 * y_limits);
 					y1 = y1 + (0.05 * y_limits);
@@ -1973,10 +2725,15 @@ module.exports = function () {
 		
 	}
 	function update_range() {
-		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
-			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
-			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+		var s = SpecContainer.spectra(true);
+		if (s.length === 0){// if no spectra are selected.
+			s = specs;				// use all spectra.
+		}
+		
+		var x0 = d3.max(s.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(s.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(s.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(s.map(function(s){return s.range().y[1];}));
 
 		// Add 5% margin to top and bottom (easier visualization).
 		var y_limits = (y1-y0);
@@ -1984,7 +2741,6 @@ module.exports = function () {
 		y1 = y1 + (0.05 * y_limits);
 
 		var xdomain = x.domain();
-
 		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
 
 		if(specs.length > 1){
@@ -2097,7 +2853,7 @@ module.exports = function () {
 	
 	return SpecContainer;
 };
-},{"../elem":18,"./line":8,"./main-brush":9,"./peak-picker":11}],14:[function(require,module,exports){
+},{"../elem":19,"./line":9,"./main-brush":10,"./peak-picker":12}],15:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -2127,7 +2883,7 @@ module.exports = function () {
 
 	return _main;	
 };
-},{"../elem":18}],15:[function(require,module,exports){
+},{"../elem":19}],16:[function(require,module,exports){
 module.exports = function(){
 	function registerDispatcher() {
 		var suff = ".line."+dispatch_idx;
@@ -2238,7 +2994,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":18}],16:[function(require,module,exports){
+},{"../elem":19}],17:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
@@ -2421,7 +3177,7 @@ module.exports = function () {
   };
 	return SpecContainer;	
 };
-},{"../d1/main-brush":9,"../elem":18,"./spec2d":17}],17:[function(require,module,exports){
+},{"../d1/main-brush":10,"../elem":19,"./spec2d":18}],18:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('spec-img');
@@ -2546,7 +3302,7 @@ module.exports = function () {
 	return _main;
 };
 
-},{"../elem":18,"./crosshair-2d":15}],18:[function(require,module,exports){
+},{"../elem":19,"./crosshair-2d":16}],19:[function(require,module,exports){
 
 function inherit(target, source){
   for (var f in source){
@@ -2691,7 +3447,7 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
@@ -2800,7 +3556,7 @@ function editText(evt){
 }*/
 
 
-},{}],20:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 require('./utils/array');
 module.exports = {};
 module.exports.App = require('./main_app');
@@ -2810,7 +3566,7 @@ module.exports.get_spectrum = require('./pro/process_data').get_spectrum;
 module.exports.version = "0.5.2";
 //console.log("specdraw:"+ spec.version);
 
-},{"./main_app":22,"./pro/plugin-hooks":31,"./pro/process_data":33,"./utils/array":36}],21:[function(require,module,exports){
+},{"./main_app":23,"./pro/plugin-hooks":33,"./pro/process_data":35,"./utils/array":38}],22:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils/event');
 
@@ -2832,6 +3588,19 @@ inp.num = function (label, val, _min, _max, step, unit) {
 		return elem.select('input').node().value;
 	};
 	return function () { return elem.node();	};
+};
+
+inp.text = function (label, placeholder) {
+	var elem = d3.select(document.createElement("label"));
+	elem.classed('param text', true)
+		.text(label)
+		.append("input")
+			.attr({
+				type: 'text',
+				placeholder: placeholder || ''
+			});
+	
+	return function () { return elem.node(); };
 };
 
 inp.checkbox = function (label, val) {
@@ -3046,15 +3815,16 @@ var parseInputElem = function (label, type, details, app) {
 };
 
 inp.spectrumSelector = function (app) {
-	var specs = app.currentSlide().spectra();
-	var spec_container = app.currentSlide().specContainer();
+	var specs = app.currentSlide() ? app.currentSlide().spectra(): null;
 	
-	if (specs.length === 0){
+	
+	if ( (!specs) || specs.length === 0){
 		return function () {
 			return d3.select(document.createElement('div')).text('No Spectra to show').node();
 		};
 	} 
-		
+	
+	var spec_container = app.currentSlide().specContainer();		
 	var elem = 	d3.select(
 		inp.select_multi('Select Spectrum', specs)()
 		).classed('spec-selector', true);
@@ -3063,6 +3833,7 @@ inp.spectrumSelector = function (app) {
 	  	.each(function(s){
 				d3.select(this).select('.checkbox')					
 					.style('color', getComputedStyle(s.select('path').node()).stroke)
+					.style('opacity', getComputedStyle(s.select('path').node()).strokeOpacity)
 					.select('.label').text( s.label() );
 					
 				d3.select(this).on('mouseenter', function () {
@@ -3106,7 +3877,7 @@ inp.popover = function (title) {
 };
 
 module.exports = inp;
-},{"./d1/threshold":14,"./utils/event":38}],22:[function(require,module,exports){
+},{"./d1/threshold":15,"./utils/event":40}],23:[function(require,module,exports){
 module.exports = function(){
 	var core = require('./elem');
 	var source = core.Elem().class('spec-app');
@@ -3188,6 +3959,9 @@ module.exports = function(){
 		for (var i = 0; i < slides.length; i++) {
 			render_slide(slides[i]);
 		}
+		if(slides.length === 0){
+			App.appendSlide();
+		}
 	}
 	function render_slide(s) {
 		if(! selection){ return; }
@@ -3220,35 +3994,10 @@ module.exports = function(){
 	};
 	App.pluginRequest = require('./pro/plugins')(App);
 	App.appendSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendSlide: No data provided.");
-		} 
-		
 		var s = require('./slide')().datum(data);
 		slides.push(s);
 		render_slide(s);
 		return App;
-	};
-	App.appendToCurrentSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendToCurrentSlide: No data provided.");
-		} 
-		
-		if (selection){
-			selection.node().appendToCurrentSlide(data);
-		} else{
-			if(slides.length === 0){ //No slides available; create a new one
-				return App.appendSlide(data);
-			}
-			//Otherwise, append data to last slide.
-			var current_slide = slides[slides.length-1].slide;
-			//TODO: BUG
-			//We don't know if the array in slide is a data array 
-			// or an array of data arrays (i.e dataset)
-			current_slide.push(data);
-			
-			return App;
-		}
 	};
 	App.options = {
 		grid:{x:false, y:false}
@@ -3273,7 +4022,7 @@ module.exports = function(){
 
 //TODO: remove Elements
 
-},{"./elem":18,"./events":19,"./menu/menu":24,"./modals":29,"./pro/plugins":32,"./pro/process_data":33,"./slide":35,"./utils/docready":37,"./utils/get-size":40}],23:[function(require,module,exports){
+},{"./elem":19,"./events":20,"./menu/menu":25,"./modals":30,"./pro/plugins":34,"./pro/process_data":35,"./slide":37,"./utils/docready":39,"./utils/get-size":42}],24:[function(require,module,exports){
 var inp = require('../input_elem');
 var fireEvent = require('../utils/event');
 
@@ -3340,7 +4089,7 @@ function main_menu () {
 }
 
 module.exports = main_menu;
-},{"../input_elem":21,"../utils/event":38}],24:[function(require,module,exports){
+},{"../input_elem":22,"../utils/event":40}],25:[function(require,module,exports){
 var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
@@ -3388,13 +4137,13 @@ module.exports = function (app){
 	
 	
 	elem.select('.open-menu').on('click', function(){
-		toggle.apply(this, main_menu.data(menu_data));
+		toggle.apply(this, [main_menu.data(menu_data)]);
 	});
 	elem.select('.open-spec-legend').on('click', function(){
-		toggle.apply(this, spectra);
+		toggle.apply(this, [spectra]);
 	});
 	elem.select('.open-slides').on('click', function(){
-		toggle.apply(this, slides);
+		toggle.apply(this, [slides]);
 	});
 	
 	var app_dispatcher = app.dispatcher();
@@ -3432,7 +4181,7 @@ module.exports = function (app){
 	return elem;									
 };
 
-},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":39,"./main_menu":23,"./menu_data":25,"./serverside-menu":26,"./slides":27,"./spectra":28}],25:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":41,"./main_menu":24,"./menu_data":26,"./serverside-menu":27,"./slides":28,"./spectra":29}],26:[function(require,module,exports){
 var events = require('../events');
 
 function get_menu_data (app) {
@@ -3501,7 +4250,7 @@ function get_menu_data (app) {
 
 
 module.exports = get_menu_data;
-},{"../events":19}],26:[function(require,module,exports){
+},{"../events":20}],27:[function(require,module,exports){
 module.exports = function (app, menu_data) {
 	function find_menu_item (menu, item) {
 		for (var i = menu.length - 1; i >= 0; i--) {
@@ -3544,7 +4293,7 @@ module.exports = function (app, menu_data) {
 
 
 
-},{"../pro/ajax":30}],27:[function(require,module,exports){
+},{"../pro/ajax":31}],28:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -3564,19 +4313,25 @@ module.exports = function (app) {
 				.on('click', function (d) {
 					app.dispatcher().slideChange(d);
 				});
-				
+		
+		nav.select('ul')
+			.append('li')
+				.text('+ New Slide')
+				.on('click', function () {
+					app.appendSlide();
+				});
+			
 		return div;
 	}
 	return _main;
 };
 
 
-},{"../input_elem":21}],28:[function(require,module,exports){
+},{"../input_elem":22}],29:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
 	function _main(div) {
-		
 		div.select('.menu-container').remove();
 		
 		var nav = div.append(inp.popover('Spectra'))
@@ -3584,16 +4339,19 @@ function spectra (app) {
 			.select('.popover-content');
 		
 		//TODO: SpectrumSelector takes an App
-		var spec_selector = inp.spectrumSelector(app);
+		var spec_selector = inp.spectrumSelector(app);		
 		
 		if( (!app.currentSlide()) || app.currentSlide().spectra().length === 0){
 			nav.append(spec_selector);
 		}else{
 			var spec_list = d3.select( spec_selector() ).select('ul');
+			spec_list.append('li')
+				.text('+ Add spectrum')
+				.on('click', require('../pro/open-file')(app) );
 			
 			nav.append( function () {return spec_list.node();} )
 				.classed('block-list spec-list no-checkbox', true);
-		}				
+		}	
 		
 		return div;
 	}
@@ -3601,7 +4359,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":21}],29:[function(require,module,exports){
+},{"../input_elem":22,"../pro/open-file":32}],30:[function(require,module,exports){
 require('nanoModal');
 console.log(require('nanoModal')());
 var nanoModal = window.nanoModal;
@@ -3627,7 +4385,7 @@ function app_modals(app){
 				}, 
 				{
 			    text: "Cancel",
-			    handler: cancel_fun? cancel_fun : "hide",
+			    handler: cancel_fun || "hide",
 					classes:"cancelBtn"
 				}
 			]}
@@ -3730,7 +4488,7 @@ function app_modals(app){
 		return nano.show;	
 	};
 
-	modals.input = function (text, value,callback){	
+	modals.input = function (text, value, callback){	
 		var content = text +
 			'<input type="number" id="input0" step="0.001" value='+value+'>';
 		
@@ -3835,7 +4593,7 @@ function app_modals(app){
 		var inp = require('./input_elem');
 		el.append(inp.spectrumSelector(app));
 		el.append(inp.div(args, app));
-		el.append(inp.preview(true));
+		//el.append(inp.preview(true));
 		return nano.show;
 	};
 	
@@ -3843,7 +4601,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":21,"./utils/event":38,"nanoModal":4}],30:[function(require,module,exports){
+},{"./input_elem":22,"./utils/event":40,"nanoModal":5}],31:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals');
 
@@ -3867,7 +4625,12 @@ var getJSON = function(url, callback, show_progress){
 	var prog = ajaxProgress();
 	request(url, function (response) {
 		prog.stop();
-		var json = JSON.parse(response);
+		var json;
+		try {
+	    json = JSON.parse(response);
+    } catch (e) {
+      json = response.toString()
+    }
 		if(typeof json['error'] === 'undefined'){
 		  callback(json);
 		}else{
@@ -3917,7 +4680,35 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":29}],31:[function(require,module,exports){
+},{"../modals":30}],32:[function(require,module,exports){
+function modal_input(app, node, callback) {
+	var modals = 	app.modals();
+	var nano = modals.proto(undefined, '',
+		function(modal) {
+			modal.hide();
+	    var input = d3.select(modal.modal.el)
+				.select("input").node().value;
+			callback(input);
+	  });
+	
+	var el = d3.select(nano.modal.el).select(".nanoModalContent");
+	el.append(node);
+	return nano.show;
+}
+
+module.exports = function (app, callback) {
+	return function () {
+		callback = callback || app.currentSlide().addSpec;
+		modal_input ( app,
+			require('../input_elem').text('File URL', 'http://'),
+			function (input) {
+				require('./process_data').get_spectrum(input,	callback);
+			}
+		)();
+	};
+	
+};
+},{"../input_elem":22,"./process_data":35}],33:[function(require,module,exports){
 function handle_peaks (app, json) {
 	var spec = app.currentSlide().spectra().filter(function (s) {
 		return s.s_id() === json['s_id'];
@@ -3962,7 +4753,7 @@ function handle_spectrum (app, json, preview){
 
 module.exports.spectrum = handle_spectrum;
 module.exports.spec_feature = handle_spec_feature;
-},{"./process_data":33}],32:[function(require,module,exports){
+},{"./process_data":35}],34:[function(require,module,exports){
 module.exports = function (app) {
 	function request (fun, params, s_id, preview) {
 		params = params || {};
@@ -3976,7 +4767,7 @@ module.exports = function (app) {
 			}
 		}
 		if(params['sid'].length === 0)
-			{app.modals.error('No Spectra selected', 'Please select one or more spectra!');}
+			{app.modals().error('No Spectra selected', 'Please select one or more spectra!');}
 		
 		var prefix = fun+'_';
 		var params_str = 'sid=' + 
@@ -4021,33 +4812,33 @@ module.exports = function (app) {
 	return request;
 };
 
-},{"./ajax":30,"./plugin-hooks":31}],33:[function(require,module,exports){
+},{"./ajax":31,"./plugin-hooks":33}],35:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
 	img.onload = function(){
-	    var canvas = document.createElement("canvas");
-	    canvas.width = img.width;
-	    canvas.height = img.height;
+    var canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-	    // Copy the image contents to the canvas
-	    var ctx = canvas.getContext("2d");
+    // Copy the image contents to the canvas
+    var ctx = canvas.getContext("2d");
 
-	    ctx.drawImage(img, 0, 0);    
-	    var buffer = ctx.getImageData(0,0,img.width,img.height).data;
+    ctx.drawImage(img, 0, 0);    
+    var buffer = ctx.getImageData(0,0,img.width,img.height).data;
+	
+    var img_data = Array.prototype.filter.call(buffer, function(element, index){
+        return(index%4 === 0);
+    });
 		
-	    var img_data = Array.prototype.filter.call(buffer, function(element, index){
-	        return(index%4==0);
-	    });
-		
-		callback(img_data)
-	}
+		callback(img_data);
+	};
 	
 	img.src = "data:image/png;base64," + y;	
 };
 
 var process_png = function(pre_data, render_fun){
-	if (pre_data['nd'] == 1){
+	if (pre_data['nd'] === 1){
 		get_png_data(pre_data['y'], function(img_data){
 			// Scaling X and Y
 			var xscale = d3.scale.linear().range(pre_data['x_domain']).domain([0, img_data.length]);
@@ -4059,7 +4850,7 @@ var process_png = function(pre_data, render_fun){
 		});
 	}
 	
-	if (pre_data['nd'] == 2){
+	if (pre_data['nd'] === 2){
 		// Mapping data and rendering
 		render_fun(pre_data);
 	}
@@ -4071,7 +4862,7 @@ var process_xy = function(pre_data, render_fun){
 };
 
 var process_b64 = function(pre_data, render_fun){
-	var img_data = atob(pre_data['y'])
+	var img_data = atob(pre_data['y']);
 	console.log(img_data);
 	// Scaling X and Y
 	var xscale = d3.scale.linear().range(pre_data['x_domain']).domain([0, img_data.length]);
@@ -4084,7 +4875,7 @@ var process_b64 = function(pre_data, render_fun){
 
 
 var processPNG = function (json, callback) {
-	if (!json['nd'] || json['nd'] == 1){
+	if (!json['nd'] || json['nd'] === 1){
 		var img = document.createElement("img");
 	
 		img.onload = function(){
@@ -4099,15 +4890,15 @@ var processPNG = function (json, callback) {
 	    var buffer = ctx.getImageData(0,0,img.width,img.height).data;
 	
 	    var img_data = [];
-			var _16bit = (json['format'] == "png16")
+			var _16bit = (json['format'] === "png16");
 			var len = _16bit? buffer.length/2: buffer.length;
 			
 			var yscale = d3.scale.linear().range(json['y_domain']).domain([0, 255]);
-			if(_16bit) yscale.domain([0,Math.pow(2,16)-1]);
+			if(_16bit) {yscale.domain([0,Math.pow(2,16)-1]);}
 			
 			for (var i = 0; i < len; i+=4) {
 				if(!_16bit){
-					img_data.push(yscale(buffer[i]))
+					img_data.push(yscale(buffer[i]));
 				}else{
 					img_data.push( yscale( (buffer[ i + len ] << 8) + buffer[i]) );
 				}
@@ -4120,24 +4911,24 @@ var processPNG = function (json, callback) {
 			
 			//console.log("img_data",img_data);
 			var ret;
-			if(typeof json["s_id"] != 'undefined')
-				ret = {data:img_data, s_id:json['s_id']}
-			else{ ret = {data:img_data} }
+			if(typeof json["s_id"] !== 'undefined'){
+				ret = {data:img_data, s_id:json['s_id']};
+			}else{ ret = {data:img_data}; }
 			
-			callback(ret)
-		}
+			callback(ret);
+		};
 		var png_data = json['data']? json['data']: json['y'];
 		img.src = "data:image/png;base64," + png_data;
-	}else if (json['nd'] == 2){
+	}else if (json['nd'] === 2){
 		// Mapping data and rendering
 		callback(json);
 	}else{
-		console.log("Unsupported data dimension: "+ json['nd'])
+		console.log("Unsupported data dimension: "+ json['nd']);
 	}
 };
 
 var processPNGworker = function (json, callback) {
-	if (!json['nd'] || json['nd'] == 1){
+	if (!json['nd'] || json['nd'] === 1){
 		var img = document.createElement("img");
 	
 		img.onload = function(){
@@ -4146,19 +4937,19 @@ var processPNGworker = function (json, callback) {
 	    canvas.height = img.height;
 	
 			var e = {};
-			e._16bit = (json['format'] == "png16")
+			e._16bit = (json['format'] === "png16");
 			
 	    // Copy the image contents to the canvas
 	    var ctx = canvas.getContext("2d");
 	    ctx.drawImage(img, 0, 0);    
 			e.buffer = ctx.getImageData(0,0,img.width,img.height).data;
 			
-			e.y_range = json['y_domain']
+			e.y_range = json['y_domain'];
 			e.y_domain = [0, 255];
-			if(e._16bit) e.y_domain = [0,Math.pow(2,16)-1];
+			if(e._16bit) {e.y_domain = [0,Math.pow(2,16)-1];}
 			
 			var worker_callback = function(e) {
-				console.log('worker done')
+				console.log('worker done');
 				var img_data = [].slice.call(e.data);
 				
 				if(json['x_domain']){
@@ -4173,25 +4964,43 @@ var processPNGworker = function (json, callback) {
 				
 				callback(ret);*/
 				json['data'] = img_data;
-				callback(json)
+				callback(json);
 			};
 			
 			var worker_message = [e, [e.buffer.buffer]];
 			
 			require('./worker').addJob({message:worker_message, callback:worker_callback});
-		}
+		};
 		var png_data = json['data']? json['data']: json['y'];
 		img.src = "data:image/png;base64," + png_data;
-	}else if (json['nd'] == 2){
+	}else if (json['nd'] === 2){
 		// Mapping data and rendering
 		callback(json);
 	}else{
-		console.log("Unsupported data dimension: "+ json['nd'])
+		console.log("Unsupported data dimension: "+ json['nd']);
 	}
 };
 
 
-
+function jcamp_to_xy(spectrum) {
+	var data = spectrum.data[0];
+	var ret = [];
+	for (var i = 0; i < data.length; i+=2) {
+		ret.push({x:data[i], y:data[i+1]});
+	}
+	return ret;
+}
+function process_jcamp(json, callback) {
+	var converter = require('jcampconverter');
+	var result = converter.convert(json);
+	console.log(result);
+	var spec_data = {};
+	spec_data.data = jcamp_to_xy(result.spectra[0]);
+	spec_data.label = result.spectra[0].title;
+	spec_data.x_label = result.xType;
+	spec_data.y_label = result.yType;
+	callback(spec_data);
+}
 /* * get the sepctrum from the web service in one these formats:
 	* Plain JSON X-Y ['xy']
 	* JSON X(range), Y (base64) ['base64'] --> if scaled down to 8 or 16 bits: require "y_domain"
@@ -4205,7 +5014,9 @@ var processPNGworker = function (json, callback) {
 	* y_domain: if 'y' was reduced to 8 or 16 bit, y_domain scales it back to original values.
 */
 function process_spectrum (json, render_fun){
-	console.log('processing')
+	if(typeof json !== 'object'){ //it wasn't a json file.
+		return process_jcamp(json, render_fun);
+	}
 	if (json.constructor === Array) {
 		for (var i = json.length - 1; i >= 0; i--) {
 			process_spectrum(json[i], render_fun);
@@ -4217,7 +5028,7 @@ function process_spectrum (json, render_fun){
 			process_xy(json, render_fun);
 			break;
 		case 'base64'://add base64 processing
-			process_b64(json, render_fun)
+			process_b64(json, render_fun);
 			break;
 		case 'png':
 		case 'png16':
@@ -4239,7 +5050,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":30,"./worker":34}],34:[function(require,module,exports){
+},{"./ajax":31,"./worker":36,"jcampconverter":4}],36:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -4325,7 +5136,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],35:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function(){
 	var core = require('./elem');
 	var source = core.Elem('g');
@@ -4347,17 +5158,29 @@ module.exports = function(){
 		"blindregion",
 		"log"
 	);
-	
+	function create_empty_slide(app) {
+		svg_selection = app.append('div')
+			.text('This slide does not contain any spectra. Click to add one.')
+			.style({
+				width: (svg_width+'px'),
+				'line-height': (svg_height+'px'),
+				'text-align': 'center',
+    		'vertical-align': 'middle'
+			})
+			.classed('spec-slide empty', true)
+			.on('click', require('./pro/open-file')(app) );
+		console.log(Slide.addSpec);
+	}
 	
 	function Slide(app){
 		parent_app = app;
-		if(!data){
-			//create_empty_slide();//TODO
-			return ;
-		}
 		svg_width = Slide.width();
 		svg_height = Slide.height();
 		
+		if(!data){
+			create_empty_slide(app);
+			return ;
+		}
 		var brush_margin = 20;
     var margin = {
         top: 10 + brush_margin,
@@ -4560,10 +5383,22 @@ module.exports = function(){
 	Slide.parent = function () {
 		return parent_app;
 	};
+	Slide.spectra = function () {
+		// This is called only when spec_container is not present, i.e. empty slide.
+		return [];
+	};
+	Slide.addSpec = function (_) { 
+		// This is called only when spec_container is not present, i.e. empty slide.
+		console.log('first spec', svg_selection.node());
+		svg_selection.remove(); // remove the empty slide.
+		Slide.datum(_)(parent_app);	// call the slide again with the data.
+		if (parent_app.currentSlide() === Slide) { Slide.show(true); }
+		console.log('added spec', svg_selection.node());
+	};
 	return Slide;
 };
 
-},{"./d1/scale-brush":12,"./d1/spec-container-1d":13,"./d2/spec-container-2d":16,"./elem":18,"./utils/guid":41,"bowser":2}],36:[function(require,module,exports){
+},{"./d1/scale-brush":13,"./d1/spec-container-1d":14,"./d2/spec-container-2d":17,"./elem":19,"./pro/open-file":32,"./utils/guid":43,"bowser":2}],38:[function(require,module,exports){
 Array.prototype.subset =function(arr){
 	var ret = [];
 	for (var i = arr.length - 1; i >= 0; i--){
@@ -4626,7 +5461,7 @@ d3.selection.prototype.size = function() {
   this.each(function() { ++n; });
   return n;
 };
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 "use strict";
 // The public function name defaults to window.docReady
 // but you can modify the last line of this function to pass in a different object or method name
@@ -4696,7 +5531,7 @@ module.exports = function(callback, context) {
 		readyEventHandlersInstalled = true;
 	}
 };
-},{}],38:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = function(element,event){
 	var evt;
 	if (document.createEventObject){
@@ -4711,7 +5546,7 @@ module.exports = function(element,event){
   }
 };
 
-},{}],39:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 function launchFullScreen(element) {
 	if (element.requestFullscreen)
 		{ element.requestFullscreen(); }
@@ -4748,7 +5583,7 @@ module.exports.launch = launchFullScreen;
 module.exports.toggle = toggleFullScreen;
 module.exports.isFull = isFullScreen;
 
-},{}],40:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = function (node) {
 	var clientwidth = node.clientWidth,
 	clientheight = node.clientHeight;
@@ -4769,7 +5604,7 @@ module.exports = function (node) {
 	
 	return [width, height];
 };
-},{}],41:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 module.exports = function (){
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
 		/[xy]/g, function(c) {
@@ -4779,7 +5614,7 @@ module.exports = function (){
 	);
 };
 
-},{}],42:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = function (data, xscale, tolerance) {
 	var ppm_range = Math.abs(xscale.domain()[0] - xscale.domain()[1]);
 	var pixels = Math.abs(xscale.range()[0] - xscale.range()[1]);
@@ -4790,5 +5625,5 @@ module.exports = function (data, xscale, tolerance) {
 	return dataResample;
 };
 
-},{"simplify":5}]},{},[20])(20)
+},{"simplify":6}]},{},[21])(21)
 });

@@ -12,16 +12,21 @@
     // Define and register <shadow-element>
     // that uses Shadow DOM and a template.
     var proto2 = Object.create(HTMLElement.prototype);
-
+    var spec_app;
+    
     proto2.createdCallback = function() {
-      var sel = d3.select(this);
       var url = 'http://127.0.0.1:8000/nmr/getSpectrum/2?';
-      var spec_app = specdraw.App()
-        .data(url);
+      spec_app = specdraw.App()
+        //.data(url);      
+    };
+    proto2.attachedCallback = function () {
+      var sel = d3.select(this);
       sel.call(spec_app);
+    };
+    proto2.attributeChangedCallback = function (attrname, oldval, newval) {
       
     };
-
+    
     document.registerElement('specdraw-js', {prototype: proto2});
   })();
 </script>

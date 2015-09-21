@@ -11,7 +11,7 @@ module.exports = function (app) {
 			}
 		}
 		if(params['sid'].length === 0)
-			{app.modals.error('No Spectra selected', 'Please select one or more spectra!');}
+			{app.modals().error('No Spectra selected', 'Please select one or more spectra!');}
 		
 		var prefix = fun+'_';
 		var params_str = 'sid=' + 

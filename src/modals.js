@@ -23,7 +23,7 @@ function app_modals(app){
 				}, 
 				{
 			    text: "Cancel",
-			    handler: cancel_fun? cancel_fun : "hide",
+			    handler: cancel_fun || "hide",
 					classes:"cancelBtn"
 				}
 			]}
@@ -126,7 +126,7 @@ function app_modals(app){
 		return nano.show;	
 	};
 
-	modals.input = function (text, value,callback){	
+	modals.input = function (text, value, callback){	
 		var content = text +
 			'<input type="number" id="input0" step="0.001" value='+value+'>';
 		
@@ -231,7 +231,7 @@ function app_modals(app){
 		var inp = require('./input_elem');
 		el.append(inp.spectrumSelector(app));
 		el.append(inp.div(args, app));
-		el.append(inp.preview(true));
+		//el.append(inp.preview(true));
 		return nano.show;
 	};
 	

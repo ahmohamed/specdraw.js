@@ -59,7 +59,7 @@ module.exports = function (){
 			.attr("class", "clr"+ spec_line.lineIdx())
 			.attr("r", 4.5)
 			.on("click",function(){
-				spec_line.sel().toggleClass("selected");
+				spec_line.selected( !spec_line.selected() );
 			})
 			.on("mouseenter",function(){
 				spec_line.parent().highlightSpec(spec_line);

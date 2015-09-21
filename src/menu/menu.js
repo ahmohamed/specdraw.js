@@ -45,13 +45,13 @@ module.exports = function (app){
 	
 	
 	elem.select('.open-menu').on('click', function(){
-		toggle.apply(this, main_menu.data(menu_data));
+		toggle.apply(this, [main_menu.data(menu_data)]);
 	});
 	elem.select('.open-spec-legend').on('click', function(){
-		toggle.apply(this, spectra);
+		toggle.apply(this, [spectra]);
 	});
 	elem.select('.open-slides').on('click', function(){
-		toggle.apply(this, slides);
+		toggle.apply(this, [slides]);
 	});
 	
 	var app_dispatcher = app.dispatcher();
