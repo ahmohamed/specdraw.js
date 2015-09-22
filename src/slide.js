@@ -24,9 +24,7 @@ module.exports = function(){
 			.text('This slide does not contain any spectra. Click to add one.')
 			.style({
 				width: (svg_width+'px'),
-				'line-height': (svg_height+'px'),
-				'text-align': 'center',
-    		'vertical-align': 'middle'
+				'line-height': (svg_height+'px')
 			})
 			.classed('spec-slide empty', true)
 			.on('click', require('./pro/open-file')(app) );

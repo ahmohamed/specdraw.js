@@ -23,7 +23,7 @@ module.exports = function () {
 			.append("svg:image")
 			  .attr('width', spec_container.width())
 			  .attr('height', spec_container.height())
-			  .attr('xlink:href', "data:image/ png;base64," + data)
+			  .attr('xlink:href', "data:image/png;base64," + data)
 			  .attr("preserveAspectRatio", "none");	
 				
 		
