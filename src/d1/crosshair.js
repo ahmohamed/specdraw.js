@@ -70,13 +70,15 @@ module.exports = function (){
 
 		svg_elem
 			.on("_regionchange", function(e){
-				if(e.x){					
+				if(e.xdomain){					
 					svg_elem.datum(null);
 					svg_elem.attr("transform", "translate(" + (-10000) + "," + (-10000) + ")");
+					tip.hide();
 				}else{
 					var datum = svg_elem.datum();
 					if(datum){
-						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");						
+						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");
+						tip.show(svg_elem.node());
 					}
 				}
 			})

@@ -3,26 +3,28 @@ module.exports = function(){
 	var source = core.Elem().class('spec-app');
 	core.inherit(App, source);
 	
-  var selection, svg_width, svg_height;
+  var selection, app_width, app_height;
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
-	var modals;
+	var modals, config = 3;
 	var slides = core.ElemArray(), current_slide;
+	var base_url = '/nmr/';
+	
 	function check_size(divnode) {
-		svg_width = App.width();
-		svg_height = App.height();
-		if (typeof svg_width === 'undefined' ||
-			typeof svg_height === 'undefined' ||
-			isNaN(svg_width) || isNaN(svg_height)
+		app_width = App.width();
+		app_height = App.height();
+		if (typeof app_width === 'undefined' ||
+			typeof app_height === 'undefined' ||
+			isNaN(app_width) || isNaN(app_height)
 		){
 			var size = require('./utils/get-size')(divnode);
-			svg_width = size[0];
-			svg_height = size[1];
-			if (typeof svg_width === 'undefined' ||
-				typeof svg_height === 'undefined'){
+			app_width = size[0];
+			app_height = size[1];
+			if (typeof app_width === 'undefined' ||
+				typeof app_height === 'undefined'){
 					return false;
 				}
 		}
-		if (svg_width < 400 || svg_height < 400){return false;}
+		if (app_width < 400 || app_height < 400){return false;}
 		return true;
 	}
 	
@@ -40,6 +42,7 @@ module.exports = function(){
 				// When web components are used, the element's dimensions are not
 				// set even when the DOM is ready. However, the container div is set.
 				if (!check_size(div.node().parentNode)){
+					//TODO: better response when canvas is small
 					throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
 				}
 			}else{
@@ -49,29 +52,18 @@ module.exports = function(){
 		
 		selection = source(div)
 			.style({
-				width:svg_width,
-				height:svg_height				
+				width:app_width,
+				height:app_height				
 			});
-		
-		svg_width -= 50; //deduct 50px for column menu.
-		
 		modals = require('./modals')(App);
-		require('./menu/menu')(App);
-
-		/**** Keyboard events and logger ****/
-		require('./events').registerKeyboard(App);
 		
-		selection.node().appendToCurrentSlide = function (data) {
-			var current_slide = selection.select('.spec-slide.active').node();
-			if(!current_slide){
-				selection.node().appendSlide(data);
-			}	else{
-				current_slide.addSpec(data);
-				app_dispatcher.slideContentChange();
-			}
-		};
+		if(config > 1){
+			require('./menu/menu')(App);
+			app_width -= 50; //deduct 50px for column menu.
+			/**** Keyboard events and logger ****/
+			require('./events').registerKeyboard(App);
+		}
 		
-		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
 			if (current_slide !== s) { App.currentSlide(s);	}
 		});
@@ -82,10 +74,12 @@ module.exports = function(){
 		if(slides.length === 0){
 			App.appendSlide();
 		}
+		
+		require('./logo')(App);
 	}
 	function render_slide(s) {
 		if(! selection){ return; }
-		s.width(svg_width).height(svg_height)
+		s.width(app_width).height(app_height)
 			(App);
 		
 		App.currentSlide(s);
@@ -119,6 +113,19 @@ module.exports = function(){
 		render_slide(s);
 		return App;
 	};
+	App.config = function (_) {
+		if (!arguments.length) {return config;}
+		config = _;
+		
+		return App;
+	};
+	App.connect = function (url){
+		if (!arguments.length) {return base_url;}
+		base_url = url;
+		config = 4;
+		
+		return App;
+	};
 	App.options = {
 		grid:{x:false, y:false}
 	};
@@ -130,7 +137,7 @@ module.exports = function(){
 			if(!App.currentSlide() || App.currentSlide().spectra().length  > s_per_slide - 1){
 				App.appendSlide(data);
 			}else{
-				App.currentSlide().addSpec(data);
+				App.currentSlide().addSpec(data, config > 1);
 			}
 		};
 		

@@ -26,7 +26,7 @@ function recursive_add(sel){
 	}
 }
 
-function main_menu () {
+function main_menu (app) {
 	var menu_data;
 	function _main(div) {
 		div.select('.menu-container').remove();
@@ -48,7 +48,7 @@ function main_menu () {
       .on("click", function(d){
         if(d.fun){
           fireEvent(div.node(), 'click'); //close the menu.
-          d.fun();
+          d.fun(app);
         }else{
         	this.focus();
         }

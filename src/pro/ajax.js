@@ -1,5 +1,5 @@
 //TODO:var modals = spec.modals;
-var modals = require('../modals');
+var modals = require('../modals')();
 
 var request = function (url, callback, err) {
 	var http_request = new XMLHttpRequest();
@@ -9,38 +9,41 @@ var request = function (url, callback, err) {
 	  var ok = 200;
 	  if (http_request.readyState === done && http_request.status === ok){
 			if(typeof(callback) === 'function')
-				callback(http_request.responseText);
+				{callback(http_request.responseText);}
 		}else	if (http_request.readyState === done){
-			err(http_request.responseText)
+			err(http_request.responseText);
 		}
 	};
 	http_request.send();	
 };
 
-var getJSON = function(url, callback, show_progress){
+var getJSON = function(url, callback, err, show_progress){
 	var prog = ajaxProgress();
+	if (typeof err !== 'function'){
+		err = modals.error;
+	}
 	request(url, function (response) {
 		prog.stop();
 		var json;
 		try {
 	    json = JSON.parse(response);
     } catch (e) {
-      json = response.toString()
+      json = response.toString();
     }
 		if(typeof json['error'] === 'undefined'){
 		  callback(json);
 		}else{
-			modals.error(json['error']['name'], json['error']['message']);
+			err(json['error']['name'], json['error']['message']);
 		}
 
 	},
 	function (err) {
 		prog.stop();
-		modals.error('Network Error', err);
+		err('Network Error', err);
 	});
 
 	if(show_progress)
-		prog();
+		{prog();}
 };
 
 var ajaxProgress = function () {
@@ -52,24 +55,24 @@ var ajaxProgress = function () {
 				d3.select(".progress").text(response);
 				setTimeout(check, 100);
 			}else{
-				ajax('/nmr/test?complete=1')
+				request('/nmr/test?complete=1');
 			}
 		});
 	}
 
 	var run = function() {
 		check();
-	}
+	};
 
 	run.stop = function() {
 		clearInterval(interval);
 		stopped = true;
 		// TODO: Progress should be bound to app
-	  d3.select(".progress").text("Completed")
+	  d3.select(".progress").text("Completed");
 			/*.transition()
 	    .duration(2500)
 	    .style("opacity", 1e-6)*/
-	}
+	};
 	return run;
 };
 

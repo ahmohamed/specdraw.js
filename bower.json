@@ -9,9 +9,11 @@
     "node"
   ],
   "keywords": [
-    "spectra",
+    "specdraw",
+    "SpecdrawJS",
     "NMR",
-    "D3"
+    "spectra",
+		"d3js"
   ],
   "license": "MIT",
   "ignore": [

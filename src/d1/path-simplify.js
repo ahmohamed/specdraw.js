@@ -1,5 +1,5 @@
+var simplify = require('../utils/simplify-line');
 module.exports = function () {
-	var simplify = require('../utils/simplify-line');
 	var core = require('../elem');
 	var source = core.ResponsiveElem('path');
 	core.inherit(PathElem, source);

@@ -10,8 +10,10 @@ module.exports = function () {
 	
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function (){
-			d3.select("#rfunc").attr("slope", zoomer.scale());
-			d3.select("#bfunc").attr("slope", zoomer.scale());
+			var slide = SpecContainer.parent();
+			
+			slide.select("#rfunc").attr("slope", zoomer.scale());
+			slide.select("#bfunc").attr("slope", zoomer.scale());
 		}).scaleExtent([0.1,100]);	
 	
 	function SpecContainer(slide) {
@@ -59,48 +61,52 @@ module.exports = function () {
 				if(!e.norender){
 					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
 				} 
-			})
-			.on("mouseenter", dispatcher.mouseenter)
-			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+			});
 			
-				dispatcher.mousemove(new_e);
-			})
-			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
-			  var new_click_event = new Event('mousedown');
-			  new_click_event.pageX = d3.event.pageX;
-			  new_click_event.clientX = d3.event.clientX;
-			  new_click_event.pageY = d3.event.pageY;
-			  new_click_event.clientY = d3.event.clientY;
-			  focus.select(".main-brush").node()
-					.dispatchEvent(new_click_event);
-			})
-			.on("click", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+		if (SpecContainer.parentApp().config() > 1){
+			focus.on("mouseenter", dispatcher.mouseenter)
+				.on("mouseleave", dispatcher.mouseleave)
+				.on("mousemove", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
+			
+					dispatcher.mousemove(new_e);
+				})
+				.on("mousedown", function () {	// Why?! because no brush when cursor on path?
+				  var new_click_event = new Event('mousedown');
+				  new_click_event.pageX = d3.event.pageX;
+				  new_click_event.clientX = d3.event.clientX;
+				  new_click_event.pageY = d3.event.pageY;
+				  new_click_event.clientY = d3.event.clientY;
+				  focus.select(".main-brush").node()
+						.dispatchEvent(new_click_event);
+				})
+				.on("click", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
 		
-				dispatcher.click(new_e);
-			})
-			.on("dblclick", dispatcher.regionfull);
+					dispatcher.click(new_e);
+				})
+				.on("dblclick", dispatcher.regionfull);
 
-		dispatcher.on("regionfull",function () {
+			dispatcher.on("regionfull",function () {
 			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
 		});
-		
+		}
 		//spectral lines
 		for (var i = 0; i < specs.length; i++) {
 			render_spec(specs[i]);
 		}
 		//brushes
-		main_brush
-			.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
+		if (SpecContainer.parentApp().config() > 1){
+			main_brush
+				.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+				(SpecContainer);
+		}
 		
 	}
 	function render_spec(s) {
@@ -140,6 +146,11 @@ module.exports = function () {
 		}	);
 		
 		if ( s.length === 0 ){
+			if(specs.length !== 0){ //TODO: Until we support 2D datasets.
+				SpecContainer.parentApp().appendSlide(spec_data);
+				return;
+			}
+			
 			s = require('./spec2d')()
 				.datum(spec_data["data"])
 				.s_id(spec_data["s_id"])
@@ -156,7 +167,7 @@ module.exports = function () {
 		render_spec(s);
 		return s;
 	};
-	SpecContainer.hightlightSpec = function(){};
+	SpecContainer.highlightSpec = function(){};
 	SpecContainer.changeRegion = function (_) {
 		if( focus ){
 			focus.on('_regionchange')(_);

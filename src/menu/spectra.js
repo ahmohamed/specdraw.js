@@ -15,9 +15,12 @@ function spectra (app) {
 			nav.append(spec_selector);
 		}else{
 			var spec_list = d3.select( spec_selector() ).select('ul');
-			spec_list.append('li')
-				.text('+ Add spectrum')
-				.on('click', require('../pro/open-file')(app) );
+			
+			if(app.config() > 2){
+				spec_list.append('li')
+					.text('+ Add spectrum')
+					.on('click', require('../pro/open-file')(app) );
+			}
 			
 			nav.append( function () {return spec_list.node();} )
 				.classed('block-list spec-list no-checkbox', true);

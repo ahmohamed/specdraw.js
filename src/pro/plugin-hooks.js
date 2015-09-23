@@ -8,6 +8,7 @@ function handle_peaks (app, json) {
 		'Can\'t find spectrum with s_id:' + json['s_id']);
 	}
 	spec[0].addPeaks(json['peaks']);
+	app.slideDispatcher().peakpick();
 }
 
 function handle_segs (app, json) {

@@ -130,7 +130,7 @@ inp.select_multi = function (label, options) {
 	return function () { return elem.node();	};
 };
 
-inp.select_toggle = function (label, options) {
+inp.select_toggle = function (label, options, app) {
 	console.log(label, options);
 	var elem = d3.select(document.createElement('div'))
     .classed('param select-toggle', true);
@@ -145,23 +145,23 @@ inp.select_toggle = function (label, options) {
 	var select_elem = elem.select('select').node();
 	
 	elem.select('select').on('input', function () {
-    d3.event.stopPropagation();
-  })
+    	d3.event.stopPropagation();
+  	})
     .on('change', function () {
-		fieldset.select('fieldset').remove();
+			fieldset.select('fieldset').remove();
 
-		if( Object.keys( options[select_elem.value][1]).length > 0 ){
-			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ));
-				//.appened('legend', 'Parameters');
-		}
-    
-    fireEvent(this.parentNode, 'input');
-	});
+			if( Object.keys( options[select_elem.value][1]).length > 0 ){
+				fieldset.append("fieldset")
+					.append(inp.div( options[select_elem.value][1], app ));
+					//.appened('legend', 'Parameters');
+			}
+    	console.log(app);
+	    fireEvent(this.parentNode, 'input');
+		});
 	
 	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
 		fieldset.append("fieldset")	
-			.append(inp.div( options[ select_elem.value ][1] ));
+			.append(inp.div( options[ select_elem.value ][1], app ));
 	}
 	
 	elem.node().getValue = function(){ 
@@ -241,7 +241,7 @@ var parseInputElem = function (label, type, details, app) {
 	][type];
 	
 	var args = [label].concat(details);
-	args = type === 6 ? args.concat(app) : args;
+	args = [3,4,6].indexOf(type) !== -1 ? args.concat(app) : args;
 	return f.apply(null, args);
 };
 

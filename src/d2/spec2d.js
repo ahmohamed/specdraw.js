@@ -19,7 +19,7 @@ module.exports = function () {
 		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
 
 		img_elem = svg_elem.append("g")
-			.attr("filter", "url(#2dColorFilter)")
+			.attr("filter", "url(#" + spec_container.parent().filterId()+ ")")
 			.append("svg:image")
 			  .attr('width', spec_container.width())
 			  .attr('height', spec_container.height())

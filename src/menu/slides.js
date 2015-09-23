@@ -18,12 +18,14 @@ module.exports = function (app) {
 					app.dispatcher().slideChange(d);
 				});
 		
-		nav.select('ul')
-			.append('li')
-				.text('+ New Slide')
-				.on('click', function () {
-					app.appendSlide();
-				});
+		if(app.config() > 2){
+			nav.select('ul')
+				.append('li')
+					.text('+ New Slide')
+					.on('click', function () {
+						app.appendSlide();
+					});
+		}
 			
 		return div;
 	}

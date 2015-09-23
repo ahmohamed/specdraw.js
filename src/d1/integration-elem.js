@@ -61,8 +61,6 @@ module.exports = function (){
 		if(!reduction_factor){ reduction_factor = 1; }
 		
 		
-		
-		
 		path = d3.svg.line()
 			.x(function(d) { return x(d.x); })
 			.y(function(d) { return y(d.y/reduction_factor) - y.range()[0]*0.3; });

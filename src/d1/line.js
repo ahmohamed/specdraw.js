@@ -116,6 +116,9 @@ module.exports = function () {
 						i_to_pixel.domain( data_slice );
 						
 						render_data();
+						range.y = path_elem.range().y;
+						range.y[0] *= scale_factor;
+						range.y[1] *= scale_factor;
 					}
 				}
 			})
@@ -162,11 +165,7 @@ module.exports = function () {
 
 		//TODO: resample factors both x and y dimensions.
 		// Both dimension need to have the same unit, i.e. pixels.										
-		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
-		range.y = path_elem.range().y;
-		range.y[0] *= scale_factor;
-		range.y[1] *= scale_factor;
-		
+		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );		
 		svg_elem.on("_redraw")({x:true});
 	}
 	
@@ -261,7 +260,6 @@ module.exports = function () {
 		
 		range.x = [data[0].x, data[data.length-1].x];
 		range.y = d3.extent(data.map(function(d) { return d.y; }));
-		
 		ppm_to_i = d3.scale.linear()
 			.range([0, data.length])
 			.domain([ data[0].x, data[data.length-1].x ]);

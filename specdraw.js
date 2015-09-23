@@ -1286,6 +1286,161 @@ module.exports = {
 },{}],5:[function(require,module,exports){
 var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
 },{}],6:[function(require,module,exports){
+(function() {
+  var out$ = typeof exports != 'undefined' && exports || this;
+
+  var doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+
+  function isExternal(url) {
+    return url && url.lastIndexOf('http',0) == 0 && url.lastIndexOf(window.location.host) == -1;
+  }
+
+  function inlineImages(el, callback) {
+    var images = el.querySelectorAll('image');
+    var left = images.length;
+    if (left == 0) {
+      callback();
+    }
+    for (var i = 0; i < images.length; i++) {
+      (function(image) {
+        var href = image.getAttribute('xlink:href');
+        if (href) {
+          if (isExternal(href.value)) {
+            console.warn("Cannot render embedded images linking to external hosts: "+href.value);
+            return;
+          }
+        }
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var img = new Image();
+        href = href || image.getAttribute('href');
+        img.src = href;
+        img.onload = function() {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          image.setAttribute('xlink:href', canvas.toDataURL('image/png'));
+          left--;
+          if (left == 0) {
+            callback();
+          }
+        }
+        img.onerror = function() {
+          console.log("Could not load "+href);
+          left--;
+          if (left == 0) {
+            callback();
+          }
+        }
+      })(images[i]);
+    }
+  }
+
+  function styles(el, selectorRemap) {
+    var css = "";
+    var sheets = document.styleSheets;
+    for (var i = 0; i < sheets.length; i++) {
+      if (isExternal(sheets[i].href)) {
+        console.warn("Cannot include styles from other hosts: "+sheets[i].href);
+        continue;
+      }
+      var rules = sheets[i].cssRules;
+      if (rules != null) {
+        for (var j = 0; j < rules.length; j++) {
+          var rule = rules[j];
+          if (typeof(rule.style) != "undefined") {
+            var match = null;
+            try {
+              match = el.querySelector(rule.selectorText);
+            } catch(err) {
+              console.warn('Invalid CSS selector "' + rule.selectorText + '"', err);
+            }
+            if (match) {
+              var selector = selectorRemap ? selectorRemap(rule.selectorText) : rule.selectorText;
+              css += selector + " { " + rule.style.cssText + " }\n";
+            } else if(rule.cssText.match(/^@font-face/)) {
+              css += rule.cssText + '\n';
+            }
+          }
+        }
+      }
+    }
+    return css;
+  }
+
+  out$.svgAsDataUri = function(el, options, cb) {
+    options = options || {};
+    options.scale = options.scale || 1;
+    var xmlns = "http://www.w3.org/2000/xmlns/";
+
+    inlineImages(el, function() {
+      var outer = document.createElement("div");
+      var clone = el.cloneNode(true);
+      var width, height;
+      if(el.tagName == 'svg') {
+        width = parseInt(clone.getAttribute('width') || clone.style.width || out$.getComputedStyle(el).getPropertyValue('width'));
+        height = parseInt(clone.getAttribute('height') || clone.style.height || out$.getComputedStyle(el).getPropertyValue('height'));
+      } else {
+        var box = el.getBBox();
+        width = box.x + box.width;
+        height = box.y + box.height;
+        clone.setAttribute('transform', clone.getAttribute('transform').replace(/translate\(.*?\)/, ''));
+
+        var svg = document.createElementNS('http://www.w3.org/2000/svg','svg')
+        svg.appendChild(clone)
+        clone = svg;
+      }
+
+      clone.setAttribute("version", "1.1");
+      clone.setAttributeNS(xmlns, "xmlns", "http://www.w3.org/2000/svg");
+      clone.setAttributeNS(xmlns, "xmlns:xlink", "http://www.w3.org/1999/xlink");
+      clone.setAttribute("width", width * options.scale);
+      clone.setAttribute("height", height * options.scale);
+      clone.setAttribute("viewBox", "0 0 " + width + " " + height);
+      outer.appendChild(clone);
+
+      var css = styles(el, options.selectorRemap);
+      var s = document.createElement('style');
+      s.setAttribute('type', 'text/css');
+      s.innerHTML = "<![CDATA[\n" + css + "\n]]>";
+      var defs = document.createElement('defs');
+      defs.appendChild(s);
+      clone.insertBefore(defs, clone.firstChild);
+
+      var svg = doctype + outer.innerHTML;
+      var uri = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svg)));
+      if (cb) {
+        cb(uri);
+      }
+    });
+  }
+
+  out$.saveSvgAsPng = function(el, name, options) {
+    options = options || {};
+    out$.svgAsDataUri(el, options, function(uri) {
+      var image = new Image();
+      image.src = uri;
+      image.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        var context = canvas.getContext('2d');
+        context.drawImage(image, 0, 0);
+
+        var a = document.createElement('a');
+        a.download = name;
+        a.href = canvas.toDataURL('image/png');
+        document.body.appendChild(a);
+        a.addEventListener("click", function(e) {
+          a.parentNode.removeChild(a);
+        });
+        a.click();
+      }
+    });
+  }
+})();
+
+},{}],7:[function(require,module,exports){
 /*
  Copyright (c) 2012, Vladimir Agafonkin
  Simplify.js is a high-performance polyline simplification library
@@ -1458,7 +1613,37 @@ function simplify(points, tolerance, highestQuality) {
   return points;
 };
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
+function bin(data, binsize) {
+	var out = [];
+	var bin_index = 0, 
+			bin_xval = 0,
+			bin_yval = 0;
+	for (var i = 0; i < data.length; i++) {
+		bin_xval += data[i].x;
+		bin_yval += data[i].y;
+		bin_index++;
+		if(bin_index === binsize){
+			out.push( {x:bin_xval/bin_index, y:bin_yval/bin_index} );
+			bin_index = bin_xval = bin_yval = 0;
+		}
+	}
+	if(bin_index > 0){
+		out.push( {x:bin_xval/bin_index, y:bin_yval/bin_index} );
+	}
+	return out;
+}
+
+module.exports = function (spec_line, binsize) {
+	var x_extent = Math.abs( spec_line.range().x[0] - spec_line.range().x[1] );
+	var nbins = x_extent / binsize;
+	var bin_points = Math.floor( spec_line.datum().length / nbins );
+	
+	var binned_data = bin(spec_line.datum(), bin_points);
+	console.log(binned_data);
+	spec_line.datum(binned_data);
+};
+},{}],9:[function(require,module,exports){
 module.exports = function (){
 	function getDataPoint (x_point, pixel_to_i, local_max) {
 		var i;
@@ -1531,13 +1716,15 @@ module.exports = function (){
 
 		svg_elem
 			.on("_regionchange", function(e){
-				if(e.x){					
+				if(e.xdomain){					
 					svg_elem.datum(null);
 					svg_elem.attr("transform", "translate(" + (-10000) + "," + (-10000) + ")");
+					tip.hide();
 				}else{
 					var datum = svg_elem.datum();
 					if(datum){
-						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");						
+						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");
+						tip.show(svg_elem.node());
 					}
 				}
 			})
@@ -1591,7 +1778,7 @@ module.exports = function (){
 	return _main;
 };
 
-},{"../elem":19}],8:[function(require,module,exports){
+},{"../elem":21}],10:[function(require,module,exports){
 function integrate(data){
 	var _cumsum = data.map(function(d) { return d.y; }).cumsum();
 	
@@ -1653,8 +1840,6 @@ module.exports = function (){
 		IntegElem.updateData();
 		if(!integ_factor){ integ_factor = integ_val; }
 		if(!reduction_factor){ reduction_factor = 1; }
-		
-		
 		
 		
 		path = d3.svg.line()
@@ -1769,7 +1954,7 @@ module.exports = function (){
 	return IntegElem;
 };
 
-},{"../elem":19}],9:[function(require,module,exports){
+},{"../elem":21}],11:[function(require,module,exports){
 function calcReductionFactor(spec_container) {
 	var seg_len = [];
 	var specs = spec_container.spectra();
@@ -1888,6 +2073,9 @@ module.exports = function () {
 						i_to_pixel.domain( data_slice );
 						
 						render_data();
+						range.y = path_elem.range().y;
+						range.y[0] *= scale_factor;
+						range.y[1] *= scale_factor;
 					}
 				}
 			})
@@ -1934,11 +2122,7 @@ module.exports = function () {
 
 		//TODO: resample factors both x and y dimensions.
 		// Both dimension need to have the same unit, i.e. pixels.										
-		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
-		range.y = path_elem.range().y;
-		range.y[0] *= scale_factor;
-		range.y[1] *= scale_factor;
-		
+		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );		
 		svg_elem.on("_redraw")({x:true});
 	}
 	
@@ -2033,7 +2217,6 @@ module.exports = function () {
 		
 		range.x = [data[0].x, data[data.length-1].x];
 		range.y = d3.extent(data.map(function(d) { return d.y; }));
-		
 		ppm_to_i = d3.scale.linear()
 			.range([0, data.length])
 			.domain([ data[0].x, data[data.length-1].x ]);
@@ -2087,7 +2270,7 @@ module.exports = function () {
 	return SpecLine;
 };
 
-},{"../elem":19,"./crosshair":7,"./integration-elem":8,"./path-simplify":11}],10:[function(require,module,exports){
+},{"../elem":21,"./crosshair":9,"./integration-elem":10,"./path-simplify":13}],12:[function(require,module,exports){
 module.exports = function (){
 	var x, y, dispatcher;
 	var svg_elem, _brush;
@@ -2188,9 +2371,9 @@ module.exports = function (){
 	return MainBrush;
 };
 
-},{"../elem":19}],11:[function(require,module,exports){
+},{"../elem":21}],13:[function(require,module,exports){
+var simplify = require('../utils/simplify-line');
 module.exports = function () {
-	var simplify = require('../utils/simplify-line');
 	var core = require('../elem');
 	var source = core.ResponsiveElem('path');
 	core.inherit(PathElem, source);
@@ -2255,7 +2438,7 @@ module.exports = function () {
 	return PathElem;
 };
 
-},{"../elem":19,"../utils/simplify-line":44}],12:[function(require,module,exports){
+},{"../elem":21,"../utils/simplify-line":49}],14:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -2473,7 +2656,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":19,"d3-context-menu":3}],13:[function(require,module,exports){
+},{"../elem":21,"d3-context-menu":3}],15:[function(require,module,exports){
 module.exports = function(){
 	var svg_elem, x, y, dispatcher,brushscale;
 	
@@ -2575,8 +2758,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":19}],14:[function(require,module,exports){
-
+},{"../elem":21}],16:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
@@ -2587,9 +2769,14 @@ module.exports = function () {
 	var specs = core.ElemArray();
 	var peak_picker = require('./peak-picker')();
 	var main_brush = require('./main-brush')();
-
+	
+	var timestamp = 0;
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function () {
+			if(d3.event.sourceEvent.timeStamp - timestamp < 50){
+			      return;
+			}
+			timestamp = d3.event.sourceEvent.timeStamp;
 			/* * When a y brush is applied, the scaled region should go both up and down.*/
 			var new_range = range.y[1]/zoomer.scale() - range.y[0];
 			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2;
@@ -2674,67 +2861,74 @@ module.exports = function () {
 				if(!e.norender){
 					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
 				} 
-			})
-			.on("mouseenter", dispatcher.mouseenter)
-			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+			});
 			
-				dispatcher.mousemove(new_e);
-			})
-			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
-			  var new_click_event = new Event('mousedown');
-			  new_click_event.pageX = d3.event.pageX;
-			  new_click_event.clientX = d3.event.clientX;
-			  new_click_event.pageY = d3.event.pageY;
-			  new_click_event.clientY = d3.event.clientY;
-			  focus.select(".main-brush").node()
-					.dispatchEvent(new_click_event);
-			})
-			.on("click", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+		if (SpecContainer.parentApp().config() > 1){
+			focus.on("mouseenter", dispatcher.mouseenter)
+				.on("mouseleave", dispatcher.mouseleave)
+				.on("mousemove", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
+			
+					dispatcher.mousemove(new_e);
+				})
+				.on("mousedown", function () {	// Why?! because no brush when cursor on path?
+				  var new_click_event = new Event('mousedown');
+				  new_click_event.pageX = d3.event.pageX;
+				  new_click_event.clientX = d3.event.clientX;
+				  new_click_event.pageY = d3.event.pageY;
+				  new_click_event.clientY = d3.event.clientY;
+				  focus.select(".main-brush").node()
+						.dispatchEvent(new_click_event);
+				})
+				.on("click", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
 		
-				dispatcher.click(new_e);
-			})
-			.on("dblclick", dispatcher.regionfull);
-
+					dispatcher.click(new_e);
+				})
+				.on("dblclick", dispatcher.regionfull);
+		}
+		
 		dispatcher.on("regionfull",function () {
 			focus.on("_regionchange")({xdomain:range.x});		
 		});
 			
+		
 		//brushes
-		main_brush.xScale(x)
-			.dispatcher(dispatcher)
-			(SpecContainer);
+		if (SpecContainer.parentApp().config() > 1){
+			main_brush.xScale(x)
+				.dispatcher(dispatcher)
+				(SpecContainer);			
+		}
 	
 
 		//spectral lines
 		for (var i = 0; i < specs.length; i++) {
 			render_spec(specs[i]);
 		}
-	
-		//peak picker	
-		peak_picker.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
 		
+		//peak picker	
+		if (SpecContainer.parentApp().config() > 2){
+			peak_picker.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+				(SpecContainer);
+		}		
 	}
 	function update_range() {
-		var s = SpecContainer.spectra(true);
-		if (s.length === 0){// if no spectra are selected.
-			s = specs;				// use all spectra.
+		var sel = SpecContainer.spectra(true);
+		if (sel.length === 0){// if no spectra are selected.
+			sel = specs;				// use all spectra.
 		}
 		
-		var x0 = d3.max(s.map(function(s){return s.range().x[0];})),
-			x1 = d3.min(s.map(function(s){return s.range().x[1];})),
-			y0 = d3.min(s.map(function(s){return s.range().y[0];})),
-			y1 = d3.max(s.map(function(s){return s.range().y[1];}));
-
+		var x0 = d3.max(sel.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(sel.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(sel.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(sel.map(function(s){return s.range().y[1];}));
+		
 		// Add 5% margin to top and bottom (easier visualization).
 		var y_limits = (y1-y0);
 		y0 = y0 - (0.05 * y_limits);
@@ -2767,6 +2961,10 @@ module.exports = function () {
 		if (!arguments.length) {
 			throw new Error("appendSlide: No data provided.");
 		} 
+		if(spec_data['nd'] !== 1){ // TODO: parentApp undefined until rendering.
+			SpecContainer.parentApp().appendSlide(spec_data);
+			return;
+		}
 		
 		if(typeof crosshair === 'undefined'){
 			crosshair = true;
@@ -2787,7 +2985,7 @@ module.exports = function () {
 		var s = specs.filter(function (e) {
 			return e.s_id() === s_id;
 		}	);
-		console.log('addspec', s, s_id);
+		
 		if ( s.length === 0 ){
 		 	s = require('./line')()
 				.datum(spec_data)
@@ -2805,7 +3003,7 @@ module.exports = function () {
 		
 		if(SpecContainer.parentApp()){
 			SpecContainer.parentApp().dispatcher().slideContentChange();
-		}		
+		}
 		return s;
 	};
 	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
@@ -2853,7 +3051,7 @@ module.exports = function () {
 	
 	return SpecContainer;
 };
-},{"../elem":19,"./line":9,"./main-brush":10,"./peak-picker":12}],15:[function(require,module,exports){
+},{"../elem":21,"./line":11,"./main-brush":12,"./peak-picker":14}],17:[function(require,module,exports){
 module.exports = function () {
 	var svg_elem, x, y, dispatcher;
 	var core = require('../elem');
@@ -2883,7 +3081,7 @@ module.exports = function () {
 
 	return _main;	
 };
-},{"../elem":19}],16:[function(require,module,exports){
+},{"../elem":21}],18:[function(require,module,exports){
 module.exports = function(){
 	function registerDispatcher() {
 		var suff = ".line."+dispatch_idx;
@@ -2994,7 +3192,7 @@ module.exports = function(){
 	return _main;
 };
 
-},{"../elem":19}],17:[function(require,module,exports){
+},{"../elem":21}],19:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
@@ -3007,8 +3205,10 @@ module.exports = function () {
 	
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function (){
-			d3.select("#rfunc").attr("slope", zoomer.scale());
-			d3.select("#bfunc").attr("slope", zoomer.scale());
+			var slide = SpecContainer.parent();
+			
+			slide.select("#rfunc").attr("slope", zoomer.scale());
+			slide.select("#bfunc").attr("slope", zoomer.scale());
 		}).scaleExtent([0.1,100]);	
 	
 	function SpecContainer(slide) {
@@ -3056,48 +3256,52 @@ module.exports = function () {
 				if(!e.norender){
 					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
 				} 
-			})
-			.on("mouseenter", dispatcher.mouseenter)
-			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+			});
 			
-				dispatcher.mousemove(new_e);
-			})
-			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
-			  var new_click_event = new Event('mousedown');
-			  new_click_event.pageX = d3.event.pageX;
-			  new_click_event.clientX = d3.event.clientX;
-			  new_click_event.pageY = d3.event.pageY;
-			  new_click_event.clientY = d3.event.clientY;
-			  focus.select(".main-brush").node()
-					.dispatchEvent(new_click_event);
-			})
-			.on("click", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+		if (SpecContainer.parentApp().config() > 1){
+			focus.on("mouseenter", dispatcher.mouseenter)
+				.on("mouseleave", dispatcher.mouseleave)
+				.on("mousemove", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
+			
+					dispatcher.mousemove(new_e);
+				})
+				.on("mousedown", function () {	// Why?! because no brush when cursor on path?
+				  var new_click_event = new Event('mousedown');
+				  new_click_event.pageX = d3.event.pageX;
+				  new_click_event.clientX = d3.event.clientX;
+				  new_click_event.pageY = d3.event.pageY;
+				  new_click_event.clientY = d3.event.clientY;
+				  focus.select(".main-brush").node()
+						.dispatchEvent(new_click_event);
+				})
+				.on("click", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
 		
-				dispatcher.click(new_e);
-			})
-			.on("dblclick", dispatcher.regionfull);
+					dispatcher.click(new_e);
+				})
+				.on("dblclick", dispatcher.regionfull);
 
-		dispatcher.on("regionfull",function () {
+			dispatcher.on("regionfull",function () {
 			focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});		
 		});
-		
+		}
 		//spectral lines
 		for (var i = 0; i < specs.length; i++) {
 			render_spec(specs[i]);
 		}
 		//brushes
-		main_brush
-			.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
+		if (SpecContainer.parentApp().config() > 1){
+			main_brush
+				.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+				(SpecContainer);
+		}
 		
 	}
 	function render_spec(s) {
@@ -3137,6 +3341,11 @@ module.exports = function () {
 		}	);
 		
 		if ( s.length === 0 ){
+			if(specs.length !== 0){ //TODO: Until we support 2D datasets.
+				SpecContainer.parentApp().appendSlide(spec_data);
+				return;
+			}
+			
 			s = require('./spec2d')()
 				.datum(spec_data["data"])
 				.s_id(spec_data["s_id"])
@@ -3153,7 +3362,7 @@ module.exports = function () {
 		render_spec(s);
 		return s;
 	};
-	SpecContainer.hightlightSpec = function(){};
+	SpecContainer.highlightSpec = function(){};
 	SpecContainer.changeRegion = function (_) {
 		if( focus ){
 			focus.on('_regionchange')(_);
@@ -3177,7 +3386,7 @@ module.exports = function () {
   };
 	return SpecContainer;	
 };
-},{"../d1/main-brush":10,"../elem":19,"./spec2d":18}],18:[function(require,module,exports){
+},{"../d1/main-brush":12,"../elem":21,"./spec2d":20}],20:[function(require,module,exports){
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('spec-img');
@@ -3199,7 +3408,7 @@ module.exports = function () {
 		//svg_elem.attr("clip-path","url(#" + svg_elem.selectP('.spec-slide').node().clip_id + ")");
 
 		img_elem = svg_elem.append("g")
-			.attr("filter", "url(#2dColorFilter)")
+			.attr("filter", "url(#" + spec_container.parent().filterId()+ ")")
 			.append("svg:image")
 			  .attr('width', spec_container.width())
 			  .attr('height', spec_container.height())
@@ -3302,7 +3511,7 @@ module.exports = function () {
 	return _main;
 };
 
-},{"../elem":19,"./crosshair-2d":16}],19:[function(require,module,exports){
+},{"../elem":21,"./crosshair-2d":18}],21:[function(require,module,exports){
 
 function inherit(target, source){
   for (var f in source){
@@ -3447,26 +3656,25 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],20:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var events = {
 	crosshair:true,
 	peakpick:false,
 	peakdel:false,
 	integrate:false,
 	zoom:["x", "y", false]
-}
+};
 
 events.crosshairToggle = function (app) {
 	events.crosshair = !events.crosshair;
 	app.slideDispatcher().crosshairEnable(events.crosshair);
-}
+};
 
 events.peakpickToggle = function (app) {
 	if(events.zoom[0] !== false)	events.zoom.rotateTo(false);	
 	if(events.peakdel !== false)	events.peakdelToggle(app);
 	if(events.integrate !== false)	events.integrateToggle(app);
 	
-	console.log(events.zoom)
 	events.peakpick = !events.peakpick;
 	app.slideDispatcher().peakpickEnable(events.peakpick);
 }
@@ -3495,78 +3703,49 @@ events.zoomToggle = function (app) {
 	if(events.integrate !== false)	events.integrateToggle(app);	
 	
 	events.zoom.rotate();
-	console.log(events.zoom)
 	//dispatcher.integrateEnable(events.integrate);	
 }
 
-var cursor = {
-	addinteg:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABtElEQVRIS62WzStFQRiHzy3lc3MX/AWSj0KhlCV7xEJRStn42MgCC7KxsxEWipSNugvKSsrCzldRilIiSlkgVpKP59VM3cY5576nc6aezjkz7/x+M/POzL0pz7+0Ub3nNI3zPR8QH1id8mkppu4I7mASzkxMYgbtCG7DMCxDLVTBATwmMYMlRIZgBOQ9VnGXSL4z0AWtsB9Lnc6uQRF1x1ANjXCqNOgkrgUW4Ta7j2tQQOOhWfcmnidKg1XiBuBfH9eglKALKPMLDjFboG1UY1BJ0KURijIDtUE54tcxDOrpex6WA41BMwKFRuSH5yesmI0xZnKYb03cHFiDdwIasmZj4+WU35gcqfIfZPBA7xp4c1Ty+J6ANHyYNtGQOilybmQX2pIOMngiQhL+ohqm59kk58xBB4JbENXAXi85z0E34nJVyDrLaCQXmqLeptZgE9Ve+NaoExN5Bjt0kvvlS2kwS9y0mXXoOegjaAPsb4FSPzhMdtE9zMAarEM/VIA90bFMxEBOo+yaKZgDWZ5BUx9LXDpbAyu0y0sPvMZWNgJiUAcl8AxXSY3cDtDvX0VSg//T+QW01FzwK6wJAwAAAABJRU5ErkJggg==",
-	delinteg:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABdklEQVRIS92VzysFURiG50p+b2z8AbJANgqFnX8AJRsLq0uRNWUlCxZWxIqUFbFTdspCKFcksVC6ko2NHSvyvDWndJw7c7ozs3Hqaeac+c77znfmO2dyQXybI2TJCuuhfxk/NQhyMUFtPL+HebiGozC+j+t5GgbLiMxCJ9zAANTDMXwkNahB4AraoRcufATtmKglaiS4AA3QBS9pG7Qi+ABvoPv3tA1aEHzM0qAf8dMsDUYR38vSYATx/X9h8EQWHfBpVVElfR0jddZ4Nf01KGo8ah+YJdolbgy+LSHtaJk3OcpXBXLma3BI4JDDQPObocKR2bPJOCqDVYJmQAbD8OV409ihKIN1Zk/BFkyUyCCRgckgj8pmrFKJAJ8lmmbuRtoGMt6GcegGnaplNZOBrvprTcIg6BS9CxVde8DbzBiopm9BZacfywGshBnseKs5Ao2BduUJaIOYtsDNIpRVnkbk90euZVDLUQWvUEzy5i6DNPT+aPwAle1IGSTahDYAAAAASUVORK5CYII=",
-	peakpick:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABxUlEQVRIS+2VPSiFURjH7yUxyEdJiUlZpJgpg0kWBiQyGBhIKZtFhI1BSFFSlI+BmGQjMSgMRkpmZSCR8Ptzzu24rvc96t7NW7/e857znOd/nuc857zRSIqfaIr9R/4FQjPspqgA60Z4dGZl0z6H01BPkUgZNrVwApfW3hXIp7MV5h1nk7SX3AkBQh2MrcAgTCUSsH3TNPrhGsrh2WP1MmmGTeiDuSCBdgZXYRea4C3ZAnYlazhW2L4C2r9t6IbFoAisQFAERTjIdSJTGhX5GMyYPcjUeKKDFiagOYpOBRH6BAkEpWgAzw1w5yjU0S403xs2tfEC+l6GTlAVVcJD6DK/DLyqqATDW8dhFe2LZAp04awHdmACvh2aEKHQCDJwcAQqsX2TIqWpAp48oggVqDYCpbxv4ABqoB72PARasNHmKgML1t5ust465qpnbbAOlz3RvlGkMyfL+HiNF9BmnoFuw0MzmGP6FNEoDHtE8cNEK08z6dCqVcsxddq6i7bMrBHe2viXvwhJYBZ6QXtwnGDyEH3jTr8i0TXu/jd+1ZTAO7TBesDKdAXrjrGPKiv2UwmKSAJ5cO8Rtn5IxaCSvfKw/zT5AMjqYuejWwg8AAAAAElFTkSuQmCC",
-	peakdel:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABqElEQVRIS+2VTShFQRiG3URC5GdjJ1HyU6wsiLtRliwtpPwtiNTNhlIWKBtFrMjKz0axUJRS7CyQUjayQIpYoFCK583cOumcOffo3mycevrmznznfeebmTM3lJTgJ5Rg/aR/A98V9lqiSt6sgReHQgbtbbjxVXUkeBkUk9MGo47cQdqrcBcPA2mkwAmUwSJ0BRGO5tpOkcaWoB36YD7eBtKbgf6/NmhkAutwCqmmymTiPkT8PrRYKmhFaMVl+Q7oC/sZzJHUC92w4LEHmm2my9g7fW82gywSjqHInCKZfAbdaJtBGLE9I3hNLIeneBnIeA0knA2dUA9a10CPVwWFqFxCFai9AbMwEEidZC8DXQs6/6WQB7fwbJbpKoiJm0EOAucwAjo5ylHs+E0VerkEcuEQdEokNAkVcG9mW008Mu0m4k6sVcjgAnQUtRwPRlSzn/ghMsXvIdPXQtw0E7J6yeAMdGOOQYNpO2cfFUijsQu1pkPXdgSWbUYyGIZx85I2sg50r7g96XROQ48Z3CI2w4dXGdFNLiBBF5Vm9Wqt+XtQ+fnwCNZ/uC/qOUsdSEVD5wAAAABJRU5ErkJggg==",
-	refpick:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAB9klEQVRIS+WVTSilURjHWdBEkY+NnUQmH0UW1AgLCwsLylaKWJhIyYIpJRmRKEKJKImyMBYWPmJhITNCysdGFkiZxgJRZur6/afz6nW7133v7Vo59es599znPP/nfD1vaMg7t9AA42veVxiCVTiFUuiDUXiy4gYqoPmaOw8rMAZRsAUjMBwMAcWYgG2bwB79TpgKlsAggfJgGtTvhS649Vcgkwm5cG9NxEZCMRxCHFRAKjzYfP7vo5OWjFMltNucm+jnwKbZkh3skfH75+8K5B8G+5AG2vtaWIdZ0CF/hmNohv5ABLTaSagCXdG/JvAvbAPosMtgAVqhB1xOt8hKSAepYBLQdfTZPp6AXmi9OeBxn/uDgz9bpFKgl5oE1i1y+RLxR6CIYBsm4AU2HV5erDchpwLymwMFjoYaKAA9sjebU4FEopxBFqj/A1SqG4MloLKg+6/XqrpzBXdmm87fEnGyghgCnMA30M3RHNlqJ6vwJJDCxFj4CbolCtQNGfDbZJuN3TX9Euyyt1W4C3zCUeVXV1Hb8ccEVfbf3YKo9reYsXLsoknolZu7QAT/qnipYnZAoenbs7cCKJk1+GIGrrGqpDN2IU9b1IaDvkpqOsh8OHDL3vqphAagzgwsYVVRfX4PEnAKB2X16CW4fVj+8XADl/Y/ngGM/GMZMjMjNAAAAABJRU5ErkJggg==",
-}
-
 events.registerKeyboard = function(app){
-	console.log(app)
 	d3.select("body").on("keydown", function() {
-      /*svg.append("text")
-          .attr("x","5")
-          .attr("y","150")
-          .style("font-size","50px")
-          .text("keyCode: " + d3.event.keyCode)  
-        .transition().duration(2000)
-          .style("font-size","5px")
-          .style("fill-opacity",".1")
-	        .remove();
-			*/
-			app.slideDispatcher().log("keyCode: " + d3.event.keyCode);
-			
+		app.slideDispatcher().log("keyCode: " + d3.event.keyCode);
+	
+		if(app.config() > 2){
 			if (d3.event.keyCode===80) { // p
 				events.peakpickToggle(app);
 			}else if (d3.event.keyCode===68) { // d
 				events.peakdelToggle(app);
 			}else if (d3.event.keyCode===73) { // i
 				events.integrateToggle(app);
-			}else if (d3.event.keyCode===67) { // c
-				events.crosshairToggle(app);
-			}else if (d3.event.keyCode===70) { // f
-				dispatcher.regionfull(app);
-			}else if (d3.event.keyCode===90) { // z
-				events.zoomToggle(app);
 			}
-			
-			
-			app.slideDispatcher().keyboard(d3.event);
-	  });
+		}
+		
+		if (d3.event.keyCode===67) { // c
+			events.crosshairToggle(app);
+		}else if (d3.event.keyCode===70) { // f
+			dispatcher.regionfull(app);
+		}else if (d3.event.keyCode===90) { // z
+			events.zoomToggle(app);
+		}
+		
+		app.slideDispatcher().keyboard(d3.event);
+  });
 };
 module.exports = events;
-
-/* opens a dialogue to edit svg text
- * to be used for integration.
-function editText(evt){
-	// fetch the DOM element where the click event occurred
-	var textElement = evt.target;
-	// fetch current text contents and place them in a prompt dialog
-	var editedText = prompt("Edit textual contents:", textElement.firstChild.data);
-	// only replace text if user didn't press cancel
-	if(editedText != null){
-		textElement.firstChild.data = editedText;
-	}
-}*/
-
-
-},{}],21:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 require('./utils/array');
 module.exports = {};
 module.exports.App = require('./main_app');
 module.exports.hooks = {};
 module.exports.hooks.readers = require('./pro/plugin-hooks');
 module.exports.get_spectrum = require('./pro/process_data').get_spectrum;
-module.exports.version = "0.5.2";
+module.exports.version = "0.6.0";
 //console.log("specdraw:"+ spec.version);
 
-},{"./main_app":23,"./pro/plugin-hooks":33,"./pro/process_data":35,"./utils/array":38}],22:[function(require,module,exports){
+
+//TODO: respond to resize.
+//TODO: check browser and fallback if not supported.
+},{"./main_app":26,"./pro/plugin-hooks":38,"./pro/process_data":40,"./utils/array":43}],24:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils/event');
 
@@ -3699,7 +3878,7 @@ inp.select_multi = function (label, options) {
 	return function () { return elem.node();	};
 };
 
-inp.select_toggle = function (label, options) {
+inp.select_toggle = function (label, options, app) {
 	console.log(label, options);
 	var elem = d3.select(document.createElement('div'))
     .classed('param select-toggle', true);
@@ -3714,23 +3893,23 @@ inp.select_toggle = function (label, options) {
 	var select_elem = elem.select('select').node();
 	
 	elem.select('select').on('input', function () {
-    d3.event.stopPropagation();
-  })
+    	d3.event.stopPropagation();
+  	})
     .on('change', function () {
-		fieldset.select('fieldset').remove();
+			fieldset.select('fieldset').remove();
 
-		if( Object.keys( options[select_elem.value][1]).length > 0 ){
-			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ));
-				//.appened('legend', 'Parameters');
-		}
-    
-    fireEvent(this.parentNode, 'input');
-	});
+			if( Object.keys( options[select_elem.value][1]).length > 0 ){
+				fieldset.append("fieldset")
+					.append(inp.div( options[select_elem.value][1], app ));
+					//.appened('legend', 'Parameters');
+			}
+    	console.log(app);
+	    fireEvent(this.parentNode, 'input');
+		});
 	
 	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
 		fieldset.append("fieldset")	
-			.append(inp.div( options[ select_elem.value ][1] ));
+			.append(inp.div( options[ select_elem.value ][1], app ));
 	}
 	
 	elem.node().getValue = function(){ 
@@ -3810,7 +3989,7 @@ var parseInputElem = function (label, type, details, app) {
 	][type];
 	
 	var args = [label].concat(details);
-	args = type === 6 ? args.concat(app) : args;
+	args = [3,4,6].indexOf(type) !== -1 ? args.concat(app) : args;
 	return f.apply(null, args);
 };
 
@@ -3877,32 +4056,48 @@ inp.popover = function (title) {
 };
 
 module.exports = inp;
-},{"./d1/threshold":15,"./utils/event":40}],23:[function(require,module,exports){
+},{"./d1/threshold":17,"./utils/event":45}],25:[function(require,module,exports){
+module.exports = function (app) {
+	app.append('div').classed('logo', true)
+		.text('SpecdrawJS')
+		.on('click', function () {
+			app.modals().proto('SpecdrawJS', 
+			'A javascript library for interactive processing and visualization of NMR spectra.'+
+			'<br> Author: Ahmed Mohamed'+
+			'<br> For bug reports, go to <a href="https://github.com/ahmohamed/specdraw.js/issues" target="_blank"> Github Repository </a>',
+			function (modal) {
+				modal.hide();
+			}).show();
+		});
+};
+},{}],26:[function(require,module,exports){
 module.exports = function(){
 	var core = require('./elem');
 	var source = core.Elem().class('spec-app');
 	core.inherit(App, source);
 	
-  var selection, svg_width, svg_height;
+  var selection, app_width, app_height;
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
-	var modals;
+	var modals, config = 3;
 	var slides = core.ElemArray(), current_slide;
+	var base_url = '/nmr/';
+	
 	function check_size(divnode) {
-		svg_width = App.width();
-		svg_height = App.height();
-		if (typeof svg_width === 'undefined' ||
-			typeof svg_height === 'undefined' ||
-			isNaN(svg_width) || isNaN(svg_height)
+		app_width = App.width();
+		app_height = App.height();
+		if (typeof app_width === 'undefined' ||
+			typeof app_height === 'undefined' ||
+			isNaN(app_width) || isNaN(app_height)
 		){
 			var size = require('./utils/get-size')(divnode);
-			svg_width = size[0];
-			svg_height = size[1];
-			if (typeof svg_width === 'undefined' ||
-				typeof svg_height === 'undefined'){
+			app_width = size[0];
+			app_height = size[1];
+			if (typeof app_width === 'undefined' ||
+				typeof app_height === 'undefined'){
 					return false;
 				}
 		}
-		if (svg_width < 400 || svg_height < 400){return false;}
+		if (app_width < 400 || app_height < 400){return false;}
 		return true;
 	}
 	
@@ -3920,6 +4115,7 @@ module.exports = function(){
 				// When web components are used, the element's dimensions are not
 				// set even when the DOM is ready. However, the container div is set.
 				if (!check_size(div.node().parentNode)){
+					//TODO: better response when canvas is small
 					throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
 				}
 			}else{
@@ -3929,29 +4125,18 @@ module.exports = function(){
 		
 		selection = source(div)
 			.style({
-				width:svg_width,
-				height:svg_height				
+				width:app_width,
+				height:app_height				
 			});
-		
-		svg_width -= 50; //deduct 50px for column menu.
-		
 		modals = require('./modals')(App);
-		require('./menu/menu')(App);
-
-		/**** Keyboard events and logger ****/
-		require('./events').registerKeyboard(App);
 		
-		selection.node().appendToCurrentSlide = function (data) {
-			var current_slide = selection.select('.spec-slide.active').node();
-			if(!current_slide){
-				selection.node().appendSlide(data);
-			}	else{
-				current_slide.addSpec(data);
-				app_dispatcher.slideContentChange();
-			}
-		};
+		if(config > 1){
+			require('./menu/menu')(App);
+			app_width -= 50; //deduct 50px for column menu.
+			/**** Keyboard events and logger ****/
+			require('./events').registerKeyboard(App);
+		}
 		
-		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
 			if (current_slide !== s) { App.currentSlide(s);	}
 		});
@@ -3962,10 +4147,12 @@ module.exports = function(){
 		if(slides.length === 0){
 			App.appendSlide();
 		}
+		
+		require('./logo')(App);
 	}
 	function render_slide(s) {
 		if(! selection){ return; }
-		s.width(svg_width).height(svg_height)
+		s.width(app_width).height(app_height)
 			(App);
 		
 		App.currentSlide(s);
@@ -3999,6 +4186,19 @@ module.exports = function(){
 		render_slide(s);
 		return App;
 	};
+	App.config = function (_) {
+		if (!arguments.length) {return config;}
+		config = _;
+		
+		return App;
+	};
+	App.connect = function (url){
+		if (!arguments.length) {return base_url;}
+		base_url = url;
+		config = 4;
+		
+		return App;
+	};
 	App.options = {
 		grid:{x:false, y:false}
 	};
@@ -4010,7 +4210,7 @@ module.exports = function(){
 			if(!App.currentSlide() || App.currentSlide().spectra().length  > s_per_slide - 1){
 				App.appendSlide(data);
 			}else{
-				App.currentSlide().addSpec(data);
+				App.currentSlide().addSpec(data, config > 1);
 			}
 		};
 		
@@ -4022,7 +4222,29 @@ module.exports = function(){
 
 //TODO: remove Elements
 
-},{"./elem":19,"./events":20,"./menu/menu":25,"./modals":30,"./pro/plugins":34,"./pro/process_data":35,"./slide":37,"./utils/docready":39,"./utils/get-size":42}],24:[function(require,module,exports){
+},{"./elem":21,"./events":22,"./logo":25,"./menu/menu":29,"./modals":34,"./pro/plugins":39,"./pro/process_data":40,"./slide":42,"./utils/docready":44,"./utils/get-size":47}],27:[function(require,module,exports){
+function find_menu_item (menu, item) {
+	for (var i = menu.length - 1; i >= 0; i--) {
+		if(menu[i].label === item){
+			if(!menu[i].children) {menu[i].children = [];}
+			return menu[i];
+		}
+	}
+	menu.push({label:item, children:[]});
+	return menu[menu.length-1];
+}
+
+
+module.exports = function (menu, menu_path) {
+	var path = find_menu_item(menu, menu_path[0]);
+
+	for (var j = 1; j < menu_path.length; j++) {
+		path = find_menu_item(path.children, menu_path[j]);
+	}
+	return path;
+};
+
+},{}],28:[function(require,module,exports){
 var inp = require('../input_elem');
 var fireEvent = require('../utils/event');
 
@@ -4051,7 +4273,7 @@ function recursive_add(sel){
 	}
 }
 
-function main_menu () {
+function main_menu (app) {
 	var menu_data;
 	function _main(div) {
 		div.select('.menu-container').remove();
@@ -4073,7 +4295,7 @@ function main_menu () {
       .on("click", function(d){
         if(d.fun){
           fireEvent(div.node(), 'click'); //close the menu.
-          d.fun();
+          d.fun(app);
         }else{
         	this.focus();
         }
@@ -4089,7 +4311,7 @@ function main_menu () {
 }
 
 module.exports = main_menu;
-},{"../input_elem":22,"../utils/event":40}],25:[function(require,module,exports){
+},{"../input_elem":24,"../utils/event":45}],29:[function(require,module,exports){
 var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 
@@ -4114,15 +4336,19 @@ module.exports = function (app){
 		menu_data = require('./menu_data')(app),
 		serverside_menu = require('./serverside-menu');
 	
-		var column_menu_buttons = [
+	var column_menu_buttons = [
 	  ['open-menu', 'Menu'],
 	  ['open-spec-legend', 'Spectra'],
 	  ['open-slides', 'Slides'],
-	  ['open-settings', 'Settings'],
-	  ['open-download', 'Download Spectra'],
-	  ['open-fullscreen', 'Fullscreen App'],
-	  ['connection-status', 'Connection Status'],
 	];
+	if(app.config() > 2){
+	  column_menu_buttons = column_menu_buttons.concat(
+			[['open-settings', 'Settings'],
+		  ['open-download', 'Download Spectra'],
+		  ['open-fullscreen', 'Fullscreen App'],
+		  ['connection-status', 'Connection Status']]
+		);
+	}
 	
 	var elem = app.append('div')
 		.classed('column-menu', true);
@@ -4147,8 +4373,22 @@ module.exports = function (app){
 	});
 	
 	var app_dispatcher = app.dispatcher();
+	app_dispatcher.on('slideChange.menu', function (s) {
+		//TODO: hide parent menu-item when all children are hidden
+		var two_d_slide = s.nd === 2;
+		elem.select('.open-menu')
+			.classed('d1', !two_d_slide)
+			.classed('d2', two_d_slide);
+		elem.select('.open-spec-legend').call( spectra );
+		elem.select('.open-slides').call( slides );
+	});
+	app_dispatcher.on('slideContentChange.menu', function () {
+		elem.select('.open-spec-legend').call( spectra );
+	});
 	
+	if(app.config() < 3){ return elem; }
 	
+	/*******   Full client-side only  ***********/
 	// Full screen manipulation
 	elem.select('.open-fullscreen')
 		.on('click', function () {
@@ -4164,136 +4404,154 @@ module.exports = function (app){
 	app_dispatcher.on('menuUpdate.menu', function () {
 		elem.select('.open-menu').call( main_menu.data(menu_data) );
 	});
-	app_dispatcher.on('slideChange.menu', function (s) {
-		//TODO: hide parent menu-item when all children are hidden
-		var two_d_slide = s.nd === 2;
-		elem.select('.open-menu')
-			.classed('d1', !two_d_slide)
-			.classed('d2', two_d_slide);
-		elem.select('.open-spec-legend').call( spectra );
-		elem.select('.open-slides').call( slides );
-	});
-	app_dispatcher.on('slideContentChange.menu', function () {
-		elem.select('.open-spec-legend').call( spectra );
-	});
 	
 	serverside_menu(app, menu_data); //read menu from server.
 	return elem;									
 };
 
-},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":41,"./main_menu":24,"./menu_data":26,"./serverside-menu":27,"./slides":28,"./spectra":29}],26:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":46,"./main_menu":28,"./menu_data":30,"./serverside-menu":31,"./slides":32,"./spectra":33}],30:[function(require,module,exports){
 var events = require('../events');
+var append_menu = require('./append-menu');
 
-function get_menu_data (app) {
-	var modals = app.modals();
-	return [	
-	  {
-			label:"Processing",
-		},
-	  {
-	    label:"Analysis",
-	    children:[
-	      {
-					label:"Peak Picking",
-					children:[
-						{label:"Manual peak picking",fun:events.peakpickToggle},
-			  		{label:"View/manage peak table",fun:null},
-						{label:"Delete peaks",fun:events.peakdelToggle},
-					]
-				},	
-			]
-	  },
-		{
-			label:"View",
-			children:[
-				{
-					label:"Change region",
-					children:[
-						{label:"Set X region",fun:modals.xRegion},
-						{label:"Set Y region",fun:modals.yRegion},
-						{label:"Full spectrum",fun:null,//dispatcher.regionfull,
-							children:[{label:"Error",fun:function(){modals.error('error message')}},]
-						},
-						{label:"Reverse Spectrum",fun:null},
-						{label:"Invert Phases",fun:null},
-					]
-				},
-			],
-		},
-	  {
-			label:"Integration",
-			fun:events.integrateToggle,
-		},
-	  {label:"crosshair",fun:events.crosshairToggle},
-	  {label:"Selected",fun:function(){},
-			children:[
-				{label:"Scale",fun:modals.scaleLine},
-			]
-		},
-	/*	{
-			label:"Export",
-			children:[
-				{label:"As PNG",fun:function(){
-					setTimeout(function(){savePNG(svg.selectP("svg"), "specdraw.png")},500);
-				}},
-				{label:"As SVG",fun:function(){
-					setTimeout(function(){saveSVG(svg.selectP("svg"), "specdraw.svg")},500);
-				}},
-				{label:"Search NMRShiftDB",fun:searchNMRShiftDB},
-				{label:"CSV",fun: function(){}},
-				{label:"Peak table",fun:function(){}},
-				{label:"JCAMP-DX",fun:function(){}},
-			],
-		},*/
-	];	
+function saveSVG(slide, filename) {
+	slide.selectAll('text').attr('font-size', '10px');
+	require('save-svg-as-png').svgAsDataUri (slide.node().parentNode, {}, function(uri) {
+	  var a = document.createElement("a");
+    a.download = filename;
+    a.href = uri;
+    a.setAttribute("data-downloadurl", uri);
+    a.click();    
+	});	
 }
 
+function savePNG(slide, filename) {
+	slide.selectAll('text').attr('font-size', '10px');
+	require('save-svg-as-png').saveSvgAsPng(slide.node().parentNode, filename);
+}
 
-module.exports = get_menu_data;
-},{"../events":20}],27:[function(require,module,exports){
-module.exports = function (app, menu_data) {
-	function find_menu_item (menu, item) {
-		for (var i = menu.length - 1; i >= 0; i--) {
-			if(menu[i].label === item){
-				if(!menu[i].children) {menu[i].children = [];}
-				return menu[i];
-			}
-		}
-		menu.push({label:item, children:[]});
-		return menu[menu.length-1];
-	}
-	function plugin_functor (c) {
-		if(c["args"]){
-			return function() {
-				app.modals().methods(c["fun"], c["args"], c["title"])();
-			};
-		}else{
-			return function () { app.pluginRequest (c["fun"]); };
-		}
-	}
-	
-	var ajax = require('../pro/ajax');
-	ajax.getJSON('/nmr/test', function (response) {
-		var c = response;
-		for (var i = 0; i < response.length; i++) {
-			var path = find_menu_item(menu_data, c[i]['menu_path'][0]);
-	
-			for (var j = 1; j < c[i]['menu_path'].length; j++) {
-				path = find_menu_item(path.children, c[i]['menu_path'][j]);
-			}
-			path.children = null;
-			path.fun = plugin_functor(c[i]);
-			path.nd = c[i]['nd'];			
-	
-		}		
-		app.dispatcher().menuUpdate();
+function add_item(i, menu_data){
+	var path = append_menu(menu_data, i['path']);
+	path.children = null;
+	path.fun = i['fun'];
+	path.nd = i['nd'];
+}
+var config2 = [{ path:['View', 'Change region', 'Set X region'],
+		fun: function (app){app.modals().xRegion();},
+		nd: [1,2]
+	},
+	{ path:['View', 'Change region', 'Set Y region'],
+		fun: function (app){app.modals().yRegion();},
+		nd: [1,2]
+	},
+	{ path:['View', 'Change region', 'Full spectrum'],
+		fun: function (app){app.slideDispatcher().regionfull();},
+		nd: [1,2]
+	},
+	{ path:['View', 'Show/hide crosshair'],
+		fun: events.crosshairToggle,
+		nd: [1,2]
+	}];
 
-	});
+var config3 = [{ path:['Analysis', 'Peak Picking', 'Manual peak picking'],
+		fun: events.peakpickToggle,	nd: [1]
+	},
+	{ path:['Analysis', 'Peak Picking', 'Delete peaks'],
+		fun: events.peakdelToggle,	nd: [1]
+	},
+	{ path:['Analysis', 'Peak integration'],
+		fun: events.integrateToggle,	nd: [1]
+	},
+	{ path:['View', 'Scale selected spectra'],
+		fun: function (app){app.modals().scaleLine();},
+		nd: [1]
+	},
+	{ path:['Save Slide', 'As PNG image'],
+		fun: function (app){savePNG(app.currentSlide(), 'specdraw_slide.png');},
+		nd: [1,2]
+	},
+	{ path:['Save Slide', 'As SVG image'],
+		fun: function (app){saveSVG(app.currentSlide(), 'specdraw_slide.svg');},
+		nd: [1,2]
+	},
+	{ path:['Bin Spectra'],
+		fun: function (app){
+			app.modals().input("Bin size", 0.04, 
+			function (input) {
+				var bin = require('../d1/binning');
+				var specs = app.currentSlide().spectra(true);
+				for (var i = 0; i < specs.length; i++) {
+					bin(specs[i], +input);
+				}
+			})();
+		},
+		nd: [1]
+	} ];	
+
+module.exports = function (app) {
+	var entries = config2;
+	if(app.config() > 2){
+		entries = entries.concat(config3);
+	}
+	
+	var menu_data = [];
+	for (var i = 0; i < entries.length; i++) {
+		add_item(entries[i], menu_data);
+	}
+	return menu_data;
 };
 
 
+},{"../d1/binning":8,"../events":22,"./append-menu":27,"save-svg-as-png":6}],31:[function(require,module,exports){
+var append_menu = require('./append-menu');
+var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
+var ajax = require('../pro/ajax');
 
-},{"../pro/ajax":31}],28:[function(require,module,exports){
+function read_menu(app, menu_data, response) {
+	function plugin_functor (c) {
+		if(c["args"]){
+			return function(app) {
+				app.modals().methods(c["fun"], c["args"], c["title"])();
+			};
+		}else{
+			return function (app) { app.pluginRequest (c["fun"]); };
+		}
+	}
+	
+	var c = response;
+	for (var i = 0; i < response.length; i++) {
+		var path = append_menu(menu_data, c[i]['menu_path']);
+		path.children = null;
+		path.fun = plugin_functor(c[i]);
+		path.nd = c[i]['nd'];
+	}
+	app.dispatcher().menuUpdate();
+}
+
+module.exports = function(app, menu_data) {
+	app.select('.connection-status')
+		.attr('class', 'connection-status connecting')
+		.attr('title', 'Connection status: connecting')
+		.call(bootstrap.tooltip().placement('right'));
+	
+	ajax.getJSON(app.connect() + 'menu', success, fail);
+	
+	function success(response) {
+		app.select('.connection-status')
+			.attr('class', 'connection-status connected')
+			.attr('title', 'Connection status: connected')
+			.call(bootstrap.tooltip().placement('right'));
+		read_menu(app, menu_data, response);
+	}
+	function fail() {
+		app.select('.connection-status')
+			.attr('class', 'connection-status disconnected')
+			.attr('title', 'Disconnected. Click to reconnect.')
+			.call(bootstrap.tooltip().placement('right'));
+	}
+};
+
+
+},{"../../lib/bootstrap-tooltip":1,"../pro/ajax":35,"./append-menu":27}],32:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -4314,12 +4572,14 @@ module.exports = function (app) {
 					app.dispatcher().slideChange(d);
 				});
 		
-		nav.select('ul')
-			.append('li')
-				.text('+ New Slide')
-				.on('click', function () {
-					app.appendSlide();
-				});
+		if(app.config() > 2){
+			nav.select('ul')
+				.append('li')
+					.text('+ New Slide')
+					.on('click', function () {
+						app.appendSlide();
+					});
+		}
 			
 		return div;
 	}
@@ -4327,7 +4587,7 @@ module.exports = function (app) {
 };
 
 
-},{"../input_elem":22}],29:[function(require,module,exports){
+},{"../input_elem":24}],33:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -4345,9 +4605,12 @@ function spectra (app) {
 			nav.append(spec_selector);
 		}else{
 			var spec_list = d3.select( spec_selector() ).select('ul');
-			spec_list.append('li')
-				.text('+ Add spectrum')
-				.on('click', require('../pro/open-file')(app) );
+			
+			if(app.config() > 2){
+				spec_list.append('li')
+					.text('+ Add spectrum')
+					.on('click', require('../pro/open-file')(app) );
+			}
 			
 			nav.append( function () {return spec_list.node();} )
 				.classed('block-list spec-list no-checkbox', true);
@@ -4359,7 +4622,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":22,"../pro/open-file":32}],30:[function(require,module,exports){
+},{"../input_elem":24,"../pro/open-file":37}],34:[function(require,module,exports){
 require('nanoModal');
 console.log(require('nanoModal')());
 var nanoModal = window.nanoModal;
@@ -4373,7 +4636,7 @@ function app_modals(app){
 	
 	modals.proto = function (title, content, ok_fun, cancel_fun) {	
 		var nano = nanoModal(
-			content,
+			'',
 			{
 			overlayClose: false,
 			autoRemove:true,
@@ -4392,15 +4655,14 @@ function app_modals(app){
 		);
 	
 		if(!app){
-			console.log('App is not defined. Initialize the modal module first.');
-			return;
+			app = d3.select('.spec-app');
 		}
 		//TODO: define spec-app;
 		app.append(function () {return nano.overlay.el;});
 		app.append(function () {return nano.modal.el;});
 	
 		var el = d3.select(nano.modal.el);
-	
+		el.select(".nanoModalContent").html(content || '');
 		el.insert("div", ":first-child")
 			.classed('title', true)
 			.text( title? title : "Dialogue" );
@@ -4505,19 +4767,19 @@ function app_modals(app){
 
 	modals.xRegion = function () {
 		modals.range(
-			"Set x region to:\n",
-			d3.select('.spec-slide.active').select(".main-focus").node().range.x,
-			function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-			d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
+			"Set x region to:<br>",
+			app.currentSlide().range().x,
+			function (new_range) { app.currentSlide().changeRegion({xdomain:new_range}); },
+			app.currentSlide().specContainer().xScale().domain()
 		)();
 	};
 
 	modals.yRegion = function () {
 		modals.range(
 			"Set y region to:\n",
-			d3.select('.spec-slide.active').select(".main-focus").node().range.y,
-			function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-			d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
+			app.currentSlide().range().y,
+			function (new_range) { app.currentSlide().changeRegion({ydomain:new_range}); },
+			app.currentSlide().specContainer().yScale().domain()
 		)();
 	};
 
@@ -4545,7 +4807,10 @@ function app_modals(app){
 		modals.slider(
 			"Scale spectrum by a factor:",
 			0,function (value) {
-				d3.select(".selected").node().setScaleFactor(Math.pow(2,value));
+				app.currentSlide().spectra(true)
+					.forEach(function (s) {
+						s.setScaleFactor(Math.pow(2,value));
+					});
 			}	
 		)();
 	};
@@ -4601,9 +4866,9 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":22,"./utils/event":40,"nanoModal":5}],31:[function(require,module,exports){
+},{"./input_elem":24,"./utils/event":45,"nanoModal":5}],35:[function(require,module,exports){
 //TODO:var modals = spec.modals;
-var modals = require('../modals');
+var modals = require('../modals')();
 
 var request = function (url, callback, err) {
 	var http_request = new XMLHttpRequest();
@@ -4613,38 +4878,41 @@ var request = function (url, callback, err) {
 	  var ok = 200;
 	  if (http_request.readyState === done && http_request.status === ok){
 			if(typeof(callback) === 'function')
-				callback(http_request.responseText);
+				{callback(http_request.responseText);}
 		}else	if (http_request.readyState === done){
-			err(http_request.responseText)
+			err(http_request.responseText);
 		}
 	};
 	http_request.send();	
 };
 
-var getJSON = function(url, callback, show_progress){
+var getJSON = function(url, callback, err, show_progress){
 	var prog = ajaxProgress();
+	if (typeof err !== 'function'){
+		err = modals.error;
+	}
 	request(url, function (response) {
 		prog.stop();
 		var json;
 		try {
 	    json = JSON.parse(response);
     } catch (e) {
-      json = response.toString()
+      json = response.toString();
     }
 		if(typeof json['error'] === 'undefined'){
 		  callback(json);
 		}else{
-			modals.error(json['error']['name'], json['error']['message']);
+			err(json['error']['name'], json['error']['message']);
 		}
 
 	},
 	function (err) {
 		prog.stop();
-		modals.error('Network Error', err);
+		err('Network Error', err);
 	});
 
 	if(show_progress)
-		prog();
+		{prog();}
 };
 
 var ajaxProgress = function () {
@@ -4656,31 +4924,113 @@ var ajaxProgress = function () {
 				d3.select(".progress").text(response);
 				setTimeout(check, 100);
 			}else{
-				ajax('/nmr/test?complete=1')
+				request('/nmr/test?complete=1');
 			}
 		});
 	}
 
 	var run = function() {
 		check();
-	}
+	};
 
 	run.stop = function() {
 		clearInterval(interval);
 		stopped = true;
 		// TODO: Progress should be bound to app
-	  d3.select(".progress").text("Completed")
+	  d3.select(".progress").text("Completed");
 			/*.transition()
 	    .duration(2500)
 	    .style("opacity", 1e-6)*/
-	}
+	};
 	return run;
 };
 
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":30}],32:[function(require,module,exports){
+},{"../modals":34}],36:[function(require,module,exports){
+var converter = require('jcampconverter');
+
+
+function jcamp_to_xy(spectrum) {
+	var data = spectrum.data[0];
+	var ret = [];
+	for (var i = 0; i < data.length; i+=2) {
+		ret.push({x:data[i], y:data[i+1]});
+	}
+	return ret;
+}
+function jcamp1d(result) {
+	var spec_data = {};
+	spec_data.data = jcamp_to_xy(result.spectra[0]);
+	return spec_data;
+}
+
+function jcamp2d(result) {
+	var spec_data = {};
+	var spectra = result.spectra;
+	
+	var z_domain = d3.max( [Math.abs(result.minMax.minZ), Math.abs(result.minMax.maxZ)] );
+	z_domain = [-z_domain, z_domain];
+	
+	var width = spectra.length, 
+		height = spectra[0].nbPoints;
+	
+	var scale = d3.scale.linear().domain(z_domain).rangeRound([0,255]).clamp(true);
+	
+	var canvas = d3.select(document.createElement("canvas"))
+			.attr("width", width)
+      .attr("height", height)
+      .style("width", width + "px")
+      .style("height", height + "px")
+			.node();
+			
+  var c = canvas.getContext("2d");
+	var imageData = c.createImageData(width, height);
+	
+	
+	var pos = 0, val;
+	for (var y = height*2 -1; y > 0; y-=2) {
+		for (var x = 0; x < width; x++) {
+			val = scale( spectra[x].data[0][y] );
+			imageData.data[pos++] = val;
+			imageData.data[pos++] = val;
+			imageData.data[pos++] = val;
+			imageData.data[pos++] = 255; // opaque alpha
+		}
+	}
+
+	c.putImageData(imageData, 0, 0, 0, 0, width, height);
+	spec_data.data = canvas.toDataURL("image/png").replace('data:image/png;base64,','');
+	spec_data.x_domain = [result.minMax.minX, result.minMax.maxX];
+	spec_data.y_domain = [result.minMax.minY, result.minMax.maxY];
+	spec_data.z_domain = z_domain;
+	spec_data.nd = 2;
+	spec_data.data_type = 'spectrum';
+	spec_data.format = 'png';
+	
+	
+	return spec_data;
+}
+
+module.exports = function(json, callback) {
+	var result = converter.convert(json, {keepSpectra:true});
+	
+	var spec_data;
+	if (result.twoD){
+		spec_data = jcamp2d(result);
+	}else{
+		spec_data = jcamp1d(result);
+	}
+	
+	spec_data.label = result.spectra[0].title;
+	spec_data.x_label = result.xType;
+	spec_data.y_label = result.yType;
+	
+	callback(spec_data);
+};
+
+},{"jcampconverter":4}],37:[function(require,module,exports){
 function modal_input(app, node, callback) {
 	var modals = 	app.modals();
 	var nano = modals.proto(undefined, '',
@@ -4708,7 +5058,7 @@ module.exports = function (app, callback) {
 	};
 	
 };
-},{"../input_elem":22,"./process_data":35}],33:[function(require,module,exports){
+},{"../input_elem":24,"./process_data":40}],38:[function(require,module,exports){
 function handle_peaks (app, json) {
 	var spec = app.currentSlide().spectra().filter(function (s) {
 		return s.s_id() === json['s_id'];
@@ -4719,6 +5069,7 @@ function handle_peaks (app, json) {
 		'Can\'t find spectrum with s_id:' + json['s_id']);
 	}
 	spec[0].addPeaks(json['peaks']);
+	app.slideDispatcher().peakpick();
 }
 
 function handle_segs (app, json) {
@@ -4753,21 +5104,35 @@ function handle_spectrum (app, json, preview){
 
 module.exports.spectrum = handle_spectrum;
 module.exports.spec_feature = handle_spec_feature;
-},{"./process_data":35}],34:[function(require,module,exports){
+},{"./process_data":40}],39:[function(require,module,exports){
 module.exports = function (app) {
 	function request (fun, params, s_id, preview) {
 		params = params || {};
 	
+		var sel, all_sids;
 		if(!params['sid']){
 			if(s_id){
 				params['sid'] = s_id;
 			}else{
-				var sel = app.currentSlide().spectra(true);
-				params['sid'] = sel.map(function (s) { return s.s_id(); });
+				sel = app.currentSlide().spectra(true);
+				all_sids = sel.map(function (s) { return s.s_id(); });
+				params['sid'] = all_sids.filter(function (e) { return e; });
 			}
 		}
-		if(params['sid'].length === 0)
-			{app.modals().error('No Spectra selected', 'Please select one or more spectra!');}
+		if(params['sid'].length === 0){
+			var message = 'Please select one or more spectra!';
+			if(all_sids.length > 0){ // if some s_ids were null;
+				sel = app.currentSlide().spectra();
+				var null_labels = sel.filter(function (s) { return !s.s_id(); })
+					.map(function (s) { return s.label(); })
+					.join(', ');
+				
+				message += '<br>NOTE: ['+ null_labels +'] spectra are stored locally' +
+					' and not connected to the server.';
+			}
+			app.modals().error('No Spectra selected', message);
+			return;
+		}
 		
 		var prefix = fun+'_';
 		var params_str = 'sid=' + 
@@ -4780,7 +5145,7 @@ module.exports = function (app) {
 			params_str += prefix + key+'='+params[key];
 		}
 	
-		var url = '/nmr/plugins?'+params_str;
+		var url = app.connect() + 'plugins?'+params_str;
 		//var ajax = pro.ajax();
 		var ajax = require('./ajax');
 		ajax.getJSON(url, function (response) {
@@ -4812,7 +5177,7 @@ module.exports = function (app) {
 	return request;
 };
 
-},{"./ajax":31,"./plugin-hooks":33}],35:[function(require,module,exports){
+},{"./ajax":35,"./plugin-hooks":38}],40:[function(require,module,exports){
 var get_png_data = function(y, callback){
 	var img = document.createElement("img");
 	
@@ -4982,86 +5347,6 @@ var processPNGworker = function (json, callback) {
 };
 
 
-function jcamp_to_xy(spectrum) {
-	var data = spectrum.data[0];
-	var ret = [];
-	for (var i = 0; i < data.length; i+=2) {
-		ret.push({x:data[i], y:data[i+1]});
-	}
-	return ret;
-}
-function jcamp1d(result) {
-	var spec_data = {};
-	spec_data.data = jcamp_to_xy(result.spectra[0]);
-	return spec_data;
-}
-function jcamp2d(result) {
-	var spec_data = {};
-	var spectra = result.spectra;
-	
-	var z_domain = d3.max( [Math.abs(result.minMax.minZ), Math.abs(result.minMax.maxZ)] );
-	z_domain = [-z_domain, z_domain];
-	
-	var width = spectra.length, 
-		height = spectra[0].nbPoints;
-	
-	var scale = d3.scale.linear().domain(z_domain).rangeRound([0,255]).clamp(true);
-	
-	var canvas = d3.select(document.createElement("canvas"))
-			.attr("width", width)
-      .attr("height", height)
-      .style("width", width + "px")
-      .style("height", height + "px")
-			.node();
-			
-  var c = canvas.getContext("2d");
-	var imageData = c.createImageData(width, height);
-	
-	
-	var pos = 0, val;
-	for (var y = height*2 -1; y > 0; y-=2) {
-		for (var x = 0; x < width; x++) {
-			val = scale( spectra[x].data[0][y] );
-			imageData.data[pos++] = val;
-			imageData.data[pos++] = val;
-			imageData.data[pos++] = val;
-			imageData.data[pos++] = 255; // opaque alpha
-		}
-	}
-	console.log('pos', pos);
-
-	c.putImageData(imageData, 0, 0, 0, 0, width, height);
-	spec_data.data = canvas.toDataURL("image/png").replace('data:image/png;base64,','');
-	spec_data.x_domain = [result.minMax.minX, result.minMax.maxX];
-	spec_data.y_domain = [result.minMax.minY, result.minMax.maxY];
-	spec_data.z_domain = z_domain;
-	spec_data.nd = 2;
-	spec_data.data_type = 'spectrum';
-	spec_data.format = 'png';
-	
-	
-	return spec_data;
-}
-
-function process_jcamp(json, callback) {
-	var converter = require('jcampconverter');
-	var result = converter.convert(json, {keepSpectra:true});
-	console.log(result);
-	
-	var spec_data;
-	if (result.twoD){
-		spec_data = jcamp2d(result);
-	}else{
-		spec_data = jcamp1d(result);
-	}
-	
-	spec_data.label = result.spectra[0].title;
-	spec_data.x_label = result.xType;
-	spec_data.y_label = result.yType;
-	
-	console.log(spec_data);	
-	callback(spec_data);
-}
 /* * get the sepctrum from the web service in one these formats:
 	* Plain JSON X-Y ['xy']
 	* JSON X(range), Y (base64) ['base64'] --> if scaled down to 8 or 16 bits: require "y_domain"
@@ -5076,7 +5361,7 @@ function process_jcamp(json, callback) {
 */
 function process_spectrum (json, render_fun){
 	if(typeof json !== 'object'){ //it wasn't a json file.
-		return process_jcamp(json, render_fun);
+		return require('./jcamp')(json, render_fun);
 	}
 	if (json.constructor === Array) {
 		for (var i = json.length - 1; i >= 0; i--) {
@@ -5111,7 +5396,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":31,"./worker":36,"jcampconverter":4}],36:[function(require,module,exports){
+},{"./ajax":35,"./jcamp":36,"./worker":41}],41:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -5197,7 +5482,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],37:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 module.exports = function(){
 	var core = require('./elem');
 	var source = core.Elem('g');
@@ -5205,6 +5490,7 @@ module.exports = function(){
 	
 	var data, slide_selection, svg_selection, svg_width, svg_height;
 	var clip_id = require('./utils/guid')();
+	var filter_id = require('./utils/guid')();
 	var parent_app, spec_container;
 	
 	// Event dispatcher to group all listeners in one place.
@@ -5240,7 +5526,7 @@ module.exports = function(){
 			create_empty_slide(app);
 			return ;
 		}
-		var brush_margin = 20;
+		var brush_margin = app.config() > 1 ? 20 : 0;
     var margin = {
         top: 10 + brush_margin,
         right: 40,
@@ -5308,7 +5594,7 @@ module.exports = function(){
 			if (require('bowser').safari) {
 			  slope *= 2;
 			}
-			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
+			var svg_filter = defs.append("filter").attr("id", filter_id);
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
 				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
@@ -5402,15 +5688,17 @@ module.exports = function(){
 			(Slide);
 		
 		//Scale brushes
-		require('./d1/scale-brush')()
-			.xScale(x)
-			.dispatcher(dispatcher)
-			(Slide);
+		if( app.config() > 1){
+			require('./d1/scale-brush')()
+				.xScale(x)
+				.dispatcher(dispatcher)
+				(Slide);
 				
-		require('./d1/scale-brush')()
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(Slide);
+			require('./d1/scale-brush')()
+				.yScale(y)
+				.dispatcher(dispatcher)
+				(Slide);
+		}
 		
 		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
@@ -5427,6 +5715,9 @@ module.exports = function(){
 	};
 	Slide.clipId = function(){
 		return clip_id;
+	};
+	Slide.filterId = function(){
+		return filter_id;
 	};
 	Slide.slideDispatcher = function(){
 		return dispatcher;
@@ -5448,6 +5739,10 @@ module.exports = function(){
 	};
 	Slide.addSpec = function (_) { 
 		// This is called only when spec_container is not present, i.e. empty slide.
+		// #TODO: Actually, this is also called if the slide is not rendered.
+		// In that case, svg_selection & parent_app are undefined.
+		// To solve this, add specContainer on initialization.
+		
 		console.log('first spec', svg_selection.node());
 		svg_selection.remove(); // remove the empty slide.
 		Slide.datum(_)(parent_app);	// call the slide again with the data.
@@ -5457,7 +5752,7 @@ module.exports = function(){
 	return Slide;
 };
 
-},{"./d1/scale-brush":13,"./d1/spec-container-1d":14,"./d2/spec-container-2d":17,"./elem":19,"./pro/open-file":32,"./utils/guid":43,"bowser":2}],38:[function(require,module,exports){
+},{"./d1/scale-brush":15,"./d1/spec-container-1d":16,"./d2/spec-container-2d":19,"./elem":21,"./pro/open-file":37,"./utils/guid":48,"bowser":2}],43:[function(require,module,exports){
 Array.prototype.subset =function(arr){
 	var ret = [];
 	for (var i = arr.length - 1; i >= 0; i--){
@@ -5520,7 +5815,7 @@ d3.selection.prototype.size = function() {
   this.each(function() { ++n; });
   return n;
 };
-},{}],39:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 // The public function name defaults to window.docReady
 // but you can modify the last line of this function to pass in a different object or method name
@@ -5590,7 +5885,7 @@ module.exports = function(callback, context) {
 		readyEventHandlersInstalled = true;
 	}
 };
-},{}],40:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 module.exports = function(element,event){
 	var evt;
 	if (document.createEventObject){
@@ -5605,7 +5900,7 @@ module.exports = function(element,event){
   }
 };
 
-},{}],41:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 function launchFullScreen(element) {
 	if (element.requestFullscreen)
 		{ element.requestFullscreen(); }
@@ -5642,7 +5937,7 @@ module.exports.launch = launchFullScreen;
 module.exports.toggle = toggleFullScreen;
 module.exports.isFull = isFullScreen;
 
-},{}],42:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = function (node) {
 	var clientwidth = node.clientWidth,
 	clientheight = node.clientHeight;
@@ -5663,7 +5958,7 @@ module.exports = function (node) {
 	
 	return [width, height];
 };
-},{}],43:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 module.exports = function (){
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
 		/[xy]/g, function(c) {
@@ -5673,7 +5968,7 @@ module.exports = function (){
 	);
 };
 
-},{}],44:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports = function (data, xscale, tolerance) {
 	var ppm_range = Math.abs(xscale.domain()[0] - xscale.domain()[1]);
 	var pixels = Math.abs(xscale.range()[0] - xscale.range()[1]);
@@ -5684,5 +5979,5 @@ module.exports = function (data, xscale, tolerance) {
 	return dataResample;
 };
 
-},{"simplify":6}]},{},[21])(21)
+},{"simplify":7}]},{},[23])(23)
 });

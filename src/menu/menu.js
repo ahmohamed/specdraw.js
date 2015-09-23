@@ -22,15 +22,19 @@ module.exports = function (app){
 		menu_data = require('./menu_data')(app),
 		serverside_menu = require('./serverside-menu');
 	
-		var column_menu_buttons = [
+	var column_menu_buttons = [
 	  ['open-menu', 'Menu'],
 	  ['open-spec-legend', 'Spectra'],
 	  ['open-slides', 'Slides'],
-	  ['open-settings', 'Settings'],
-	  ['open-download', 'Download Spectra'],
-	  ['open-fullscreen', 'Fullscreen App'],
-	  ['connection-status', 'Connection Status'],
 	];
+	if(app.config() > 2){
+	  column_menu_buttons = column_menu_buttons.concat(
+			[//['open-settings', 'Settings'],
+				//['open-download', 'Download Spectra'], //TODO: download spectra: csv, peak table, Jcamp?
+		  ['open-fullscreen', 'Fullscreen App'],
+		  ['connection-status', 'Connection Status']]
+		);
+	}
 	
 	var elem = app.append('div')
 		.classed('column-menu', true);
@@ -55,8 +59,22 @@ module.exports = function (app){
 	});
 	
 	var app_dispatcher = app.dispatcher();
+	app_dispatcher.on('slideChange.menu', function (s) {
+		//TODO: hide parent menu-item when all children are hidden
+		var two_d_slide = s.nd === 2;
+		elem.select('.open-menu')
+			.classed('d1', !two_d_slide)
+			.classed('d2', two_d_slide);
+		elem.select('.open-spec-legend').call( spectra );
+		elem.select('.open-slides').call( slides );
+	});
+	app_dispatcher.on('slideContentChange.menu', function () {
+		elem.select('.open-spec-legend').call( spectra );
+	});
 	
+	if(app.config() < 3){ return elem; }
 	
+	/*******   Full client-side only  ***********/
 	// Full screen manipulation
 	elem.select('.open-fullscreen')
 		.on('click', function () {
@@ -71,18 +89,6 @@ module.exports = function (app){
 	
 	app_dispatcher.on('menuUpdate.menu', function () {
 		elem.select('.open-menu').call( main_menu.data(menu_data) );
-	});
-	app_dispatcher.on('slideChange.menu', function (s) {
-		//TODO: hide parent menu-item when all children are hidden
-		var two_d_slide = s.nd === 2;
-		elem.select('.open-menu')
-			.classed('d1', !two_d_slide)
-			.classed('d2', two_d_slide);
-		elem.select('.open-spec-legend').call( spectra );
-		elem.select('.open-slides').call( slides );
-	});
-	app_dispatcher.on('slideContentChange.menu', function () {
-		elem.select('.open-spec-legend').call( spectra );
 	});
 	
 	serverside_menu(app, menu_data); //read menu from server.
