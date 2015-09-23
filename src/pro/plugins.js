@@ -2,16 +2,30 @@ module.exports = function (app) {
 	function request (fun, params, s_id, preview) {
 		params = params || {};
 	
+		var sel, all_sids;
 		if(!params['sid']){
 			if(s_id){
 				params['sid'] = s_id;
 			}else{
-				var sel = app.currentSlide().spectra(true);
-				params['sid'] = sel.map(function (s) { return s.s_id(); });
+				sel = app.currentSlide().spectra(true);
+				all_sids = sel.map(function (s) { return s.s_id(); });
+				params['sid'] = all_sids.filter(function (e) { return e; });
 			}
 		}
-		if(params['sid'].length === 0)
-			{app.modals.error('No Spectra selected', 'Please select one or more spectra!');}
+		if(params['sid'].length === 0){
+			var message = 'Please select one or more spectra!';
+			if(all_sids.length > 0){ // if some s_ids were null;
+				sel = app.currentSlide().spectra();
+				var null_labels = sel.filter(function (s) { return !s.s_id(); })
+					.map(function (s) { return s.label(); })
+					.join(', ');
+				
+				message += '<br>NOTE: ['+ null_labels +'] spectra are stored locally' +
+					' and not connected to the server.';
+			}
+			app.modals().error('No Spectra selected', message);
+			return;
+		}
 		
 		var prefix = fun+'_';
 		var params_str = 'sid=' + 
@@ -24,7 +38,7 @@ module.exports = function (app) {
 			params_str += prefix + key+'='+params[key];
 		}
 	
-		var url = '/nmr/plugins?'+params_str;
+		var url = app.connect() + 'plugins?'+params_str;
 		//var ajax = pro.ajax();
 		var ajax = require('./ajax');
 		ajax.getJSON(url, function (response) {

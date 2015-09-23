@@ -1,4 +1,3 @@
-
 module.exports = function () {
 	var core = require('../elem');
 	var source = core.SVGElem().class('main-focus');
@@ -9,9 +8,14 @@ module.exports = function () {
 	var specs = core.ElemArray();
 	var peak_picker = require('./peak-picker')();
 	var main_brush = require('./main-brush')();
-
+	
+	var timestamp = 0;
 	var zoomer = d3.behavior.zoom()
 		.on("zoom", function () {
+			if(d3.event.sourceEvent.timeStamp - timestamp < 50){
+			      return;
+			}
+			timestamp = d3.event.sourceEvent.timeStamp;
 			/* * When a y brush is applied, the scaled region should go both up and down.*/
 			var new_range = range.y[1]/zoomer.scale() - range.y[0];
 			var addition = (new_range - (y.domain()[1] - y.domain()[0]))/2;
@@ -67,8 +71,12 @@ module.exports = function () {
 					} 
 				}else{
 					//modify range.y  and reset the zoom scale
-					var y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-						y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
+					var s = SpecContainer.spectra(true);
+					if (s.length === 0){// if no spectra are selected.
+						s = specs;				// use all spectra.
+					}
+					var y0 = d3.min(s.map(function(s){return s.range().y[0];})),
+						y1 = d3.max(s.map(function(s){return s.range().y[1];}));
 					var y_limits = (y1-y0);
 					y0 = y0 - (0.05 * y_limits);
 					y1 = y1 + (0.05 * y_limits);
@@ -92,69 +100,80 @@ module.exports = function () {
 				if(!e.norender){
 					focus.on("_regionchange")({xdomain:range.x, ydomain:range.y});
 				} 
-			})
-			.on("mouseenter", dispatcher.mouseenter)
-			.on("mouseleave", dispatcher.mouseleave)
-			.on("mousemove", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+			});
 			
-				dispatcher.mousemove(new_e);
-			})
-			.on("mousedown", function () {	// Why?! because no brush when cursor on path?
-			  var new_click_event = new Event('mousedown');
-			  new_click_event.pageX = d3.event.pageX;
-			  new_click_event.clientX = d3.event.clientX;
-			  new_click_event.pageY = d3.event.pageY;
-			  new_click_event.clientY = d3.event.clientY;
-			  focus.select(".main-brush").node()
-					.dispatchEvent(new_click_event);
-			})
-			.on("click", function(){
-				var new_e = d3.event;
-				new_e.xcoor = d3.mouse(this)[0];
-				new_e.ycoor = d3.mouse(this)[1];
+		if (SpecContainer.parentApp().config() > 1){
+			focus.on("mouseenter", dispatcher.mouseenter)
+				.on("mouseleave", dispatcher.mouseleave)
+				.on("mousemove", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
+			
+					dispatcher.mousemove(new_e);
+				})
+				.on("mousedown", function () {	// Why?! because no brush when cursor on path?
+				  var new_click_event = new Event('mousedown');
+				  new_click_event.pageX = d3.event.pageX;
+				  new_click_event.clientX = d3.event.clientX;
+				  new_click_event.pageY = d3.event.pageY;
+				  new_click_event.clientY = d3.event.clientY;
+				  focus.select(".main-brush").node()
+						.dispatchEvent(new_click_event);
+				})
+				.on("click", function(){
+					var new_e = d3.event;
+					new_e.xcoor = d3.mouse(this)[0];
+					new_e.ycoor = d3.mouse(this)[1];
 		
-				dispatcher.click(new_e);
-			})
-			.on("dblclick", dispatcher.regionfull);
-
+					dispatcher.click(new_e);
+				})
+				.on("dblclick", dispatcher.regionfull);
+		}
+		
 		dispatcher.on("regionfull",function () {
 			focus.on("_regionchange")({xdomain:range.x});		
 		});
 			
+		
 		//brushes
-		main_brush.xScale(x)
-			.dispatcher(dispatcher)
-			(SpecContainer);
+		if (SpecContainer.parentApp().config() > 1){
+			main_brush.xScale(x)
+				.dispatcher(dispatcher)
+				(SpecContainer);			
+		}
 	
 
 		//spectral lines
 		for (var i = 0; i < specs.length; i++) {
 			render_spec(specs[i]);
 		}
-	
-		//peak picker	
-		peak_picker.xScale(x)
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(SpecContainer);
 		
+		//peak picker	
+		if (SpecContainer.parentApp().config() > 2){
+			peak_picker.xScale(x)
+				.yScale(y)
+				.dispatcher(dispatcher)
+				(SpecContainer);
+		}		
 	}
 	function update_range() {
-		var x0 = d3.max(specs.map(function(s){return s.range().x[0];})),
-			x1 = d3.min(specs.map(function(s){return s.range().x[1];})),
-			y0 = d3.min(specs.map(function(s){return s.range().y[0];})),
-			y1 = d3.max(specs.map(function(s){return s.range().y[1];}));
-
+		var sel = SpecContainer.spectra(true);
+		if (sel.length === 0){// if no spectra are selected.
+			sel = specs;				// use all spectra.
+		}
+		
+		var x0 = d3.max(sel.map(function(s){return s.range().x[0];})),
+			x1 = d3.min(sel.map(function(s){return s.range().x[1];})),
+			y0 = d3.min(sel.map(function(s){return s.range().y[0];})),
+			y1 = d3.max(sel.map(function(s){return s.range().y[1];}));
+		
 		// Add 5% margin to top and bottom (easier visualization).
 		var y_limits = (y1-y0);
 		y0 = y0 - (0.05 * y_limits);
 		y1 = y1 + (0.05 * y_limits);
 
 		var xdomain = x.domain();
-
 		focus.on("_rangechange")({x:[x0,x1], y:[y0,y1], norender: specs.length > 1});
 
 		if(specs.length > 1){
@@ -181,6 +200,10 @@ module.exports = function () {
 		if (!arguments.length) {
 			throw new Error("appendSlide: No data provided.");
 		} 
+		if(spec_data['nd'] !== 1){ // TODO: parentApp undefined until rendering.
+			SpecContainer.parentApp().appendSlide(spec_data);
+			return;
+		}
 		
 		if(typeof crosshair === 'undefined'){
 			crosshair = true;
@@ -201,7 +224,7 @@ module.exports = function () {
 		var s = specs.filter(function (e) {
 			return e.s_id() === s_id;
 		}	);
-		console.log('addspec', s, s_id);
+		
 		if ( s.length === 0 ){
 		 	s = require('./line')()
 				.datum(spec_data)
@@ -217,6 +240,9 @@ module.exports = function () {
 			update_range();
 		}		
 		
+		if(SpecContainer.parentApp()){
+			SpecContainer.parentApp().dispatcher().slideContentChange();
+		}
 		return s;
 	};
 	SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
@@ -239,7 +265,7 @@ module.exports = function () {
 			specs.sel().classed('dimmed', false)
 				.classed('highlighted', false);
 		}else{
-			specs.sel().classed('dimmed', false);
+			specs.sel().classed('dimmed', true);
 			_.sel().classed('highlighted', true);
 		}		
 	};

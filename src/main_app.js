@@ -3,57 +3,67 @@ module.exports = function(){
 	var source = core.Elem().class('spec-app');
 	core.inherit(App, source);
 	
-  var selection, svg_width, svg_height;
+  var selection, app_width, app_height;
 	var app_dispatcher = d3.dispatch('slideChange', 'slideContentChange', 'menuUpdate');
-	var modals;
+	var modals, config = 3;
 	var slides = core.ElemArray(), current_slide;
+	var base_url = '/nmr/';
 	
-  function App(div){
-		svg_width = App.width();
-		svg_height = App.height();
-		
-    /* * Check size definitions**/
-		if (typeof svg_width === 'undefined' ||
-			typeof svg_height === 'undefined' ||
-			isNaN(svg_width) || isNaN(svg_height)
+	function check_size(divnode) {
+		app_width = App.width();
+		app_height = App.height();
+		if (typeof app_width === 'undefined' ||
+			typeof app_height === 'undefined' ||
+			isNaN(app_width) || isNaN(app_height)
 		){
-				var parent_svg = div.node();
-				var dimensions = parent_svg.clientWidth ? [parent_svg.clientWidth, parent_svg.clientHeight]
-					: [parent_svg.getBoundingClientRect().width, parent_svg.getBoundingClientRect().height];
-				
-				svg_width = dimensions[0]; //deduct 50px for column menu.
-				svg_height = dimensions[1];
+			var size = require('./utils/get-size')(divnode);
+			app_width = size[0];
+			app_height = size[1];
+			if (typeof app_width === 'undefined' ||
+				typeof app_height === 'undefined'){
+					return false;
+				}
 		}
-		
-    if (svg_width < 400 || svg_height < 400){
-      throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
+		if (app_width < 400 || app_height < 400){return false;}
+		return true;
+	}
+	
+	function App(div) {
+		if(!check_size(div.node())){
+			require('./utils/docready')(function () {	render(div); });
+			return;
+		}		
+		render(div);
+	}
+	
+  function render(div){
+    if ( !check_size(div.node()) ){
+			if(div.node().tagName.toLowerCase() === 'specdraw-js'){
+				// When web components are used, the element's dimensions are not
+				// set even when the DOM is ready. However, the container div is set.
+				if (!check_size(div.node().parentNode)){
+					//TODO: better response when canvas is small
+					throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");
+				}
+			}else{
+				throw new Error("SpecApp: Canvas size too small. Width and height must be at least 400px");	
+			}
     }
 		
 		selection = source(div)
 			.style({
-				width:svg_width,
-				height:svg_height				
+				width:app_width,
+				height:app_height				
 			});
-		
-		svg_width -= 50; //deduct 50px for column menu.
-		
 		modals = require('./modals')(App);
-		require('./menu/menu')(App);
-
-		/**** Keyboard events and logger ****/
-		require('./events').registerKeyboard(App);
 		
-		selection.node().appendToCurrentSlide = function (data) {
-			var current_slide = selection.select('.spec-slide.active').node();
-			if(!current_slide){
-				selection.node().appendSlide(data);
-			}	else{
-				current_slide.addSpec(data);
-				app_dispatcher.slideContentChange();
-			}
-		};
+		if(config > 1){
+			require('./menu/menu')(App);
+			app_width -= 50; //deduct 50px for column menu.
+			/**** Keyboard events and logger ****/
+			require('./events').registerKeyboard(App);
+		}
 		
-		//selection.node().options = App.options;
 		app_dispatcher.on('slideChange.app', function (s) {
 			if (current_slide !== s) { App.currentSlide(s);	}
 		});
@@ -61,10 +71,15 @@ module.exports = function(){
 		for (var i = 0; i < slides.length; i++) {
 			render_slide(slides[i]);
 		}
+		if(slides.length === 0){
+			App.appendSlide();
+		}
+		
+		require('./logo')(App);
 	}
 	function render_slide(s) {
 		if(! selection){ return; }
-		s.width(svg_width).height(svg_height)
+		s.width(app_width).height(app_height)
 			(App);
 		
 		App.currentSlide(s);
@@ -74,7 +89,7 @@ module.exports = function(){
 		return slides;
 	};
 	App.currentSlide = function (s) {
-		if (!arguments.length) { return current_slide; }
+		if (!arguments.length) { return current_slide || slides[slides.length -1]; }
 		if (current_slide) { // When the first slide is added, no current_slide.
 			current_slide.show(false);
 		}
@@ -93,38 +108,41 @@ module.exports = function(){
 	};
 	App.pluginRequest = require('./pro/plugins')(App);
 	App.appendSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendSlide: No data provided.");
-		} 
-		
 		var s = require('./slide')().datum(data);
 		slides.push(s);
 		render_slide(s);
 		return App;
 	};
-	App.appendToCurrentSlide = function(data){
-		if (!arguments.length){
-			throw new Error("appendToCurrentSlide: No data provided.");
-		} 
+	App.config = function (_) {
+		if (!arguments.length) {return config;}
+		config = _;
 		
-		if (selection){
-			selection.node().appendToCurrentSlide(data);
-		} else{
-			if(slides.length === 0){ //No slides available; create a new one
-				return App.appendSlide(data);
-			}
-			//Otherwise, append data to last slide.
-			var current_slide = slides[slides.length-1].slide;
-			//TODO: BUG
-			//We don't know if the array in slide is a data array 
-			// or an array of data arrays (i.e dataset)
-			current_slide.push(data);
-			
-			return App;
-		}
+		return App;
+	};
+	App.connect = function (url){
+		if (!arguments.length) {return base_url;}
+		base_url = url;
+		config = 4;
+		
+		return App;
 	};
 	App.options = {
 		grid:{x:false, y:false}
+	};
+	App.data = function (url, s_per_slide) {
+		if(typeof s_per_slide === 'undefined'){
+			s_per_slide = 5;
+		}
+		var callback = function (data) {
+			if(!App.currentSlide() || App.currentSlide().spectra().length  > s_per_slide - 1){
+				App.appendSlide(data);
+			}else{
+				App.currentSlide().addSpec(data, config > 1);
+			}
+		};
+		
+		require('./pro/process_data').get_spectrum(url,	callback);
+		return App;
 	};
 	return App;
 };

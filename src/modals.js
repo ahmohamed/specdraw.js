@@ -11,7 +11,7 @@ function app_modals(app){
 	
 	modals.proto = function (title, content, ok_fun, cancel_fun) {	
 		var nano = nanoModal(
-			content,
+			'',
 			{
 			overlayClose: false,
 			autoRemove:true,
@@ -23,22 +23,21 @@ function app_modals(app){
 				}, 
 				{
 			    text: "Cancel",
-			    handler: cancel_fun? cancel_fun : "hide",
+			    handler: cancel_fun || "hide",
 					classes:"cancelBtn"
 				}
 			]}
 		);
 	
 		if(!app){
-			console.log('App is not defined. Initialize the modal module first.');
-			return;
+			app = d3.select('.spec-app');
 		}
 		//TODO: define spec-app;
 		app.append(function () {return nano.overlay.el;});
 		app.append(function () {return nano.modal.el;});
 	
 		var el = d3.select(nano.modal.el);
-	
+		el.select(".nanoModalContent").html(content || '');
 		el.insert("div", ":first-child")
 			.classed('title', true)
 			.text( title? title : "Dialogue" );
@@ -126,7 +125,7 @@ function app_modals(app){
 		return nano.show;	
 	};
 
-	modals.input = function (text, value,callback){	
+	modals.input = function (text, value, callback){	
 		var content = text +
 			'<input type="number" id="input0" step="0.001" value='+value+'>';
 		
@@ -143,19 +142,19 @@ function app_modals(app){
 
 	modals.xRegion = function () {
 		modals.range(
-			"Set x region to:\n",
-			d3.select('.spec-slide.active').select(".main-focus").node().range.x,
-			function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({xdomain:new_range}); },
-			d3.select('.spec-slide.active').select(".main-focus").node().xScale.domain()
+			"Set x region to:<br>",
+			app.currentSlide().range().x,
+			function (new_range) { app.currentSlide().changeRegion({xdomain:new_range}); },
+			app.currentSlide().specContainer().xScale().domain()
 		)();
 	};
 
 	modals.yRegion = function () {
 		modals.range(
 			"Set y region to:\n",
-			d3.select('.spec-slide.active').select(".main-focus").node().range.y,
-			function (new_range) { d3.select('.spec-slide.active').select(".main-focus").on("_regionchange")({ydomain:new_range}); },
-			d3.select('.spec-slide.active').select(".main-focus").node().yScale.domain()
+			app.currentSlide().range().y,
+			function (new_range) { app.currentSlide().changeRegion({ydomain:new_range}); },
+			app.currentSlide().specContainer().yScale().domain()
 		)();
 	};
 
@@ -183,7 +182,10 @@ function app_modals(app){
 		modals.slider(
 			"Scale spectrum by a factor:",
 			0,function (value) {
-				d3.select(".selected").node().setScaleFactor(Math.pow(2,value));
+				app.currentSlide().spectra(true)
+					.forEach(function (s) {
+						s.setScaleFactor(Math.pow(2,value));
+					});
 			}	
 		)();
 	};
@@ -195,7 +197,7 @@ function app_modals(app){
 	
 		var ok_fun = function (modal) {
 			preview = false;
-			require('./utils').fireEvent(el.node(), 'input');
+			require('./utils/event')(el.node(), 'input');
 			modal.hide();
 		};
 	
@@ -231,7 +233,7 @@ function app_modals(app){
 		var inp = require('./input_elem');
 		el.append(inp.spectrumSelector(app));
 		el.append(inp.div(args, app));
-		el.append(inp.preview(true));
+		//el.append(inp.preview(true));
 		return nano.show;
 	};
 	

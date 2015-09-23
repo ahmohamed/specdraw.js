@@ -1,12 +1,30 @@
 {
   "name": "specdraw",
   "version": "0.6.0",
-  "description": "",
+  "description": "Interactive processing and visualization of NMR spectra",
   "main": "specdraw.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Ahmed Mohamed",
+	"repository": {
+    "type": "git",
+    "url": "https://github.com/ahmohamed/specdraw.js"
+  },
+  "keywords": [
+    "specdraw",
+    "SpecdrawJS",
+    "NMR",
+    "spectra",
+		"d3js"
+  ],
+  "bugs": {
+    "url": "https://github.com/ahmohamed/specdraw.js/issues"
+  },
+	"author": {
+    "name": "Ahmed Mohamed",
+    "email": "mohamed@kuicr.kyoto-u.ac.jp",
+    "url": "https://github.com/ahmohamed"
+  },
   "license": "MIT",
   "devDependencies": {
     "grunt": "^0.4.5",
@@ -18,7 +36,9 @@
   "dependencies": {
     "bowser": "^1.0.0",
     "d3-context-menu": "0.0.1",
+    "jcampconverter": "^2.1.0",
     "nanomodal": "^5.1.1",
+    "save-svg-as-png": "^1.0.0",
     "simplify": "^1.0.0"
   }
 }

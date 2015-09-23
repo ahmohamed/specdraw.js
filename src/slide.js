@@ -4,7 +4,8 @@ module.exports = function(){
 	core.inherit(Slide, source);
 	
 	var data, slide_selection, svg_selection, svg_width, svg_height;
-	var clip_id = require('./utils').guid();
+	var clip_id = require('./utils/guid')();
+	var filter_id = require('./utils/guid')();
 	var parent_app, spec_container;
 	
 	// Event dispatcher to group all listeners in one place.
@@ -19,18 +20,28 @@ module.exports = function(){
 		"blindregion",
 		"log"
 	);
-	
+	function create_empty_slide(app) {
+		svg_selection = app.append('div')
+			.text('This slide does not contain any spectra. Click to add one.')
+			.style({
+				width: (svg_width+'px'),
+				'line-height': (svg_height+'px')
+			})
+			.classed('spec-slide empty', true)
+			.on('click', require('./pro/open-file')(app) );
+		console.log(Slide.addSpec);
+	}
 	
 	function Slide(app){
 		parent_app = app;
-		if(!data){
-			//create_empty_slide();//TODO
-			return ;
-		}
 		svg_width = Slide.width();
 		svg_height = Slide.height();
 		
-		var brush_margin = 20;
+		if(!data){
+			create_empty_slide(app);
+			return ;
+		}
+		var brush_margin = app.config() > 1 ? 20 : 0;
     var margin = {
         top: 10 + brush_margin,
         right: 40,
@@ -98,7 +109,7 @@ module.exports = function(){
 			if (require('bowser').safari) {
 			  slope *= 2;
 			}
-			var svg_filter = defs.append("filter").attr("id", "2dColorFilter");
+			var svg_filter = defs.append("filter").attr("id", filter_id);
 			svg_filter.append("feColorMatrix")
 				.attr("type","matrix")
 				.attr("values","1 0 0 0 0	0 0 0 0 0 1 0 0 0 0 0 0 0 1 0");
@@ -192,20 +203,24 @@ module.exports = function(){
 			(Slide);
 		
 		//Scale brushes
-		require('./d1/scale-brush')()
-			.xScale(x)
-			.dispatcher(dispatcher)
-			(Slide);
+		if( app.config() > 1){
+			require('./d1/scale-brush')()
+				.xScale(x)
+				.dispatcher(dispatcher)
+				(Slide);
 				
-		require('./d1/scale-brush')()
-			.yScale(y)
-			.dispatcher(dispatcher)
-			(Slide);
+			require('./d1/scale-brush')()
+				.yScale(y)
+				.dispatcher(dispatcher)
+				(Slide);
+		}
 		
 		d3.rebind(Slide, spec_container, 'spectra', 'addSpec', 'changeRegion', 'range');
 	}
 	Slide.show = function (_) {
-		svg_selection.classed('active', _);
+		if(svg_selection){
+			svg_selection.classed('active', _);	
+		}		
 	};
 	Slide.nd = function(){
 		if (!data){ //TODO: empty slide?
@@ -215,6 +230,9 @@ module.exports = function(){
 	};
 	Slide.clipId = function(){
 		return clip_id;
+	};
+	Slide.filterId = function(){
+		return filter_id;
 	};
 	Slide.slideDispatcher = function(){
 		return dispatcher;
@@ -229,6 +247,22 @@ module.exports = function(){
   };
 	Slide.parent = function () {
 		return parent_app;
+	};
+	Slide.spectra = function () {
+		// This is called only when spec_container is not present, i.e. empty slide.
+		return [];
+	};
+	Slide.addSpec = function (_) { 
+		// This is called only when spec_container is not present, i.e. empty slide.
+		// #TODO: Actually, this is also called if the slide is not rendered.
+		// In that case, svg_selection & parent_app are undefined.
+		// To solve this, add specContainer on initialization.
+		
+		console.log('first spec', svg_selection.node());
+		svg_selection.remove(); // remove the empty slide.
+		Slide.datum(_)(parent_app);	// call the slide again with the data.
+		if (parent_app.currentSlide() === Slide) { Slide.show(true); }
+		console.log('added spec', svg_selection.node());
 	};
 	return Slide;
 };

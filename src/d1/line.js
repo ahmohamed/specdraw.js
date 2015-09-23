@@ -108,16 +108,18 @@ module.exports = function () {
 			})
 			.on("_regionchange", function(e){
 				if(e.xdomain){
-					data_slice = e.xdomain.map(SpecLine.ppmToi);
-					i_to_pixel.domain( data_slice );
-					
-					//TODO: resample factors both x and y dimensions.
-					// Both dimension need to have the same unit, i.e. pixels.										
-					path_elem.datum( Array.prototype.slice.apply(data, data_slice) );
-					range.y = path_elem.range().y;
-					range.y[0] *= scale_factor;
-					range.y[1] *= scale_factor;
-					
+					var new_slice = e.xdomain.map(SpecLine.ppmToi);
+					if (data_slice && new_slice[0] === data_slice[0] && new_slice[1] === data_slice[1]){
+						return;
+					}else{
+						data_slice = new_slice;
+						i_to_pixel.domain( data_slice );
+						
+						render_data();
+						range.y = path_elem.range().y;
+						range.y[0] *= scale_factor;
+						range.y[1] *= scale_factor;
+					}
 				}
 			})
 			.on("_integrate", function(e){
@@ -160,7 +162,10 @@ module.exports = function () {
 	function render_data() {
 		//TODO: Update peaks, integrate, segments to match new data.
 		if (!svg_elem){ return; }
-		svg_elem.on("_regionchange")({xdomain:x.domain()});
+
+		//TODO: resample factors both x and y dimensions.
+		// Both dimension need to have the same unit, i.e. pixels.										
+		path_elem.datum( Array.prototype.slice.apply(data, data_slice) );		
 		svg_elem.on("_redraw")({x:true});
 	}
 	
@@ -255,7 +260,6 @@ module.exports = function () {
 		
 		range.x = [data[0].x, data[data.length-1].x];
 		range.y = d3.extent(data.map(function(d) { return d.y; }));
-		
 		ppm_to_i = d3.scale.linear()
 			.range([0, data.length])
 			.domain([ data[0].x, data[data.length-1].x ]);
@@ -291,6 +295,9 @@ module.exports = function () {
   SpecLine.selected = function(_){
     if (!arguments.length) {return selected;}
     selected = _;
+		if(svg_elem){
+			svg_elem.classed('selected', _);
+		}
     return SpecLine;
   };
 	SpecLine.lineIdx = function () {

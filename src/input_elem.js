@@ -1,5 +1,5 @@
 var inp = {};
-var fireEvent = require('./utils').fireEvent;
+var fireEvent = require('./utils/event');
 
 inp.num = function (label, val, _min, _max, step, unit) {
 	var elem = d3.select(document.createElement("label"));
@@ -19,6 +19,19 @@ inp.num = function (label, val, _min, _max, step, unit) {
 		return elem.select('input').node().value;
 	};
 	return function () { return elem.node();	};
+};
+
+inp.text = function (label, placeholder) {
+	var elem = d3.select(document.createElement("label"));
+	elem.classed('param text', true)
+		.text(label)
+		.append("input")
+			.attr({
+				type: 'text',
+				placeholder: placeholder || ''
+			});
+	
+	return function () { return elem.node(); };
 };
 
 inp.checkbox = function (label, val) {
@@ -117,7 +130,7 @@ inp.select_multi = function (label, options) {
 	return function () { return elem.node();	};
 };
 
-inp.select_toggle = function (label, options) {
+inp.select_toggle = function (label, options, app) {
 	console.log(label, options);
 	var elem = d3.select(document.createElement('div'))
     .classed('param select-toggle', true);
@@ -132,23 +145,23 @@ inp.select_toggle = function (label, options) {
 	var select_elem = elem.select('select').node();
 	
 	elem.select('select').on('input', function () {
-    d3.event.stopPropagation();
-  })
+    	d3.event.stopPropagation();
+  	})
     .on('change', function () {
-		fieldset.select('fieldset').remove();
+			fieldset.select('fieldset').remove();
 
-		if( Object.keys( options[select_elem.value][1]).length > 0 ){
-			fieldset.append("fieldset")
-				.append(inp.div( options[select_elem.value][1] ));
-				//.appened('legend', 'Parameters');
-		}
-    
-    fireEvent(this.parentNode, 'input');
-	});
+			if( Object.keys( options[select_elem.value][1]).length > 0 ){
+				fieldset.append("fieldset")
+					.append(inp.div( options[select_elem.value][1], app ));
+					//.appened('legend', 'Parameters');
+			}
+    	console.log(app);
+	    fireEvent(this.parentNode, 'input');
+		});
 	
 	if( Object.keys(options[ select_elem.value ][1]).length > 0 ){
 		fieldset.append("fieldset")	
-			.append(inp.div( options[ select_elem.value ][1] ));
+			.append(inp.div( options[ select_elem.value ][1], app ));
 	}
 	
 	elem.node().getValue = function(){ 
@@ -228,20 +241,21 @@ var parseInputElem = function (label, type, details, app) {
 	][type];
 	
 	var args = [label].concat(details);
-	args = type === 6 ? args.concat(app) : args;
+	args = [3,4,6].indexOf(type) !== -1 ? args.concat(app) : args;
 	return f.apply(null, args);
 };
 
 inp.spectrumSelector = function (app) {
-	var specs = app.currentSlide().spectra();
-	var spec_container = app.currentSlide().specContainer();
+	var specs = app.currentSlide() ? app.currentSlide().spectra(): null;
 	
-	if (specs.length === 0){
+	
+	if ( (!specs) || specs.length === 0){
 		return function () {
 			return d3.select(document.createElement('div')).text('No Spectra to show').node();
 		};
 	} 
-		
+	
+	var spec_container = app.currentSlide().specContainer();		
 	var elem = 	d3.select(
 		inp.select_multi('Select Spectrum', specs)()
 		).classed('spec-selector', true);
@@ -250,6 +264,7 @@ inp.spectrumSelector = function (app) {
 	  	.each(function(s){
 				d3.select(this).select('.checkbox')					
 					.style('color', getComputedStyle(s.select('path').node()).stroke)
+					.style('opacity', getComputedStyle(s.select('path').node()).strokeOpacity)
 					.select('.label').text( s.label() );
 					
 				d3.select(this).on('mouseenter', function () {

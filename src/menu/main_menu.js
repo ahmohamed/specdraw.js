@@ -1,5 +1,5 @@
 var inp = require('../input_elem');
-var utils = require('../utils');
+var fireEvent = require('../utils/event');
 
 function add_li(sel) {
 	sel.enter()
@@ -26,7 +26,7 @@ function recursive_add(sel){
 	}
 }
 
-function main_menu () {
+function main_menu (app) {
 	var menu_data;
 	function _main(div) {
 		div.select('.menu-container').remove();
@@ -47,8 +47,8 @@ function main_menu () {
     nav.selectAll('li')
       .on("click", function(d){
         if(d.fun){
-          utils.fireEvent(div.node(), 'click'); //close the menu.
-          d.fun();
+          fireEvent(div.node(), 'click'); //close the menu.
+          d.fun(app);
         }else{
         	this.focus();
         }

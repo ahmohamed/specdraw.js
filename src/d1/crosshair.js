@@ -59,26 +59,26 @@ module.exports = function (){
 			.attr("class", "clr"+ spec_line.lineIdx())
 			.attr("r", 4.5)
 			.on("click",function(){
-				spec_line.sel().toggleClass("selected");
+				spec_line.selected( !spec_line.selected() );
 			})
 			.on("mouseenter",function(){
-				spec_line.sel().selectP('.main-focus').classed('dimmed', true);
-				spec_line.sel().classed('highlighted', true);
+				spec_line.parent().highlightSpec(spec_line);
 			})
 			.on("mouseleave",function(){
-				spec_line.sel().selectP('.main-focus').classed('dimmed', false);
-				spec_line.sel().classed('highlighted', false);
+				spec_line.parent().highlightSpec();
 			});
 
 		svg_elem
 			.on("_regionchange", function(e){
-				if(e.x){					
+				if(e.xdomain){					
 					svg_elem.datum(null);
 					svg_elem.attr("transform", "translate(" + (-10000) + "," + (-10000) + ")");
+					tip.hide();
 				}else{
 					var datum = svg_elem.datum();
 					if(datum){
-						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");						
+						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");
+						tip.show(svg_elem.node());
 					}
 				}
 			})

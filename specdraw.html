@@ -1,0 +1,34 @@
+<link rel="stylesheet" href="style.css" type="text/css" media="screen">
+<script src="lib/d3.v3.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="lib/d3-tip.edited.js" type="text/javascript" charset="utf-8"></script>
+<script src="specdraw.js" type="text/javascript" charset="utf-8"></script>
+
+<script>
+// modify this previous line to pass in your own method name 
+// and object for the method to be attached to
+  (function() {
+    //var importDoc = document.currentScript.ownerDocument; // importee
+    
+    // Define and register <shadow-element>
+    // that uses Shadow DOM and a template.
+    var proto2 = Object.create(HTMLElement.prototype);
+    var spec_app;
+    
+    proto2.createdCallback = function() {
+      var url = 'http://127.0.0.1:8000/nmr/getSpectrum/2?';
+      spec_app = specdraw.App()
+        //.data(url);      
+    };
+    proto2.attachedCallback = function () {
+      var sel = d3.select(this);
+      sel.call(spec_app);
+    };
+    proto2.attributeChangedCallback = function (attrname, oldval, newval) {
+      
+    };
+    
+    document.registerElement('specdraw-js', {prototype: proto2});
+  })();
+</script>
+  
+  
