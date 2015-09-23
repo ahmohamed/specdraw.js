@@ -1,6 +1,6 @@
 module.exports = function(element,event){
-	var evt;
-	if (document.createEventObject){
+  var evt;
+  if (document.createEventObject){
     // dispatch for IE
     evt = document.createEventObject();
     return element.fireEvent('on'+event,evt);

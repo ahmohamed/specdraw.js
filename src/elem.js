@@ -2,22 +2,22 @@
 function inherit(target, source){
   for (var f in source){
     if (typeof source[f] === 'function'){
-			//console.log(f);
+      //console.log(f);
       d3.rebind(target, source, f);
     }
   }
 }
 
 function ElemArray(arr){
-	if(!arr){
-		arr = [];
-	}
+  if(!arr){
+    arr = [];
+  }
   arr.nodes = function(){
-	  return this.map(function(e){return e.node();});
-	};
+    return this.map(function(e){return e.node();});
+  };
   arr.sel = function(){
-	  return d3.selectAll(this.nodes());
-	};
+    return d3.selectAll(this.nodes());
+  };
   return arr;
 }
 
@@ -25,13 +25,13 @@ function Elem(tag){
   var selection, parentElem, width, height, cls;
   function _main (container){
     selection = container.append(tag || 'div');
-		parentElem = container;
+    parentElem = container;
     if(cls){
       selection.classed(cls, true);
     }
     return selection;
   }
-	
+  
   _main.sel = function(){
     return selection;
   };
@@ -51,52 +51,52 @@ function Elem(tag){
     height = _;
     return _main;
   };
-	_main.class = function(_){
+  _main.class = function(_){
     if (!arguments.length) {return cls;}
     cls = _;
     return _main;
   };
-	_main.append = function(_){ 
-		if(!selection){
-			throw new Error('Elem is not in DOM');
-		}
-		return selection.append(_);
-	};
-	_main.select = function(_){
-		if(!selection){
-			throw new Error('Elem is not in DOM');
-		}
-		return selection.select(_);
-	};
-	_main.selectAll = function(_){
-		if(!selection){
-			throw new Error('Elem is not in DOM');
-		}
-		return selection.selectAll(_);
-	};
-	_main.remove = function () {
-		if( selection ){
-			if ( selection.on('remove') ){
-				selection.on('remove')();
-			}
-			selection.remove();
-		}
-	};
-	_main.parentApp = function () {
-		var _parent = parentElem;
-		while(_parent){    
-			if(typeof _parent.currentSlide === 'function'){
-				return _parent;
-			}
-			_parent = _parent.parent ? _parent.parent() : null;
-		}
-		return null;
-	};
+  _main.append = function(_){ 
+    if(!selection){
+      throw new Error('Elem is not in DOM');
+    }
+    return selection.append(_);
+  };
+  _main.select = function(_){
+    if(!selection){
+      throw new Error('Elem is not in DOM');
+    }
+    return selection.select(_);
+  };
+  _main.selectAll = function(_){
+    if(!selection){
+      throw new Error('Elem is not in DOM');
+    }
+    return selection.selectAll(_);
+  };
+  _main.remove = function () {
+    if( selection ){
+      if ( selection.on('remove') ){
+        selection.on('remove')();
+      }
+      selection.remove();
+    }
+  };
+  _main.parentApp = function () {
+    var _parent = parentElem;
+    while(_parent){    
+      if(typeof _parent.currentSlide === 'function'){
+        return _parent;
+      }
+      _parent = _parent.parent ? _parent.parent() : null;
+    }
+    return null;
+  };
   return _main;
 }
 
 function ResponsiveElem(tag){
-	var source = Elem(tag);
+  var source = Elem(tag);
   var x, y, data, dispatcher;
   function _main (container){
     var selection = source(container);
@@ -118,21 +118,21 @@ function ResponsiveElem(tag){
     return _main;
   };
   _main.dispatcher = function(_) {
-  	if (!arguments.length) {return dispatcher;}
-  	dispatcher = _;
-  	return _main;
-  };	
-	inherit(_main, source);
+    if (!arguments.length) {return dispatcher;}
+    dispatcher = _;
+    return _main;
+  };  
+  inherit(_main, source);
   return _main;
 }
 
 function SVGElem(){
-	var source = ResponsiveElem('g');
+  var source = ResponsiveElem('g');
   function _main (container){
     var selection = source(container);
     return selection;
   }
-	inherit(_main, source);
+  inherit(_main, source);
   return _main;
 }
 
