@@ -56,7 +56,7 @@ module.exports = function () {
     dispatcher = SpecLine.dispatcher();
     i_to_pixel = x.copy();
     
-    //var width = spec_container.width();
+    
     line_idx = spec_container.spectra().indexOf(SpecLine);
     svg_elem = source(spec_container)
       .classed('selected', selected)
@@ -109,11 +109,16 @@ module.exports = function () {
       .on("_regionchange", function(e){
         if(e.xdomain){
           var new_slice = e.xdomain.map(SpecLine.ppmToi);
+					// The reason I always update the i_to_pixel scale is that:
+					// If the xdomain is larger than the spectrum range, the data slice will equal
+					// the data length (i.e all the data is included), even in the xdomain changes.
+					i_to_pixel.domain( new_slice )
+						.range(new_slice.map(function (i) { return x( data[i].x ); }));
+					
           if (data_slice && new_slice[0] === data_slice[0] && new_slice[1] === data_slice[1]){
             return;
           }else{
             data_slice = new_slice;
-            i_to_pixel.domain( data_slice );
             
             render_data();
             range.y = path_elem.range().y;

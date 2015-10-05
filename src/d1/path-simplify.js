@@ -28,11 +28,17 @@ module.exports = function () {
   }
   PathElem.redraw = function () {
     if ( !svg_elem ){return PathElem;}
-    svg_elem.attr("d", path_fun);
+    if (data.length < 2) { svg_elem.attr("d", null); }
+    else { svg_elem.attr("d", path_fun); }
     return PathElem;
   };
   PathElem.update = function () {
     if ( !svg_elem ){return PathElem;}
+    console.log('data length',data.length);
+    if (data.length < 2) {
+      svg_elem.datum(null);
+      return PathElem;
+    }
     
     if(simplify_val){
       data_resample = simplify(data, x, simplify_val);

@@ -1,5 +1,4 @@
-require('nanoModal');
-console.log(require('nanoModal')());
+require('nanoModal')
 var nanoModal = window.nanoModal;
 nanoModal.customHide = function(defaultHide, modalAPI) {
   modalAPI.modal.el.style.display = 'block';

@@ -60,3 +60,4 @@ d3.selection.prototype.size = function() {
   this.each(function() { ++n; });
   return n;
 };
+require('../../lib/d3-tip.edited.js')(d3);

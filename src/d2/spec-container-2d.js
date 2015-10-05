@@ -111,7 +111,7 @@ module.exports = function () {
   }
   function render_spec(s) {
     if(!focus){return;}
-    console.log(s);
+
     s.xScale(x).yScale(y)
       .dispatcher(dispatcher)
       (SpecContainer);
@@ -159,12 +159,13 @@ module.exports = function () {
         .range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
         
       specs.push(s);
+			render_spec(s);
     }else{
       s = s[0];
       s.datum(spec_data["data"])
         .range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
     }
-    render_spec(s);
+    
     return s;
   };
   SpecContainer.highlightSpec = function(){};

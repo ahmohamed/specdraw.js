@@ -29,7 +29,6 @@ module.exports = function(){
       })
       .classed('spec-slide empty', true)
       .on('click', require('./pro/open-file')(app) );
-    console.log(Slide.addSpec);
   }
   
   function Slide(app){
@@ -258,11 +257,9 @@ module.exports = function(){
     // In that case, svg_selection & parent_app are undefined.
     // To solve this, add specContainer on initialization.
     
-    console.log('first spec', svg_selection.node());
     svg_selection.remove(); // remove the empty slide.
     Slide.datum(_)(parent_app);  // call the slide again with the data.
     if (parent_app.currentSlide() === Slide) { Slide.show(true); }
-    console.log('added spec', svg_selection.node());
   };
   return Slide;
 };

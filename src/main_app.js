@@ -24,7 +24,7 @@ module.exports = function(){
           return false;
         }
     }
-    if (app_width < 400 || app_height < 400){return false;}
+    if (app_width < 300 || app_height < 300){return false;}
     return true;
   }
   

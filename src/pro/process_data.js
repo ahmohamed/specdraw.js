@@ -142,12 +142,6 @@ var processPNGworker = function (json, callback) {
           img_data = img_data.map(function(d,i){ return {x:xscale(i), y:d}; });
         }
       
-        /*var ret;
-        if(typeof json["s_id"] != 'undefined')
-          ret = {data:img_data, s_id:json['s_id']}
-        else{ ret = {data:img_data}; }
-        
-        callback(ret);*/
         json['data'] = img_data;
         callback(json);
       };

@@ -27,6 +27,7 @@ module.exports = function(app, menu_data) {
   app.select('.connection-status')
     .attr('class', 'connection-status connecting')
     .attr('title', 'Connection status: connecting')
+		.on('click', null)
     .call(bootstrap.tooltip().placement('right'));
   
   ajax.getJSON(app.connect() + 'menu', success, fail);
@@ -42,6 +43,7 @@ module.exports = function(app, menu_data) {
     app.select('.connection-status')
       .attr('class', 'connection-status disconnected')
       .attr('title', 'Disconnected. Click to reconnect.')
+			.on('click', function () { module.exports(app, menu_data);})
       .call(bootstrap.tooltip().placement('right'));
   }
 };

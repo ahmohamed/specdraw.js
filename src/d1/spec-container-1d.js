@@ -5,6 +5,7 @@ module.exports = function () {
   
   
   var focus, x, y, dispatcher, data, range = {};
+  var x_label;
   var specs = core.ElemArray();
   var peak_picker = require('./peak-picker')();
   var main_brush = require('./main-brush')();
@@ -200,7 +201,9 @@ module.exports = function () {
     if (!arguments.length) {
       throw new Error("appendSlide: No data provided.");
     } 
-    if(spec_data['nd'] !== 1){ // TODO: parentApp undefined until rendering.
+    if(spec_data['nd'] !== 1 ||
+      (x_label && spec_data['x_label'] !== x_label)
+    ){ // TODO: parentApp undefined until rendering.
       SpecContainer.parentApp().appendSlide(spec_data);
       return;
     }
@@ -208,15 +211,13 @@ module.exports = function () {
     if(typeof crosshair === 'undefined'){
       crosshair = true;
     }
-    
+    console.log('x_labels', x_label, spec_data['x_label']);
     // TODO: s_id is only present in 'connected' mode.
     var s_id = null;
     var spec_label = 'spec'+specs.length;
-    console.log(spec_data['label']);
 
     if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
     if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
-    spec_data = spec_data["data"];
     
     // Find the spectrum with the same s_id.
     // If it is present, overwrite it.
@@ -227,7 +228,7 @@ module.exports = function () {
     
     if ( s.length === 0 ){
        s = require('./line')()
-        .datum(spec_data)
+        .datum(spec_data["data"])
         .crosshair(crosshair)
         .s_id(s_id)
         .label(spec_label);
@@ -236,10 +237,14 @@ module.exports = function () {
       render_spec(s);
     }else{
       s = s[0];
-      s.datum(spec_data);//TODO: setData!!
+      s.datum(spec_data["data"]);//TODO: setData!!
       update_range();
-    }    
-    
+    }
+    console.log('specs.length', specs.length);
+    if (specs.length === 1) { 
+      x_label = spec_data['x_label']; 
+      console.log('set x_label to ', x_label, spec_data['x_label']);
+    }
     if(SpecContainer.parentApp()){
       SpecContainer.parentApp().dispatcher().slideContentChange();
     }

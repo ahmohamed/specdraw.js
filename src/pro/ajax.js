@@ -17,10 +17,10 @@ var request = function (url, callback, err) {
   http_request.send();  
 };
 
-var getJSON = function(url, callback, err, show_progress){
+var getJSON = function(url, callback, err_fun, show_progress){
   var prog = ajaxProgress();
-  if (typeof err !== 'function'){
-    err = modals.error;
+  if (typeof err_fun !== 'function'){
+    err_fun = modals.error;
   }
   request(url, function (response) {
     prog.stop();
@@ -33,13 +33,13 @@ var getJSON = function(url, callback, err, show_progress){
     if(typeof json['error'] === 'undefined'){
       callback(json);
     }else{
-      err(json['error']['name'], json['error']['message']);
+      err_fun(json['error']['name'], json['error']['message']);
     }
 
   },
-  function (err) {
+  function (error) {
     prog.stop();
-    err('Network Error', err);
+    err_fun('Network Error', error);
   });
 
   if(show_progress)

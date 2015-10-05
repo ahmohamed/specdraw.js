@@ -25,5 +25,6 @@ module.exports = function (spec_line, binsize) {
   
   var binned_data = bin(spec_line.datum(), bin_points);
   console.log(binned_data);
+	//TODO: upadting data with new size breaks peak picking and integration.
   spec_line.datum(binned_data);
 };
