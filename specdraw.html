@@ -1,6 +1,5 @@
-<link rel="stylesheet" href="style.css" type="text/css" media="screen">
-<script src="lib/d3.v3.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="lib/d3-tip.edited.js" type="text/javascript" charset="utf-8"></script>
+<link rel="stylesheet" href="specdraw.min.css" type="text/css" media="screen">
+<script src="nmrpro/d3.v3.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="specdraw.js" type="text/javascript" charset="utf-8"></script>
 
 <script>
@@ -11,23 +10,23 @@
     
     // Define and register <shadow-element>
     // that uses Shadow DOM and a template.
-    var proto2 = Object.create(HTMLElement.prototype);
-    var spec_app;
+    var proto = Object.create(HTMLElement.prototype);
     
-    proto2.createdCallback = function() {
-      var url = 'http://127.0.0.1:8000/nmr/getSpectrum/2?';
-      spec_app = specdraw.App()
-        //.data(url);      
+    proto.createdCallback = function() {
+      var url = this.getAttribute('url');
+      var spec_app = specdraw.App()
+        .data(url);
+      this.app = spec_app;
     };
-    proto2.attachedCallback = function () {
+    proto.attachedCallback = function () {
       var sel = d3.select(this);
-      sel.call(spec_app);
+      sel.call(this.app);
     };
-    proto2.attributeChangedCallback = function (attrname, oldval, newval) {
+    proto.attributeChangedCallback = function (attrname, oldval, newval) {
       
     };
     
-    document.registerElement('specdraw-js', {prototype: proto2});
+    document.registerElement('specdraw-js', {prototype: proto});
   })();
 </script>
   

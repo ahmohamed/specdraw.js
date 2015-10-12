@@ -19,8 +19,7 @@ module.exports = function (app){
   var main_menu = require('./main_menu')(app),
     spectra = require('./spectra')(app),
     slides = require('./slides')(app),
-    menu_data = require('./menu_data')(app),
-    serverside_menu = require('./serverside-menu');
+    get_menu_data = require('./menu_data');
   
   var column_menu_buttons = [
     ['open-menu', 'Menu'],
@@ -47,10 +46,6 @@ module.exports = function (app){
     .call(bootstrap.tooltip().placement('right'))
     .on('click', toggle);
   
-  
-  elem.select('.open-menu').on('click', function(){
-    toggle.apply(this, [main_menu.data(menu_data)]);
-  });
   elem.select('.open-spec-legend').on('click', function(){
     toggle.apply(this, [spectra]);
   });
@@ -59,18 +54,22 @@ module.exports = function (app){
   });
   
   var app_dispatcher = app.dispatcher();
-  app_dispatcher.on('slideChange.menu', function (s) {
-    //TODO: hide parent menu-item when all children are hidden
-    var two_d_slide = s.nd === 2;
-    elem.select('.open-menu')
-      .classed('d1', !two_d_slide)
-      .classed('d2', two_d_slide);
+  app_dispatcher.on('slideChange.menu', function () {
     elem.select('.open-spec-legend').call( spectra );
     elem.select('.open-slides').call( slides );
+    app_dispatcher.menuUpdate();
   });
+  
   app_dispatcher.on('slideContentChange.menu', function () {
     elem.select('.open-spec-legend').call( spectra );
   });
+  
+  app_dispatcher.on('menuUpdate.menu', function () {
+    elem.select('.open-menu').call( main_menu.data(get_menu_data(app)) );
+  });
+  
+  //initialize main-menu
+  elem.select('.open-menu').call( main_menu.data(get_menu_data(app)) );
   
   if(app.config() < 3){ return elem; }
   
@@ -85,12 +84,6 @@ module.exports = function (app){
   d3.select(window).on('resize.fullscreenbutton', function () {
     elem.select('.open-fullscreen').classed('opened', fullscreen.isFull() );
   });
-  /**************************/
-  
-  app_dispatcher.on('menuUpdate.menu', function () {
-    elem.select('.open-menu').call( main_menu.data(menu_data) );
-  });
-  
-  serverside_menu(app, menu_data); //read menu from server.
+  /******************************************/
   return elem;                  
 };

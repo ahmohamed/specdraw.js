@@ -81,7 +81,7 @@ module.exports = function(){
     if(! selection){ return; }
     s.width(app_width).height(app_height)
       (App);
-    
+
     App.currentSlide(s);
   }
   

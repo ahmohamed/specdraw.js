@@ -259,7 +259,10 @@ module.exports = function(){
     
     svg_selection.remove(); // remove the empty slide.
     Slide.datum(_)(parent_app);  // call the slide again with the data.
-    if (parent_app.currentSlide() === Slide) { Slide.show(true); }
+    if (parent_app.currentSlide() === Slide) { 
+			Slide.show(true);
+			parent_app.dispatcher().menuUpdate();
+		}
   };
   return Slide;
 };

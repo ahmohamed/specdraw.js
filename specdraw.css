@@ -468,6 +468,7 @@ body {
   display: -ms-flexbox;
   display: -webkit-flex;
   display: flex;
+  position: relative;
 }
 
 .spec-app .column-menu {

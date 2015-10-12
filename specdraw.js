@@ -4530,7 +4530,7 @@ module.exports = function(){
     if(! selection){ return; }
     s.width(app_width).height(app_height)
       (App);
-    
+
     App.currentSlide(s);
   }
   
@@ -4709,8 +4709,7 @@ module.exports = function (app){
   var main_menu = require('./main_menu')(app),
     spectra = require('./spectra')(app),
     slides = require('./slides')(app),
-    menu_data = require('./menu_data')(app),
-    serverside_menu = require('./serverside-menu');
+    get_menu_data = require('./menu_data');
   
   var column_menu_buttons = [
     ['open-menu', 'Menu'],
@@ -4737,10 +4736,6 @@ module.exports = function (app){
     .call(bootstrap.tooltip().placement('right'))
     .on('click', toggle);
   
-  
-  elem.select('.open-menu').on('click', function(){
-    toggle.apply(this, [main_menu.data(menu_data)]);
-  });
   elem.select('.open-spec-legend').on('click', function(){
     toggle.apply(this, [spectra]);
   });
@@ -4749,18 +4744,22 @@ module.exports = function (app){
   });
   
   var app_dispatcher = app.dispatcher();
-  app_dispatcher.on('slideChange.menu', function (s) {
-    //TODO: hide parent menu-item when all children are hidden
-    var two_d_slide = s.nd === 2;
-    elem.select('.open-menu')
-      .classed('d1', !two_d_slide)
-      .classed('d2', two_d_slide);
+  app_dispatcher.on('slideChange.menu', function () {
     elem.select('.open-spec-legend').call( spectra );
     elem.select('.open-slides').call( slides );
+    app_dispatcher.menuUpdate();
   });
+  
   app_dispatcher.on('slideContentChange.menu', function () {
     elem.select('.open-spec-legend').call( spectra );
   });
+  
+  app_dispatcher.on('menuUpdate.menu', function () {
+    elem.select('.open-menu').call( main_menu.data(get_menu_data(app)) );
+  });
+  
+  //initialize main-menu
+  elem.select('.open-menu').call( main_menu.data(get_menu_data(app)) );
   
   if(app.config() < 3){ return elem; }
   
@@ -4775,19 +4774,14 @@ module.exports = function (app){
   d3.select(window).on('resize.fullscreenbutton', function () {
     elem.select('.open-fullscreen').classed('opened', fullscreen.isFull() );
   });
-  /**************************/
-  
-  app_dispatcher.on('menuUpdate.menu', function () {
-    elem.select('.open-menu').call( main_menu.data(menu_data) );
-  });
-  
-  serverside_menu(app, menu_data); //read menu from server.
+  /******************************************/
   return elem;                  
 };
 
-},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":47,"./main_menu":29,"./menu_data":31,"./serverside-menu":32,"./slides":33,"./spectra":34}],31:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":47,"./main_menu":29,"./menu_data":31,"./slides":33,"./spectra":34}],31:[function(require,module,exports){
 var events = require('../events');
 var append_menu = require('./append-menu');
+var server_menu = require('./serverside-menu');
 
 function saveSVG(slide, filename) {
   slide.selectAll('text').attr('font-size', '10px');
@@ -4806,50 +4800,50 @@ function savePNG(slide, filename) {
 }
 
 function add_item(i, menu_data){
-  var path = append_menu(menu_data, i['path']);
+  var path = append_menu(menu_data, i['menu_path']);
   path.children = null;
   path.fun = i['fun'];
   path.nd = i['nd'];
 }
-var config2 = [{ path:['View', 'Change region', 'Set X region'],
+var config2 = [{ menu_path:['View', 'Change region', 'Set X region'],
     fun: function (app){app.modals().xRegion();},
     nd: [1,2]
   },
-  { path:['View', 'Change region', 'Set Y region'],
+  { menu_path:['View', 'Change region', 'Set Y region'],
     fun: function (app){app.modals().yRegion();},
     nd: [1,2]
   },
-  { path:['View', 'Change region', 'Full spectrum'],
+  { menu_path:['View', 'Change region', 'Full spectrum'],
     fun: function (app){app.slideDispatcher().regionfull();},
     nd: [1,2]
   },
-  { path:['View', 'Show/hide crosshair'],
+  { menu_path:['View', 'Show/hide crosshair'],
     fun: events.crosshairToggle,
     nd: [1,2]
   }];
 
-var config3 = [{ path:['Analysis', 'Peak Picking', 'Manual peak picking'],
+var config3 = [{ menu_path:['Analysis', 'Peak Picking', 'Manual peak picking'],
     fun: events.peakpickToggle,  nd: [1]
   },
-  { path:['Analysis', 'Peak Picking', 'Delete peaks'],
+  { menu_path:['Analysis', 'Peak Picking', 'Delete peaks'],
     fun: events.peakdelToggle,  nd: [1]
   },
-  { path:['Analysis', 'Peak integration'],
+  { menu_path:['Analysis', 'Peak integration'],
     fun: events.integrateToggle,  nd: [1]
   },
-  { path:['View', 'Scale selected spectra'],
+/*TODO  { menu_path:['View', 'Scale selected spectra'],
     fun: function (app){app.modals().scaleLine();},
     nd: [1]
-  },
-  { path:['Save Slide', 'As PNG image'],
+  },*/
+  { menu_path:['Save Slide', 'As PNG image'],
     fun: function (app){savePNG(app.currentSlide(), 'specdraw_slide.png');},
     nd: [1,2]
   },
-  { path:['Save Slide', 'As SVG image'],
+  { menu_path:['Save Slide', 'As SVG image'],
     fun: function (app){saveSVG(app.currentSlide(), 'specdraw_slide.svg');},
     nd: [1,2]
   },
-  { path:['Bin Spectra'],
+  { menu_path:['Bin Spectra'],
     fun: function (app){
       app.modals().input("Bin size", 0.04, 
       function (input) {
@@ -4864,9 +4858,20 @@ var config3 = [{ path:['Analysis', 'Peak Picking', 'Manual peak picking'],
   } ];  
 
 module.exports = function (app) {
+  
   var entries = config2;
   if(app.config() > 2){
     entries = entries.concat(config3);
+  }
+  if(app.config() > 3){
+    entries = server_menu(app).concat(entries);
+  }
+  
+  if (app.currentSlide() && app.currentSlide().nd()) {
+    var current_nd = app.currentSlide().nd();
+    entries = entries.filter(function (e) {
+      return !(e.nd && e.nd.indexOf(current_nd) < 0);
+    });    
   }
   
   var menu_data = [];
@@ -4877,12 +4882,11 @@ module.exports = function (app) {
 };
 
 
-},{"../d1/binning":9,"../events":23,"./append-menu":28,"save-svg-as-png":7}],32:[function(require,module,exports){
-var append_menu = require('./append-menu');
+},{"../d1/binning":9,"../events":23,"./append-menu":28,"./serverside-menu":32,"save-svg-as-png":7}],32:[function(require,module,exports){
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 var ajax = require('../pro/ajax');
 
-function read_menu(app, menu_data, response) {
+function read_menu(app, response) {
   function plugin_functor (c) {
     if(c["args"]){
       return function(app) {
@@ -4893,17 +4897,24 @@ function read_menu(app, menu_data, response) {
     }
   }
   
-  var c = response;
+  //var c = response;
   for (var i = 0; i < response.length; i++) {
-    var path = append_menu(menu_data, c[i]['menu_path']);
-    path.children = null;
-    path.fun = plugin_functor(c[i]);
-    path.nd = c[i]['nd'];
+    response[i]['fun'] = plugin_functor(response[i]);
   }
+	server_menu = response;
   app.dispatcher().menuUpdate();
 }
 
-module.exports = function(app, menu_data) {
+
+
+
+var server_menu;
+module.exports = function(app) {
+	if (server_menu) {
+		return server_menu;
+	}
+  server_menu = []; //flag that we are getting the menu.
+  
   app.select('.connection-status')
     .attr('class', 'connection-status connecting')
     .attr('title', 'Connection status: connecting')
@@ -4917,19 +4928,23 @@ module.exports = function(app, menu_data) {
       .attr('class', 'connection-status connected')
       .attr('title', 'Connection status: connected')
       .call(bootstrap.tooltip().placement('right'));
-    read_menu(app, menu_data, response);
+    read_menu(app, response);
   }
   function fail() {
+    server_menu = undefined;
     app.select('.connection-status')
       .attr('class', 'connection-status disconnected')
       .attr('title', 'Disconnected. Click to reconnect.')
-			.on('click', function () { module.exports(app, menu_data);})
+			.on('click', function () { module.exports(app);})
       .call(bootstrap.tooltip().placement('right'));
   }
+	
+	// it returns an empty array until the ajax call returns, and calls dispatcher().menuUpdate()
+	return [];
 };
 
 
-},{"../../lib/bootstrap-tooltip":1,"../pro/ajax":36,"./append-menu":28}],33:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../pro/ajax":36}],33:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -5464,7 +5479,7 @@ function handle_segs (app, json) {
   }
 }
 
-
+//TODO:handle_spec_like
 function handle_spec_feature (app, json, preview){
   if (json['peaks'] !== undefined){
     handle_peaks(app, json, preview);
@@ -6115,7 +6130,10 @@ module.exports = function(){
     
     svg_selection.remove(); // remove the empty slide.
     Slide.datum(_)(parent_app);  // call the slide again with the data.
-    if (parent_app.currentSlide() === Slide) { Slide.show(true); }
+    if (parent_app.currentSlide() === Slide) { 
+			Slide.show(true);
+			parent_app.dispatcher().menuUpdate();
+		}
   };
   return Slide;
 };
