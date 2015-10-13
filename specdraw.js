@@ -5418,6 +5418,7 @@ module.exports = function(json, callback) {
   spec_data.label = result.spectra[0].title;
   spec_data.x_label = result.xType;
   spec_data.y_label = result.yType;
+  spec_data.nd = result.twoD? 2 : 1;
   
   callback(spec_data);
 };
@@ -5935,7 +5936,8 @@ module.exports = function(){
       yGrid = d3.svg.axis().scale(y)
         .orient("right").innerTickSize(width)
         .tickFormat('');
-    
+		
+		//TODO: check nd (if missing, or not in [1,2])
     var two_d = (data["nd"] && data["nd"] === 2);
     dispatcher.idx = 0;
     
