@@ -40,6 +40,9 @@ module.exports = function(){
       create_empty_slide(app);
       return ;
     }
+		//TODO: check nd (if missing, or not in [1,2])
+    var two_d = (data["nd"] && data["nd"] === 2);
+    
     var brush_margin = app.config() > 1 ? 20 : 0;
     var margin = {
         top: 10 + brush_margin,
@@ -56,7 +59,7 @@ module.exports = function(){
   
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("right")
-          .tickFormat(d3.format("s"));
+          .tickFormat(two_d? null : d3.format("s"));
     
     var xGrid = d3.svg.axis().scale(x)
         .orient("bottom").innerTickSize(height)
@@ -65,8 +68,6 @@ module.exports = function(){
         .orient("right").innerTickSize(width)
         .tickFormat('');
 		
-		//TODO: check nd (if missing, or not in [1,2])
-    var two_d = (data["nd"] && data["nd"] === 2);
     dispatcher.idx = 0;
     
     svg_selection = app.append('svg')
@@ -82,11 +83,7 @@ module.exports = function(){
         width:svg_width,
         height:svg_height
       });
-    
-    //var contents = slide_selection
-      //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
-    
+        
     var defs = slide_selection.append("defs");
     defs.append("clipPath")
     .attr("id", clip_id)
@@ -94,7 +91,7 @@ module.exports = function(){
         .attr("width", width)
         .attr("height", height);
 
-    /** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
+    /** PNG images are grey scale. All positive and negative values are represented as unsigned 8-bit int.
         where 127 represent the zero. We want to recolor them as follows:
          * positive values colored with a red-orange hue.
         * negative values colored with a blue-cyan hue.
@@ -161,7 +158,7 @@ module.exports = function(){
     slide_selection.append("g").classed('y grid', true);
     
     slide_selection.append("text")
-      .attr("class", "x label")
+      .attr("class", "x axis-label")
       .attr("text-anchor", "middle")
       .attr("x", width/2)
       .attr("y", height)
@@ -169,7 +166,7 @@ module.exports = function(){
       .text("Chemical shift (ppm)");
     
     slide_selection.append("text")
-      .attr("class", "y label")
+      .attr("class", "y axis-label")
       .attr("text-anchor", "end")
       .attr("y", width)
       .attr("dy", "-.75em")

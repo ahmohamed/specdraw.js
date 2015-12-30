@@ -47,7 +47,7 @@ inp.checkbox = function (label, val) {
   elem.append('div')
       .classed('checker', true);
   elem.append('div')
-    .classed('label', true)
+    .classed('checkbox-label', true)
     .text(typeof label === 'string' ? label : '');
   
   elem.node().getValue = function(){ 
@@ -124,7 +124,7 @@ inp.select_multi = function (label, options) {
       })[0]
       .map(function (e) {
         return typeof(e.value) !== 'undefined' ? e.value
-          : d3.select(e).select('.label').text();
+          : d3.select(e).select('.checkbox-label').text();
       });
   };
   return function () { return elem.node();  };
@@ -182,7 +182,7 @@ inp.button = function (label) {
   return function(){return elem.node();};
 };
 inp.threshold = function (label, axis, app) {
-  console.log('app: ',app);
+  //console.log('app: ',app);
   var elem = d3.select(document.createElement('div'))
   .classed('param threshold', true);
   
@@ -265,7 +265,7 @@ inp.spectrumSelector = function (app) {
         d3.select(this).select('.checkbox')          
           .style('color', getComputedStyle(s.select('path').node()).stroke)
           .style('opacity', getComputedStyle(s.select('path').node()).strokeOpacity)
-          .select('.label').text( s.label() );
+          .select('.checkbox-label').text( s.label() );
           
         d3.select(this).on('mouseenter', function () {
           spec_container.highlightSpec(s);

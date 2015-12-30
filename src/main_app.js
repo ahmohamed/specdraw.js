@@ -108,7 +108,9 @@ module.exports = function(){
   };
   App.pluginRequest = require('./pro/plugins')(App);
   App.appendSlide = function(data){
-    var s = require('./slide')().datum(data);
+    console.log('append_slide start');
+		var s = require('./slide')().datum(data);
+		console.log('slide added');
     slides.push(s);
     render_slide(s);
     return App;

@@ -14,9 +14,15 @@ function read_menu(app, response) {
   
   //var c = response;
   for (var i = 0; i < response.length; i++) {
-    response[i]['fun'] = plugin_functor(response[i]);
+    server_menu.push( {
+      menu_path: response[i]['menu_path'],
+      nd: response[i]['nd'],
+      fun: plugin_functor(response[i])
+    });
+    
+    //response[i]['fun'] = plugin_functor(response[i]);
   }
-	server_menu = response;
+	//server_menu = response;
   app.dispatcher().menuUpdate();
 }
 

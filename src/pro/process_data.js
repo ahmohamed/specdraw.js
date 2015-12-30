@@ -175,6 +175,7 @@ var processPNGworker = function (json, callback) {
 */
 function process_spectrum (json, render_fun){
   if(typeof json !== 'object'){ //it wasn't a json file.
+    console.log(json, typeof json);
     return require('./jcamp')(json, render_fun);
   }
   if (json.constructor === Array) {

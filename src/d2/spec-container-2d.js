@@ -26,7 +26,7 @@ module.exports = function () {
       .attr('clip-path', "url(#" + slide.clipId() + ")")
       .attr("width", SpecContainer.width())
       .attr("height", SpecContainer.height())
-      .call(zoomer)
+      .call(zoomer) // TODO: if app.config > 1
       .on("dblclick.zoom", null)
       .on("mousedown.zoom", null);
         

@@ -1,5 +1,6 @@
 var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
+var events = require('../events');
 
 module.exports = function (app){  
   function toggle(callback){
@@ -25,7 +26,10 @@ module.exports = function (app){
     ['open-menu', 'Menu'],
     ['open-spec-legend', 'Spectra'],
     ['open-slides', 'Slides'],
+    ['kbd', 'Keyboard Shortcuts'],
   ];
+  
+  // Full client-side only buttons
   if(app.config() > 2){
     column_menu_buttons = column_menu_buttons.concat(
       [//['open-settings', 'Settings'],
@@ -51,6 +55,9 @@ module.exports = function (app){
   });
   elem.select('.open-slides').on('click', function(){
     toggle.apply(this, [slides]);
+  });
+  elem.select('.kbd').on('click', function(){
+    events.display_shortcuts(app);
   });
   
   var app_dispatcher = app.dispatcher();

@@ -3596,7 +3596,7 @@ module.exports = function () {
       .attr('clip-path', "url(#" + slide.clipId() + ")")
       .attr("width", SpecContainer.width())
       .attr("height", SpecContainer.height())
-      .call(zoomer)
+      .call(zoomer) // TODO: if app.config > 1
       .on("dblclick.zoom", null)
       .on("mousedown.zoom", null);
         
@@ -4041,6 +4041,7 @@ var events = {
   zoom:["x", "y", false]
 };
 
+var shortcuts = [];
 events.crosshairToggle = function (app) {
   events.crosshair = !events.crosshair;
   app.slideDispatcher().crosshairEnable(events.crosshair);
@@ -4082,30 +4083,73 @@ events.zoomToggle = function (app) {
   //dispatcher.integrateEnable(events.integrate);  
 }
 
-events.registerKeyboard = function(app){
-  d3.select("body").on("keydown", function() {
-    app.slideDispatcher().log("keyCode: " + d3.event.keyCode);
+function add_kbd_shortcut(shortcut, fun, message) {
+  shortcut = shortcut.toUpperCase()
+  var all_keys = shortcut.split(' ');
+  var key = all_keys[all_keys.length - 1];
+  var shift = shortcut.indexOf('SHIFT') > -1;
+  var ctrl = shortcut.indexOf('CONTROL') > -1 || shortcut.indexOf('CTRL') > -1;
+  var alt = shortcut.indexOf('ALT') > -1;
+  shortcuts.push({key:[key, shift, ctrl, alt], fun:fun, message: message});
+}
+
+function shortcut_to_text(s) {
+  ret = '';
+  if(s[1]) ret +='⇧';
+  if(s[2]) ret +='Ctrl';
+  if(s[3]) ret +='⌥';
   
-    if(app.config() > 2){
-      if (d3.event.keyCode===80) { // p
-        events.peakpickToggle(app);
-      }else if (d3.event.keyCode===68) { // d
-        events.peakdelToggle(app);
-      }else if (d3.event.keyCode===73) { // i
-        events.integrateToggle(app);
-      }
+  if(s[0]) ret += s[0];
+  console.log(s, ret);
+  return ret
+}
+events.display_shortcuts = function(app) {
+  var nano = app.modals().proto('Keyboard Shortcuts', '', 'hide');
+  el = d3.select(nano.modal.el).select(".nanoModalContent")//.style('display', 'table');
+  el.append('table').selectAll('tr')
+    .data(shortcuts).enter()
+    .append('tr')
+    .each(function (d,i) {
+      var _this = d3.select(this)
+      _this.append('td').append('kbd').text(shortcut_to_text(d.key));
+      _this.append('td').text(d.message)
+    });
+  
+  nano.show();
+};
+
+events.registerKeyboard = function(app){
+  add_kbd_shortcut('?', events.display_shortcuts, 'Display help and keyboard shortcuts');
+  add_kbd_shortcut('c', events.crosshairToggle, 'Toggle crosshair');
+  add_kbd_shortcut('z', events.zoomToggle, 'Toggle zoom');
+  add_kbd_shortcut('f', function(app){app.slideDispatcher().regionfull(app)}, 'View full spectrum');
+  add_kbd_shortcut('shift', null, 'Move cursor to nearest peak maximum');
+  
+  if(app.config() > 2){
+    add_kbd_shortcut('p', events.peakpickToggle, 'Peak picking');
+    add_kbd_shortcut('d', events.peakdelToggle, 'Peak deletion');
+    add_kbd_shortcut('i', events.integrateToggle, 'Peak integration');
+  }
+  
+  // Add keyboard listener
+  d3.select("body").on("keypress", function() {
+    //app.slideDispatcher().log("keyCode: " + d3.event.keyCode);
+    var pressed = String.fromCharCode(d3.event.keyCode).toUpperCase()
+    for (var i = 0; i < shortcuts.length; i++) {
+      var k = shortcuts[i].key;
+      if(k[0] != pressed || 
+        (k[1] && !d3.event.shiftKey) ||
+        (k[2] && !d3.event.ctrlKey) ||
+        (k[3] && !d3.event.altKey)){
+          continue;
+        }else{
+          shortcuts[i].fun(app);
+          break;
+        }
     }
-    
-    if (d3.event.keyCode===67) { // c
-      events.crosshairToggle(app);
-    }else if (d3.event.keyCode===70) { // f
-      dispatcher.regionfull(app);
-    }else if (d3.event.keyCode===90) { // z
-      events.zoomToggle(app);
-    }
-    
+    //fall back if nothing matched the shortcut
     app.slideDispatcher().keyboard(d3.event);
-  });
+  });    
 };
 module.exports = events;
 },{}],24:[function(require,module,exports){
@@ -4114,6 +4158,7 @@ module.exports = {};
 module.exports.App = require('./main_app');
 module.exports.hooks = {};
 module.exports.hooks.readers = require('./pro/plugin-hooks');
+module.exports.hooks.input = require('./input_elem');
 module.exports.get_spectrum = require('./pro/process_data').get_spectrum;
 module.exports.version = "0.6.0";
 //console.log("specdraw:"+ spec.version);
@@ -4121,7 +4166,7 @@ module.exports.version = "0.6.0";
 
 //TODO: respond to resize.
 //TODO: check browser and fallback if not supported.
-},{"./main_app":27,"./pro/plugin-hooks":39,"./pro/process_data":41,"./utils/array":44}],25:[function(require,module,exports){
+},{"./input_elem":25,"./main_app":27,"./pro/plugin-hooks":39,"./pro/process_data":41,"./utils/array":44}],25:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils/event');
 
@@ -4171,7 +4216,7 @@ inp.checkbox = function (label, val) {
   elem.append('div')
       .classed('checker', true);
   elem.append('div')
-    .classed('label', true)
+    .classed('checkbox-label', true)
     .text(typeof label === 'string' ? label : '');
   
   elem.node().getValue = function(){ 
@@ -4248,7 +4293,7 @@ inp.select_multi = function (label, options) {
       })[0]
       .map(function (e) {
         return typeof(e.value) !== 'undefined' ? e.value
-          : d3.select(e).select('.label').text();
+          : d3.select(e).select('.checkbox-label').text();
       });
   };
   return function () { return elem.node();  };
@@ -4306,7 +4351,7 @@ inp.button = function (label) {
   return function(){return elem.node();};
 };
 inp.threshold = function (label, axis, app) {
-  console.log('app: ',app);
+  //console.log('app: ',app);
   var elem = d3.select(document.createElement('div'))
   .classed('param threshold', true);
   
@@ -4389,7 +4434,7 @@ inp.spectrumSelector = function (app) {
         d3.select(this).select('.checkbox')          
           .style('color', getComputedStyle(s.select('path').node()).stroke)
           .style('opacity', getComputedStyle(s.select('path').node()).strokeOpacity)
-          .select('.label').text( s.label() );
+          .select('.checkbox-label').text( s.label() );
           
         d3.select(this).on('mouseenter', function () {
           spec_container.highlightSpec(s);
@@ -4557,7 +4602,9 @@ module.exports = function(){
   };
   App.pluginRequest = require('./pro/plugins')(App);
   App.appendSlide = function(data){
-    var s = require('./slide')().datum(data);
+    console.log('append_slide start');
+		var s = require('./slide')().datum(data);
+		console.log('slide added');
     slides.push(s);
     render_slide(s);
     return App;
@@ -4690,6 +4737,7 @@ module.exports = main_menu;
 },{"../input_elem":25,"../utils/event":46}],30:[function(require,module,exports){
 var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
+var events = require('../events');
 
 module.exports = function (app){  
   function toggle(callback){
@@ -4715,7 +4763,10 @@ module.exports = function (app){
     ['open-menu', 'Menu'],
     ['open-spec-legend', 'Spectra'],
     ['open-slides', 'Slides'],
+    ['kbd', 'Keyboard Shortcuts'],
   ];
+  
+  // Full client-side only buttons
   if(app.config() > 2){
     column_menu_buttons = column_menu_buttons.concat(
       [//['open-settings', 'Settings'],
@@ -4741,6 +4792,9 @@ module.exports = function (app){
   });
   elem.select('.open-slides').on('click', function(){
     toggle.apply(this, [slides]);
+  });
+  elem.select('.kbd').on('click', function(){
+    events.display_shortcuts(app);
   });
   
   var app_dispatcher = app.dispatcher();
@@ -4778,7 +4832,7 @@ module.exports = function (app){
   return elem;                  
 };
 
-},{"../../lib/bootstrap-tooltip":1,"../utils/fullscreen":47,"./main_menu":29,"./menu_data":31,"./slides":33,"./spectra":34}],31:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../events":23,"../utils/fullscreen":47,"./main_menu":29,"./menu_data":31,"./slides":33,"./spectra":34}],31:[function(require,module,exports){
 var events = require('../events');
 var append_menu = require('./append-menu');
 var server_menu = require('./serverside-menu');
@@ -4899,9 +4953,15 @@ function read_menu(app, response) {
   
   //var c = response;
   for (var i = 0; i < response.length; i++) {
-    response[i]['fun'] = plugin_functor(response[i]);
+    server_menu.push( {
+      menu_path: response[i]['menu_path'],
+      nd: response[i]['nd'],
+      fun: plugin_functor(response[i])
+    });
+    
+    //response[i]['fun'] = plugin_functor(response[i]);
   }
-	server_menu = response;
+	//server_menu = response;
   app.dispatcher().menuUpdate();
 }
 
@@ -5748,6 +5808,7 @@ var processPNGworker = function (json, callback) {
 */
 function process_spectrum (json, render_fun){
   if(typeof json !== 'object'){ //it wasn't a json file.
+    console.log(json, typeof json);
     return require('./jcamp')(json, render_fun);
   }
   if (json.constructor === Array) {
@@ -5912,6 +5973,9 @@ module.exports = function(){
       create_empty_slide(app);
       return ;
     }
+		//TODO: check nd (if missing, or not in [1,2])
+    var two_d = (data["nd"] && data["nd"] === 2);
+    
     var brush_margin = app.config() > 1 ? 20 : 0;
     var margin = {
         top: 10 + brush_margin,
@@ -5928,7 +5992,7 @@ module.exports = function(){
   
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("right")
-          .tickFormat(d3.format("s"));
+          .tickFormat(two_d? null : d3.format("s"));
     
     var xGrid = d3.svg.axis().scale(x)
         .orient("bottom").innerTickSize(height)
@@ -5937,8 +6001,6 @@ module.exports = function(){
         .orient("right").innerTickSize(width)
         .tickFormat('');
 		
-		//TODO: check nd (if missing, or not in [1,2])
-    var two_d = (data["nd"] && data["nd"] === 2);
     dispatcher.idx = 0;
     
     svg_selection = app.append('svg')
@@ -5954,11 +6016,7 @@ module.exports = function(){
         width:svg_width,
         height:svg_height
       });
-    
-    //var contents = slide_selection
-      //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
-    
+        
     var defs = slide_selection.append("defs");
     defs.append("clipPath")
     .attr("id", clip_id)
@@ -5966,7 +6024,7 @@ module.exports = function(){
         .attr("width", width)
         .attr("height", height);
 
-    /** PNG images are grey scale. All positive and negative values are represented as unsined 8-bit int.
+    /** PNG images are grey scale. All positive and negative values are represented as unsigned 8-bit int.
         where 127 represent the zero. We want to recolor them as follows:
          * positive values colored with a red-orange hue.
         * negative values colored with a blue-cyan hue.
@@ -6033,7 +6091,7 @@ module.exports = function(){
     slide_selection.append("g").classed('y grid', true);
     
     slide_selection.append("text")
-      .attr("class", "x label")
+      .attr("class", "x axis-label")
       .attr("text-anchor", "middle")
       .attr("x", width/2)
       .attr("y", height)
@@ -6041,7 +6099,7 @@ module.exports = function(){
       .text("Chemical shift (ppm)");
     
     slide_selection.append("text")
-      .attr("class", "y label")
+      .attr("class", "y axis-label")
       .attr("text-anchor", "end")
       .attr("y", width)
       .attr("dy", "-.75em")
