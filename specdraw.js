@@ -543,10 +543,10 @@
 
 },{}],3:[function(require,module,exports){
 /*!
-  * Bowser - a browser detector
-  * https://github.com/ded/bowser
-  * MIT License | (c) Dustin Diaz 2015
-  */
+ * Bowser - a browser detector
+ * https://github.com/ded/bowser
+ * MIT License | (c) Dustin Diaz 2015
+ */
 
 !function (name, definition) {
   if (typeof module != 'undefined' && module.exports) module.exports = definition()
@@ -574,18 +574,36 @@
     var iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase()
       , likeAndroid = /like android/i.test(ua)
       , android = !likeAndroid && /android/i.test(ua)
-      , chromeBook = /CrOS/.test(ua)
+      , nexusMobile = /nexus\s*[0-6]\s*/i.test(ua)
+      , nexusTablet = !nexusMobile && /nexus\s*[0-9]+/i.test(ua)
+      , chromeos = /CrOS/.test(ua)
+      , silk = /silk/i.test(ua)
+      , sailfish = /sailfish/i.test(ua)
+      , tizen = /tizen/i.test(ua)
+      , webos = /(web|hpw)os/i.test(ua)
+      , windowsphone = /windows phone/i.test(ua)
+      , windows = !windowsphone && /windows/i.test(ua)
+      , mac = !iosdevice && !silk && /macintosh/i.test(ua)
+      , linux = !android && !sailfish && !tizen && !webos && /linux/i.test(ua)
       , edgeVersion = getFirstMatch(/edge\/(\d+(\.\d+)?)/i)
       , versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i)
       , tablet = /tablet/i.test(ua)
       , mobile = !tablet && /[^-]mobi/i.test(ua)
+      , xbox = /xbox/i.test(ua)
       , result
 
-    if (/opera|opr/i.test(ua)) {
+    if (/opera|opr|opios/i.test(ua)) {
       result = {
         name: 'Opera'
       , opera: t
-      , version: versionIdentifier || getFirstMatch(/(?:opera|opr)[\s\/](\d+(\.\d+)?)/i)
+      , version: versionIdentifier || getFirstMatch(/(?:opera|opr|opios)[\s\/](\d+(\.\d+)?)/i)
+      }
+    }
+    else if (/coast/i.test(ua)) {
+      result = {
+        name: 'Opera Coast'
+        , coast: t
+        , version: versionIdentifier || getFirstMatch(/(?:coast)[\s\/](\d+(\.\d+)?)/i)
       }
     }
     else if (/yabrowser/i.test(ua)) {
@@ -595,7 +613,49 @@
       , version: versionIdentifier || getFirstMatch(/(?:yabrowser)[\s\/](\d+(\.\d+)?)/i)
       }
     }
-    else if (/windows phone/i.test(ua)) {
+    else if (/ucbrowser/i.test(ua)) {
+      result = {
+          name: 'UC Browser'
+        , ucbrowser: t
+        , version: getFirstMatch(/(?:ucbrowser)[\s\/](\d+(?:\.\d+)+)/i)
+      }
+    }
+    else if (/mxios/i.test(ua)) {
+      result = {
+        name: 'Maxthon'
+        , maxthon: t
+        , version: getFirstMatch(/(?:mxios)[\s\/](\d+(?:\.\d+)+)/i)
+      }
+    }
+    else if (/epiphany/i.test(ua)) {
+      result = {
+        name: 'Epiphany'
+        , epiphany: t
+        , version: getFirstMatch(/(?:epiphany)[\s\/](\d+(?:\.\d+)+)/i)
+      }
+    }
+    else if (/puffin/i.test(ua)) {
+      result = {
+        name: 'Puffin'
+        , puffin: t
+        , version: getFirstMatch(/(?:puffin)[\s\/](\d+(?:\.\d+)?)/i)
+      }
+    }
+    else if (/sleipnir/i.test(ua)) {
+      result = {
+        name: 'Sleipnir'
+        , sleipnir: t
+        , version: getFirstMatch(/(?:sleipnir)[\s\/](\d+(?:\.\d+)+)/i)
+      }
+    }
+    else if (/k-meleon/i.test(ua)) {
+      result = {
+        name: 'K-Meleon'
+        , kMeleon: t
+        , version: getFirstMatch(/(?:k-meleon)[\s\/](\d+(?:\.\d+)+)/i)
+      }
+    }
+    else if (windowsphone) {
       result = {
         name: 'Windows Phone'
       , windowsphone: t
@@ -615,9 +675,10 @@
       , msie: t
       , version: getFirstMatch(/(?:msie |rv:)(\d+(\.\d+)?)/i)
       }
-    } else if (chromeBook) {
+    } else if (chromeos) {
       result = {
         name: 'Chrome'
+      , chromeos: t
       , chromeBook: t
       , chrome: t
       , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
@@ -629,23 +690,14 @@
       , version: edgeVersion
       }
     }
-    else if (/chrome|crios|crmo/i.test(ua)) {
+    else if (/vivaldi/i.test(ua)) {
       result = {
-        name: 'Chrome'
-      , chrome: t
-      , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
+        name: 'Vivaldi'
+        , vivaldi: t
+        , version: getFirstMatch(/vivaldi\/(\d+(\.\d+)?)/i) || versionIdentifier
       }
     }
-    else if (iosdevice) {
-      result = {
-        name : iosdevice == 'iphone' ? 'iPhone' : iosdevice == 'ipad' ? 'iPad' : 'iPod'
-      }
-      // WTF: version is not part of user agent in web apps
-      if (versionIdentifier) {
-        result.version = versionIdentifier
-      }
-    }
-    else if (/sailfish/i.test(ua)) {
+    else if (sailfish) {
       result = {
         name: 'Sailfish'
       , sailfish: t
@@ -659,27 +711,21 @@
       , version: getFirstMatch(/seamonkey\/(\d+(\.\d+)?)/i)
       }
     }
-    else if (/firefox|iceweasel/i.test(ua)) {
+    else if (/firefox|iceweasel|fxios/i.test(ua)) {
       result = {
         name: 'Firefox'
       , firefox: t
-      , version: getFirstMatch(/(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i)
+      , version: getFirstMatch(/(?:firefox|iceweasel|fxios)[ \/](\d+(\.\d+)?)/i)
       }
       if (/\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i.test(ua)) {
         result.firefoxos = t
       }
     }
-    else if (/silk/i.test(ua)) {
+    else if (silk) {
       result =  {
         name: 'Amazon Silk'
       , silk: t
       , version : getFirstMatch(/silk\/(\d+(\.\d+)?)/i)
-      }
-    }
-    else if (android) {
-      result = {
-        name: 'Android'
-      , version: versionIdentifier
       }
     }
     else if (/phantom/i.test(ua)) {
@@ -689,6 +735,13 @@
       , version: getFirstMatch(/phantomjs\/(\d+(\.\d+)?)/i)
       }
     }
+    else if (/slimerjs/i.test(ua)) {
+      result = {
+        name: 'SlimerJS'
+        , slimer: t
+        , version: getFirstMatch(/slimerjs\/(\d+(\.\d+)?)/i)
+      }
+    }
     else if (/blackberry|\bbb\d+/i.test(ua) || /rim\stablet/i.test(ua)) {
       result = {
         name: 'BlackBerry'
@@ -696,7 +749,7 @@
       , version: versionIdentifier || getFirstMatch(/blackberry[\d]+\/(\d+(\.\d+)?)/i)
       }
     }
-    else if (/(web|hpw)os/i.test(ua)) {
+    else if (webos) {
       result = {
         name: 'WebOS'
       , webos: t
@@ -711,18 +764,63 @@
       , version: getFirstMatch(/dolfin\/(\d+(\.\d+)?)/i)
       };
     }
-    else if (/tizen/i.test(ua)) {
+    else if (tizen) {
       result = {
         name: 'Tizen'
       , tizen: t
       , version: getFirstMatch(/(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i) || versionIdentifier
       };
     }
-    else if (/safari/i.test(ua)) {
+    else if (/qupzilla/i.test(ua)) {
+      result = {
+        name: 'QupZilla'
+        , qupzilla: t
+        , version: getFirstMatch(/(?:qupzilla)[\s\/](\d+(?:\.\d+)+)/i) || versionIdentifier
+      }
+    }
+    else if (/chromium/i.test(ua)) {
+      result = {
+        name: 'Chromium'
+        , chromium: t
+        , version: getFirstMatch(/(?:chromium)[\s\/](\d+(?:\.\d+)?)/i) || versionIdentifier
+      }
+    }
+    else if (/chrome|crios|crmo/i.test(ua)) {
+      result = {
+        name: 'Chrome'
+        , chrome: t
+        , version: getFirstMatch(/(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i)
+      }
+    }
+    else if (android) {
+      result = {
+        name: 'Android'
+        , version: versionIdentifier
+      }
+    }
+    else if (/safari|applewebkit/i.test(ua)) {
       result = {
         name: 'Safari'
       , safari: t
-      , version: versionIdentifier
+      }
+      if (versionIdentifier) {
+        result.version = versionIdentifier
+      }
+    }
+    else if (iosdevice) {
+      result = {
+        name : iosdevice == 'iphone' ? 'iPhone' : iosdevice == 'ipad' ? 'iPad' : 'iPod'
+      }
+      // WTF: version is not part of user agent in web apps
+      if (versionIdentifier) {
+        result.version = versionIdentifier
+      }
+    }
+    else if(/googlebot/i.test(ua)) {
+      result = {
+        name: 'Googlebot'
+      , googlebot: t
+      , version: getFirstMatch(/googlebot\/(\d+(\.\d+))/i) || versionIdentifier
       }
     }
     else {
@@ -734,8 +832,13 @@
 
     // set webkit or gecko flag for browsers based on these engines
     if (!result.msedge && /(apple)?webkit/i.test(ua)) {
-      result.name = result.name || "Webkit"
-      result.webkit = t
+      if (/(apple)?webkit\/537\.36/i.test(ua)) {
+        result.name = result.name || "Blink"
+        result.blink = t
+      } else {
+        result.name = result.name || "Webkit"
+        result.webkit = t
+      }
       if (!result.version && versionIdentifier) {
         result.version = versionIdentifier
       }
@@ -751,6 +854,14 @@
     } else if (iosdevice) {
       result[iosdevice] = t
       result.ios = t
+    } else if (mac) {
+      result.mac = t
+    } else if (xbox) {
+      result.xbox = t
+    } else if (windows) {
+      result.windows = t
+    } else if (linux) {
+      result.linux = t
     }
 
     // OS version extraction
@@ -777,9 +888,24 @@
 
     // device type extraction
     var osMajorVersion = osVersion.split('.')[0];
-    if (tablet || iosdevice == 'ipad' || (android && (osMajorVersion == 3 || (osMajorVersion == 4 && !mobile))) || result.silk) {
+    if (
+         tablet
+      || nexusTablet
+      || iosdevice == 'ipad'
+      || (android && (osMajorVersion == 3 || (osMajorVersion >= 4 && !mobile)))
+      || result.silk
+    ) {
       result.tablet = t
-    } else if (mobile || iosdevice == 'iphone' || iosdevice == 'ipod' || android || result.blackberry || result.webos || result.bada) {
+    } else if (
+         mobile
+      || iosdevice == 'iphone'
+      || iosdevice == 'ipod'
+      || android
+      || nexusMobile
+      || result.blackberry
+      || result.webos
+      || result.bada
+    ) {
       result.mobile = t
     }
 
@@ -788,12 +914,14 @@
     if (result.msedge ||
         (result.msie && result.version >= 10) ||
         (result.yandexbrowser && result.version >= 15) ||
+		    (result.vivaldi && result.version >= 1.0) ||
         (result.chrome && result.version >= 20) ||
         (result.firefox && result.version >= 20.0) ||
         (result.safari && result.version >= 6) ||
         (result.opera && result.version >= 10.0) ||
         (result.ios && result.osversion && result.osversion.split(".")[0] >= 6) ||
         (result.blackberry && result.version >= 10.1)
+        || (result.chromium && result.version >= 20)
         ) {
       result.a = t;
     }
@@ -803,6 +931,7 @@
         (result.safari && result.version < 6) ||
         (result.opera && result.version < 10.0) ||
         (result.ios && result.osversion && result.osversion.split(".")[0] < 6)
+        || (result.chromium && result.version < 20)
         ) {
       result.c = t
     } else result.x = t
@@ -823,6 +952,145 @@
     }
     return false;
   }
+
+  /**
+   * Get version precisions count
+   *
+   * @example
+   *   getVersionPrecision("1.10.3") // 3
+   *
+   * @param  {string} version
+   * @return {number}
+   */
+  function getVersionPrecision(version) {
+    return version.split(".").length;
+  }
+
+  /**
+   * Array::map polyfill
+   *
+   * @param  {Array} arr
+   * @param  {Function} iterator
+   * @return {Array}
+   */
+  function map(arr, iterator) {
+    var result = [], i;
+    if (Array.prototype.map) {
+      return Array.prototype.map.call(arr, iterator);
+    }
+    for (i = 0; i < arr.length; i++) {
+      result.push(iterator(arr[i]));
+    }
+    return result;
+  }
+
+  /**
+   * Calculate browser version weight
+   *
+   * @example
+   *   compareVersions(['1.10.2.1',  '1.8.2.1.90'])    // 1
+   *   compareVersions(['1.010.2.1', '1.09.2.1.90']);  // 1
+   *   compareVersions(['1.10.2.1',  '1.10.2.1']);     // 0
+   *   compareVersions(['1.10.2.1',  '1.0800.2']);     // -1
+   *
+   * @param  {Array<String>} versions versions to compare
+   * @return {Number} comparison result
+   */
+  function compareVersions(versions) {
+    // 1) get common precision for both versions, for example for "10.0" and "9" it should be 2
+    var precision = Math.max(getVersionPrecision(versions[0]), getVersionPrecision(versions[1]));
+    var chunks = map(versions, function (version) {
+      var delta = precision - getVersionPrecision(version);
+
+      // 2) "9" -> "9.0" (for precision = 2)
+      version = version + new Array(delta + 1).join(".0");
+
+      // 3) "9.0" -> ["000000000"", "000000009"]
+      return map(version.split("."), function (chunk) {
+        return new Array(20 - chunk.length).join("0") + chunk;
+      }).reverse();
+    });
+
+    // iterate in reverse order by reversed chunks array
+    while (--precision >= 0) {
+      // 4) compare: "000000009" > "000000010" = false (but "9" > "10" = true)
+      if (chunks[0][precision] > chunks[1][precision]) {
+        return 1;
+      }
+      else if (chunks[0][precision] === chunks[1][precision]) {
+        if (precision === 0) {
+          // all version chunks are same
+          return 0;
+        }
+      }
+      else {
+        return -1;
+      }
+    }
+  }
+
+  /**
+   * Check if browser is unsupported
+   *
+   * @example
+   *   bowser.isUnsupportedBrowser({
+   *     msie: "10",
+   *     firefox: "23",
+   *     chrome: "29",
+   *     safari: "5.1",
+   *     opera: "16",
+   *     phantom: "534"
+   *   });
+   *
+   * @param  {Object}  minVersions map of minimal version to browser
+   * @param  {Boolean} [strictMode = false] flag to return false if browser wasn't found in map
+   * @param  {String}  [ua] user agent string
+   * @return {Boolean}
+   */
+  function isUnsupportedBrowser(minVersions, strictMode, ua) {
+    var _bowser = bowser;
+
+    // make strictMode param optional with ua param usage
+    if (typeof strictMode === 'string') {
+      ua = strictMode;
+      strictMode = void(0);
+    }
+
+    if (strictMode === void(0)) {
+      strictMode = false;
+    }
+    if (ua) {
+      _bowser = detect(ua);
+    }
+
+    var version = "" + _bowser.version;
+    for (var browser in minVersions) {
+      if (minVersions.hasOwnProperty(browser)) {
+        if (_bowser[browser]) {
+          // browser version and min supported version.
+          return compareVersions([version, minVersions[browser]]) < 0;
+        }
+      }
+    }
+
+    return strictMode; // not found
+  }
+
+  /**
+   * Check if browser is supported
+   *
+   * @param  {Object} minVersions map of minimal version to browser
+   * @param  {Boolean} [strictMode = false] flag to return false if browser wasn't found in map
+   * @param  {String}  [ua] user agent string
+   * @return {Boolean}
+   */
+  function check(minVersions, strictMode, ua) {
+    return !isUnsupportedBrowser(minVersions, strictMode, ua);
+  }
+
+  bowser.isUnsupportedBrowser = isUnsupportedBrowser;
+  bowser.compareVersions = compareVersions;
+  bowser.check = check;
 
   /*
    * Set our detect method to the main bowser object so we can
@@ -899,13 +1167,13 @@
 },{}],5:[function(require,module,exports){
 'use strict';
 
+var parseXYDataRegExp = require('./parseXYData.js');
+
+
 function getConverter() {
 
     // the following RegExp can only be used for XYdata, some peakTables have values with a "E-5" ...
-    var xyDataSplitRegExp = /[,\t \+-]*(?=[^\d,\t \.])|[ \t]+(?=[\d+\.-])/;
-    var removeCommentRegExp = /\$\$.*/;
-    var peakTableSplitRegExp = /[,\t ]+/;
-    var DEBUG = false;
+    var ntuplesSeparator = /[, \t]{1,}/;
 
     var GC_MS_FIELDS = ['TIC', '.RIC', 'SCANNUMBER'];
 
@@ -917,20 +1185,19 @@ function getConverter() {
         }
         return floatArray;
     }
-
-    /*
-     options.keepSpectra: keep the original spectra for a 2D
-     options.xy: true // create x / y array instead of a 1D array
-     options.keepRecordsRegExp: which fields do we keep
-     */
+    
+    function Spectrum() {
+        
+    }
 
     function convert(jcamp, options) {
         options = options || {};
 
-        var keepRecordsRegExp=/^[A-Z]+$/;
-        if (options.keepRecordsRegExp) keepRecordsRegExp=options.keepRecordsRegExp;
+        var keepRecordsRegExp = /^$/;
+        if (options.keepRecordsRegExp) keepRecordsRegExp = options.keepRecordsRegExp;
+        var wantXY = !options.withoutXY;
 
-        var start = new Date();
+        var start = Date.now();
 
         var ntuples = {},
             ldr,
@@ -945,16 +1212,22 @@ function getConverter() {
         var spectra = [];
         result.spectra = spectra;
         result.info = {};
-        var spectrum = {};
+        var spectrum = new Spectrum();
 
         if (!(typeof jcamp === 'string')) return result;
         // console.time('start');
 
-        if (result.profiling) result.profiling.push({action: 'Before split to LDRS', time: new Date() - start});
+        if (result.profiling) result.profiling.push({
+            action: 'Before split to LDRS',
+            time: Date.now() - start
+        });
 
         ldrs = jcamp.split(/[\r\n]+##/);
 
-        if (result.profiling) result.profiling.push({action: 'Split to LDRS', time: new Date() - start});
+        if (result.profiling) result.profiling.push({
+            action: 'Split to LDRS',
+            time: Date.now() - start
+        });
 
         if (ldrs[0]) ldrs[0] = ldrs[0].replace(/^[\r\n ]*##/, '');
 
@@ -1020,11 +1293,45 @@ function getConverter() {
                 }
             }
 
+            if (dataLabel === 'XYDATA') {
+                if (wantXY) {
+                    prepareSpectrum(result, spectrum);
+                    // well apparently we should still consider it is a PEAK TABLE if there are no '++' after
+                    if (dataValue.match(/.*\+\+.*/)) {
+                        if (options.fastParse === false) {
+                            parseXYDataRegExp(spectrum, dataValue, result);
+                        } else {
+                            if (!spectrum.deltaX) {
+                                spectrum.deltaX = (spectrum.lastX - spectrum.firstX) / (spectrum.nbPoints - 1);
+                            }
+                            fastParseXYData(spectrum, dataValue, result);
+                        }
+                    } else {
+                        parsePeakTable(spectrum, dataValue, result);
+                    }
+                    spectra.push(spectrum);
+                    spectrum = new Spectrum();
+                }
+                continue;
+            } else if (dataLabel === 'PEAKTABLE') {
+                if (wantXY) {
+                    prepareSpectrum(result, spectrum);
+                    parsePeakTable(spectrum, dataValue, result);
+                    spectra.push(spectrum);
+                    spectrum = new Spectrum();
+                }
+                continue;
+            }
+
 
             if (dataLabel === 'TITLE') {
                 spectrum.title = dataValue;
             } else if (dataLabel === 'DATATYPE') {
                 spectrum.dataType = dataValue;
+                if (dataValue.indexOf('nD') > -1) {
+                    result.twoD = true;
+                }
+            } else if (dataLabel === 'NTUPLES') {
                 if (dataValue.indexOf('nD') > -1) {
                     result.twoD = true;
                 }
@@ -1038,6 +1345,8 @@ function getConverter() {
                 spectrum.lastX = parseFloat(dataValue);
             } else if (dataLabel === 'FIRSTY') {
                 spectrum.firstY = parseFloat(dataValue);
+            } else if (dataLabel === 'LASTY') {
+                spectrum.lastY = parseFloat(dataValue);
             } else if (dataLabel === 'NPOINTS') {
                 spectrum.nbPoints = parseFloat(dataValue);
             } else if (dataLabel === 'XFACTOR') {
@@ -1065,30 +1374,30 @@ function getConverter() {
                 //                 result.shiftOffsetNum = parseInt(parts[2].trim());
                 //                 result.shiftOffsetVal = parseFloat(parts[3].trim());
             } else if (dataLabel === 'VARNAME') {
-                ntuples.varname = dataValue.split(/[, \t]{2,}/);
+                ntuples.varname = dataValue.split(ntuplesSeparator);
             } else if (dataLabel === 'SYMBOL') {
-                ntuples.symbol = dataValue.split(/[, \t]{2,}/);
+                ntuples.symbol = dataValue.split(ntuplesSeparator);
             } else if (dataLabel === 'VARTYPE') {
-                ntuples.vartype = dataValue.split(/[, \t]{2,}/);
+                ntuples.vartype = dataValue.split(ntuplesSeparator);
             } else if (dataLabel === 'VARFORM') {
-                ntuples.varform = dataValue.split(/[, \t]{2,}/);
+                ntuples.varform = dataValue.split(ntuplesSeparator);
             } else if (dataLabel === 'VARDIM') {
-                ntuples.vardim = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+                ntuples.vardim = convertToFloatArray(dataValue.split(ntuplesSeparator));
             } else if (dataLabel === 'UNITS') {
-                ntuples.units = dataValue.split(/[, \t]{2,}/);
+                ntuples.units = dataValue.split(ntuplesSeparator);
             } else if (dataLabel === 'FACTOR') {
-                ntuples.factor = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+                ntuples.factor = convertToFloatArray(dataValue.split(ntuplesSeparator));
             } else if (dataLabel === 'FIRST') {
-                ntuples.first = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+                ntuples.first = convertToFloatArray(dataValue.split(ntuplesSeparator));
             } else if (dataLabel === 'LAST') {
-                ntuples.last = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+                ntuples.last = convertToFloatArray(dataValue.split(ntuplesSeparator));
             } else if (dataLabel === 'MIN') {
-                ntuples.min = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+                ntuples.min = convertToFloatArray(dataValue.split(ntuplesSeparator));
             } else if (dataLabel === 'MAX') {
-                ntuples.max = convertToFloatArray(dataValue.split(/[, \t]{2,}/));
+                ntuples.max = convertToFloatArray(dataValue.split(ntuplesSeparator));
             } else if (dataLabel === '.NUCLEUS') {
                 if (result.twoD) {
-                    result.yType = dataValue.split(/[, \t]{2,}/)[0];
+                    result.yType = dataValue.split(ntuplesSeparator)[0];
                 }
             } else if (dataLabel === 'PAGE') {
                 spectrum.page = dataValue.trim();
@@ -1104,82 +1413,65 @@ function getConverter() {
                 }
             } else if (dataLabel === 'RETENTIONTIME') {
                 spectrum.pageValue = parseFloat(dataValue);
-            } else if (dataLabel === 'XYDATA') {
-                prepareSpectrum(result, spectrum);
-                // well apparently we should still consider it is a PEAK TABLE if there are no '++' after
-                if (dataValue.match(/.*\+\+.*/)) {
-                    parseXYData(spectrum, dataValue, result);
-                } else {
-                    parsePeakTable(spectrum, dataValue, result);
-                }
-                spectra.push(spectrum);
-                spectrum = {};
-            } else if (dataLabel === 'PEAKTABLE') {
-                prepareSpectrum(result, spectrum);
-                parsePeakTable(spectrum, dataValue, result);
-                spectra.push(spectrum);
-                spectrum = {};
             } else if (isMSField(dataLabel)) {
                 spectrum[convertMSFieldToLabel(dataLabel)] = dataValue;
-            } else if (dataLabel.match(keepRecordsRegExp)) {
+            }
+            if (dataLabel.match(keepRecordsRegExp)) {
                 result.info[dataLabel] = dataValue.trim();
             }
         }
 
-        // Currently disabled
-        //    if (options && options.lowRes) addLowRes(spectra,options);
+        if (result.profiling) result.profiling.push({
+            action: 'Finished parsing',
+            time: Date.now() - start
+        });
 
-        if (result.profiling) result.profiling.push({action: 'Finished parsing', time: new Date() - start});
-
-        if (Object.keys(ntuples).length>0) {
-            var newNtuples=[];
-            var keys=Object.keys(ntuples);
-            for (var i=0; i<keys.length; i++) {
-                var key=keys[i];
-                var values=ntuples[key];
-                for (var j=0; j<values.length; j++) {
-                    if (! newNtuples[j]) newNtuples[j]={};
-                    newNtuples[j][key]=values[j];
+        if (Object.keys(ntuples).length > 0) {
+            var newNtuples = [];
+            var keys = Object.keys(ntuples);
+            for (var i = 0; i < keys.length; i++) {
+                var key = keys[i];
+                var values = ntuples[key];
+                for (var j = 0; j < values.length; j++) {
+                    if (!newNtuples[j]) newNtuples[j] = {};
+                    newNtuples[j][key] = values[j];
                 }
             }
-            result.ntuples=newNtuples;
+            result.ntuples = newNtuples;
         }
 
-        if (result.twoD) {
-            add2D(result);
+        if (result.twoD && wantXY) {
+            add2D(result, options);
             if (result.profiling) result.profiling.push({
                 action: 'Finished countour plot calculation',
-                time: new Date() - start
+                time: Date.now() - start
             });
             if (!options.keepSpectra) {
                 delete result.spectra;
             }
         }
 
-
-        // maybe it is a GC (HPLC) / MS. In this case we add a new format
-        if (spectra.length > 1 && (! spectra[0].dataType || spectra[0].dataType.toLowerCase().match(/.*mass./))) {
-            addGCMS(result);
-            if (result.profiling) result.profiling.push({
-                action: 'Finished GCMS calculation',
-                time: new Date() - start
-            });
+        var isGCMS = (spectra.length > 1 && (!spectra[0].dataType || spectra[0].dataType.match(/.*mass.*/i)));
+        if (isGCMS && options.newGCMS) {
+            options.xy = true;
         }
 
-
-        if (options.xy) { // the spectraData should not be a oneD array but an object with x and y
+        if (options.xy && wantXY) { // the spectraData should not be a oneD array but an object with x and y
             if (spectra.length > 0) {
-                for (var i=0; i<spectra.length; i++) {
-                    var spectrum=spectra[i];
-                    if (spectrum.data.length>0) {
-                        for (var j=0; j<spectrum.data.length; j++) {
-                            var data=spectrum.data[j];
-                            var newData={x:Array(data.length/2), y:Array(data.length/2)};
-                            for (var k=0; k<data.length; k=k+2) {
-                                newData.x[k/2]=data[k];
-                                newData.y[k/2]=data[k+1];
+                for (var i = 0; i < spectra.length; i++) {
+                    var spectrum = spectra[i];
+                    if (spectrum.data.length > 0) {
+                        for (var j = 0; j < spectrum.data.length; j++) {
+                            var data = spectrum.data[j];
+                            var newData = {
+                                x: new Array(data.length / 2),
+                                y: new Array(data.length / 2)
+                            };
+                            for (var k = 0; k < data.length; k = k + 2) {
+                                newData.x[k / 2] = data[k];
+                                newData.y[k / 2] = data[k + 1];
                             }
-                            spectrum.data[j]=newData;
+                            spectrum.data[j] = newData;
                         }
 
                     }
@@ -1188,14 +1480,27 @@ function getConverter() {
             }
         }
 
-        if (result.profiling) {
-            result.profiling.push({action: 'Total time', time: new Date() - start});
+        // maybe it is a GC (HPLC) / MS. In this case we add a new format
+        if (isGCMS && wantXY) {
+            if (options.newGCMS) {
+                addNewGCMS(result);
+            } else {
+                addGCMS(result);
+            }
+            if (result.profiling) result.profiling.push({
+                action: 'Finished GCMS calculation',
+                time: Date.now() - start
+            });
         }
 
-        //   console.log(result);
-        //    console.log(JSON.stringify(spectra));
-        return result;
+        if (result.profiling) {
+            result.profiling.push({
+                action: 'Total time',
+                time: Date.now() - start
+            });
+        }
 
+        return result;
     }
 
 
@@ -1204,10 +1509,47 @@ function getConverter() {
     }
 
     function isMSField(dataLabel) {
-        for (var i = 0; i < GC_MS_FIELDS.length; i++) {
-            if (dataLabel === GC_MS_FIELDS[i]) return true;
+        return GC_MS_FIELDS.indexOf(dataLabel) !== -1;
+    }
+
+    function addNewGCMS(result) {
+        var spectra = result.spectra;
+        var length = spectra.length;
+        var gcms = {
+            times: new Array(length),
+            series: [{
+                name: 'ms',
+                dimension: 2,
+                data: new Array(length)
+            }]
+        };
+
+        var i;
+        var existingGCMSFields = [];
+        for (i = 0; i < GC_MS_FIELDS.length; i++) {
+            var label = convertMSFieldToLabel(GC_MS_FIELDS[i]);
+            if (spectra[0][label]) {
+                existingGCMSFields.push(label);
+                gcms.series.push({
+                    name: label,
+                    dimension: 1,
+                    data: new Array(length)
+                });
+            }
         }
-        return false;
+
+        for (i = 0; i < length; i++) {
+            var spectrum = spectra[i];
+            gcms.times[i] = spectrum.pageValue;
+            for (var j = 0; j < existingGCMSFields.length; j++) {
+                gcms.series[j + 1].data[i] = parseFloat(spectrum[existingGCMSFields[j]]);
+            }
+            if (spectrum.data) {
+                gcms.series[0].data[i] = [spectrum.data[0].x, spectrum.data[0].y];
+            }
+
+        }
+        result.gcms = gcms;
     }
 
     function addGCMS(result) {
@@ -1220,7 +1562,7 @@ function getConverter() {
                 existingGCMSFields.push(label);
             }
         }
-        if (existingGCMSFields.length===0) return;
+        if (existingGCMSFields.length === 0) return;
         var gcms = {};
         gcms.gc = {};
         gcms.ms = [];
@@ -1233,7 +1575,7 @@ function getConverter() {
                 gcms.gc[existingGCMSFields[j]].push(spectrum.pageValue);
                 gcms.gc[existingGCMSFields[j]].push(parseFloat(spectrum[existingGCMSFields[j]]));
             }
-          if (spectrum.data) gcms.ms[i] = spectrum.data[0];
+            if (spectrum.data) gcms.ms[i] = spectrum.data[0];
 
         }
         result.gcms = gcms;
@@ -1258,154 +1600,6 @@ function getConverter() {
         }
     }
 
-    function parsePeakTable(spectrum, value, result) {
-        spectrum.isPeaktable=true;
-        var i, ii, j, jj, values;
-        var currentData = [];
-        spectrum.data = [currentData];
-
-        // counts for around 20% of the time
-        var lines = value.split(/,? *,?[;\r\n]+ */);
-
-        var k = 0;
-        for (i = 1, ii = lines.length; i < ii; i++) {
-            values = lines[i].trim().replace(removeCommentRegExp, '').split(peakTableSplitRegExp);
-            if (values.length % 2 === 0) {
-                for (j = 0, jj = values.length; j < jj; j = j + 2) {
-                    // takes around 40% of the time to add and parse the 2 values nearly exclusively because of parseFloat
-                    currentData[k++] = (parseFloat(values[j]) * spectrum.xFactor);
-                    currentData[k++] = (parseFloat(values[j + 1]) * spectrum.yFactor);
-                }
-            } else {
-                result.logs.push('Format error: ' + values);
-            }
-        }
-    }
-
-    function parseXYData(spectrum, value, result) {
-        // we check if deltaX is defined otherwise we calculate it
-        if (!spectrum.deltaX) {
-            spectrum.deltaX = (spectrum.lastX - spectrum.firstX) / (spectrum.nbPoints - 1);
-        }
-
-        spectrum.isXYdata=true;
-
-        var currentData = [];
-        spectrum.data = [currentData];
-
-        var currentX = spectrum.firstX;
-        var currentY = spectrum.firstY;
-        var lines = value.split(/[\r\n]+/);
-        var lastDif, values, ascii, expectedY;
-        values = [];
-        for (var i = 1, ii = lines.length; i < ii; i++) {
-            //var previousValues=JSON.parse(JSON.stringify(values));
-            values = lines[i].trim().replace(removeCommentRegExp, '').split(xyDataSplitRegExp);
-            if (values.length > 0) {
-                if (DEBUG) {
-                    if (!spectrum.firstPoint) {
-                        spectrum.firstPoint = parseFloat(values[0]);
-                    }
-                    var expectedCurrentX = parseFloat(values[0] - spectrum.firstPoint) * spectrum.xFactor + spectrum.firstX;
-                    if ((lastDif || lastDif === 0)) {
-                        expectedCurrentX += spectrum.deltaX;
-                    }
-                    result.logs.push('Checking X value: currentX: ' + currentX + ' - expectedCurrentX: ' + expectedCurrentX);
-                }
-                for (var j = 1, jj = values.length; j < jj; j++) {
-                    if (j === 1 && (lastDif || lastDif === 0)) {
-                        lastDif = null; // at the beginning of each line there should be the full value X / Y so the diff is always undefined
-                        // we could check if we have the expected Y value
-                        ascii = values[j].charCodeAt(0);
-
-                        if (false) { // this code is just to check the jcamp DIFDUP and the next line repeat of Y value
-                            // + - . 0 1 2 3 4 5 6 7 8 9
-                            if ((ascii === 43) || (ascii === 45) || (ascii === 46) || ((ascii > 47) && (ascii < 58))) {
-                                expectedY = parseFloat(values[j]);
-                            } else
-                            // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
-                            if ((ascii > 63) && (ascii < 74)) {
-                                // we could use parseInt but parseFloat is faster at least in Chrome
-                                expectedY = parseFloat(String.fromCharCode(ascii - 16) + values[j].substring(1));
-                            } else
-                            // negative SQZ digits a b c d e f g h i (ascii 97-105)
-                            if ((ascii > 96) && (ascii < 106)) {
-                                // we could use parseInt but parseFloat is faster at least in Chrome
-                                expectedY = -parseFloat(String.fromCharCode(ascii - 48) + values[j].substring(1));
-                            }
-                            if (expectedY !== currentY) {
-                                result.logs.push('Y value check error: Found: ' + expectedY + ' - Current: ' + currentY);
-                                result.logs.push('Previous values: ' + previousValues.length);
-                                result.logs.push(previousValues);
-                            }
-                        }
-                    } else {
-                        if (values[j].length > 0) {
-                            ascii = values[j].charCodeAt(0);
-                            // + - . 0 1 2 3 4 5 6 7 8 9
-                            if ((ascii === 43) || (ascii === 45) || (ascii === 46) || ((ascii > 47) && (ascii < 58))) {
-                                lastDif = null;
-                                currentY = parseFloat(values[j]);
-                                currentData.push(currentX, currentY * spectrum.yFactor);;
-                                currentX += spectrum.deltaX;
-                            } else
-                            // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
-                            if ((ascii > 63) && (ascii < 74)) {
-                                lastDif = null;
-                                currentY = parseFloat(String.fromCharCode(ascii - 16) + values[j].substring(1));
-                                currentData.push(currentX, currentY * spectrum.yFactor);;
-                                currentX += spectrum.deltaX;
-                            } else
-                            // negative SQZ digits a b c d e f g h i (ascii 97-105)
-                            if ((ascii > 96) && (ascii < 106)) {
-                                lastDif = null;
-                                currentY = -parseFloat(String.fromCharCode(ascii - 48) + values[j].substring(1));
-                                currentData.push(currentX, currentY * spectrum.yFactor);;
-                                currentX += spectrum.deltaX;
-                            } else
-
-
-
-                            // DUP digits S T U V W X Y Z s (ascii 83-90, 115)
-                            if (((ascii > 82) && (ascii < 91)) || (ascii === 115)) {
-                                var dup = parseFloat(String.fromCharCode(ascii - 34) + values[j].substring(1)) - 1;
-                                if (ascii === 115) {
-                                    dup = parseFloat('9' + values[j].substring(1)) - 1;
-                                }
-                                for (var l = 0; l < dup; l++) {
-                                    if (lastDif) {
-                                        currentY = currentY + lastDif;
-                                    }
-                                    currentData.push(currentX, currentY * spectrum.yFactor);;
-                                    currentX += spectrum.deltaX;
-                                }
-                            } else
-                            // positive DIF digits % J K L M N O P Q R (ascii 37, 74-82)
-                            if (ascii === 37) {
-                                lastDif = parseFloat('0' + values[j].substring(1));
-                                currentY += lastDif;
-                                currentData.push(currentX, currentY * spectrum.yFactor);;
-                                currentX += spectrum.deltaX;
-                            } else if ((ascii > 73) && (ascii < 83)) {
-                                lastDif = parseFloat(String.fromCharCode(ascii - 25) + values[j].substring(1));
-                                currentY += lastDif;
-                                currentData.push(currentX, currentY * spectrum.yFactor);;
-                                currentX += spectrum.deltaX;
-                            } else
-                            // negative DIF digits j k l m n o p q r (ascii 106-114)
-                            if ((ascii > 105) && (ascii < 115)) {
-                                lastDif = -parseFloat(String.fromCharCode(ascii - 57) + values[j].substring(1));
-                                currentY += lastDif;
-                                currentData.push(currentX, currentY * spectrum.yFactor);;
-                                currentX += spectrum.deltaX;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    }
 
     function convertTo3DZ(spectra) {
         var noise = 0;
@@ -1416,19 +1610,21 @@ function getConverter() {
         var z = new Array(ySize);
         for (var i = 0; i < ySize; i++) {
             z[i] = new Array(xSize);
+            var xVector = spectra[i].data[0];
             for (var j = 0; j < xSize; j++) {
-                z[i][j] = spectra[i].data[0][j * 2 + 1];
-                if (z[i][j] < minZ) minZ = spectra[i].data[0][j * 2 + 1];
-                if (z[i][j] > maxZ) maxZ = spectra[i].data[0][j * 2 + 1];
+                var value = xVector[j * 2 + 1];
+                z[i][j] = value;
+                if (value < minZ) minZ = value;
+                if (value > maxZ) maxZ = value;
                 if (i !== 0 && j !== 0) {
-                    noise += Math.abs(z[i][j] - z[i][j - 1]) + Math.abs(z[i][j] - z[i - 1][j]);
+                    noise += Math.abs(value - z[i][j - 1]) + Math.abs(value - z[i - 1][j]);
                 }
             }
         }
         return {
             z: z,
             minX: spectra[0].data[0][0],
-            maxX: spectra[0].data[0][spectra[0].data[0].length - 2],
+            maxX: spectra[0].data[0][spectra[0].data[0].length - 2], // has to be -2 because it is a 1D array [x,y,x,y,...]
             minY: spectra[0].pageValue,
             maxY: spectra[ySize - 1].pageValue,
             minZ: minZ,
@@ -1438,22 +1634,23 @@ function getConverter() {
 
     }
 
-    function add2D(result) {
+    function add2D(result, options) {
         var zData = convertTo3DZ(result.spectra);
-        result.contourLines = generateContourLines(zData);
-        delete zData.z;
+        if (!options.noContour) {
+            result.contourLines = generateContourLines(zData, options);
+            delete zData.z;
+        }
         result.minMax = zData;
     }
 
 
     function generateContourLines(zData, options) {
-        //console.time('generateContourLines');
         var noise = zData.noise;
         var z = zData.z;
-        var contourLevels = [];
-        var nbLevels = 7;
-        var povarHeight = new Float32Array(4);
-        var isOver = [];
+        var nbLevels = options.nbContourLevels || 7;
+        var noiseMultiplier = options.noiseMultiplier === undefined ? 5 : options.noiseMultiplier;
+        var povarHeight0, povarHeight1, povarHeight2, povarHeight3;
+        var isOver0, isOver1, isOver2, isOver3;
         var nbSubSpectra = z.length;
         var nbPovars = z[0].length;
         var pAx, pAy, pBx, pBy;
@@ -1478,15 +1675,18 @@ function getConverter() {
         //
         // ---------------------d------
 
+        var iter = nbLevels * 2;
+        var contourLevels = new Array(iter);
         var lineZValue;
-        for (var level = 0; level < nbLevels * 2; level++) { // multiply by 2 for positif and negatif
+        for (var level = 0; level < iter; level++) { // multiply by 2 for positif and negatif
             var contourLevel = {};
-            contourLevels.push(contourLevel);
+            contourLevels[level] = contourLevel;
             var side = level % 2;
+            var factor = (maxZ - noiseMultiplier * noise) * Math.exp((level >> 1) - nbLevels);
             if (side === 0) {
-                lineZValue = (maxZ - 5 * noise) * Math.exp(level / 2 - nbLevels) + 5 * noise;
+                lineZValue = factor + noiseMultiplier * noise;
             } else {
-                lineZValue = -(maxZ - 5 * noise) * Math.exp(level / 2 - nbLevels) - 5 * noise;
+                lineZValue = (0 - factor) - noiseMultiplier * noise;
             }
             var lines = [];
             contourLevel.zValue = lineZValue;
@@ -1495,62 +1695,84 @@ function getConverter() {
             if (lineZValue <= minZ || lineZValue >= maxZ) continue;
 
             for (var iSubSpectra = 0; iSubSpectra < nbSubSpectra - 1; iSubSpectra++) {
+                var subSpectra = z[iSubSpectra];
+                var subSpectraAfter = z[iSubSpectra + 1];
                 for (var povar = 0; povar < nbPovars - 1; povar++) {
-                    povarHeight[0] = z[iSubSpectra][povar];
-                    povarHeight[1] = z[iSubSpectra][povar + 1];
-                    povarHeight[2] = z[(iSubSpectra + 1)][povar];
-                    povarHeight[3] = z[(iSubSpectra + 1)][(povar + 1)];
+                    povarHeight0 = subSpectra[povar];
+                    povarHeight1 = subSpectra[povar + 1];
+                    povarHeight2 = subSpectraAfter[povar];
+                    povarHeight3 = subSpectraAfter[povar + 1];
 
-                    for (var i = 0; i < 4; i++) {
-                        isOver[i] = (povarHeight[i] > lineZValue);
-                    }
+                    isOver0 = (povarHeight0 > lineZValue);
+                    isOver1 = (povarHeight1 > lineZValue);
+                    isOver2 = (povarHeight2 > lineZValue);
+                    isOver3 = (povarHeight3 > lineZValue);
 
                     // Example povar0 is over the plane and povar1 and
                     // povar2 are below, we find the varersections and add
                     // the segment
-                    if (isOver[0] !== isOver[1] && isOver[0] !== isOver[2]) {
-                        pAx = povar + (lineZValue - povarHeight[0]) / (povarHeight[1] - povarHeight[0]);
+                    if (isOver0 !== isOver1 && isOver0 !== isOver2) {
+                        pAx = povar + (lineZValue - povarHeight0) / (povarHeight1 - povarHeight0);
                         pAy = iSubSpectra;
                         pBx = povar;
-                        pBy = iSubSpectra + (lineZValue - povarHeight[0]) / (povarHeight[2] - povarHeight[0]);
-                        lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                        pBy = iSubSpectra + (lineZValue - povarHeight0) / (povarHeight2 - povarHeight0);
+                        lines.push(pAx * dx + x0);
+                        lines.push(pAy * dy + y0);
+                        lines.push(pBx * dx + x0);
+                        lines.push(pBy * dy + y0);
                     }
-                    if (isOver[3] !== isOver[1] && isOver[3] !== isOver[2]) {
+                    // remove push does not help !!!!
+                    if (isOver3 !== isOver1 && isOver3 !== isOver2) {
                         pAx = povar + 1;
-                        pAy = iSubSpectra + 1 - (lineZValue - povarHeight[3]) / (povarHeight[1] - povarHeight[3]);
-                        pBx = povar + 1 - (lineZValue - povarHeight[3]) / (povarHeight[2] - povarHeight[3]);
+                        pAy = iSubSpectra + 1 - (lineZValue - povarHeight3) / (povarHeight1 - povarHeight3);
+                        pBx = povar + 1 - (lineZValue - povarHeight3) / (povarHeight2 - povarHeight3);
                         pBy = iSubSpectra + 1;
-                        lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                        lines.push(pAx * dx + x0);
+                        lines.push(pAy * dy + y0);
+                        lines.push(pBx * dx + x0);
+                        lines.push(pBy * dy + y0);
                     }
                     // test around the diagonal
-                    if (isOver[1] !== isOver[2]) {
-                        pAx = povar + 1 - (lineZValue - povarHeight[1]) / (povarHeight[2] - povarHeight[1]);
-                        pAy = iSubSpectra + (lineZValue - povarHeight[1]) / (povarHeight[2] - povarHeight[1]);
-                        if (isOver[1] !== isOver[0]) {
-                            pBx = povar + 1 - (lineZValue - povarHeight[1]) / (povarHeight[0] - povarHeight[1]);
+                    if (isOver1 !== isOver2) {
+                        pAx = (povar + 1 - (lineZValue - povarHeight1) / (povarHeight2 - povarHeight1)) * dx + x0;
+                        pAy = (iSubSpectra + (lineZValue - povarHeight1) / (povarHeight2 - povarHeight1)) * dy + y0;
+                        if (isOver1 !== isOver0) {
+                            pBx = povar + 1 - (lineZValue - povarHeight1) / (povarHeight0 - povarHeight1);
                             pBy = iSubSpectra;
-                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                            lines.push(pAx);
+                            lines.push(pAy);
+                            lines.push(pBx * dx + x0);
+                            lines.push(pBy * dy + y0);
                         }
-                        if (isOver[2] !== isOver[0]) {
+                        if (isOver2 !== isOver0) {
                             pBx = povar;
-                            pBy = iSubSpectra + 1 - (lineZValue - povarHeight[2]) / (povarHeight[0] - povarHeight[2]);
-                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                            pBy = iSubSpectra + 1 - (lineZValue - povarHeight2) / (povarHeight0 - povarHeight2);
+                            lines.push(pAx);
+                            lines.push(pAy);
+                            lines.push(pBx * dx + x0);
+                            lines.push(pBy * dy + y0);
                         }
-                        if (isOver[1] !== isOver[3]) {
+                        if (isOver1 !== isOver3) {
                             pBx = povar + 1;
-                            pBy = iSubSpectra + (lineZValue - povarHeight[1]) / (povarHeight[3] - povarHeight[1]);
-                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                            pBy = iSubSpectra + (lineZValue - povarHeight1) / (povarHeight3 - povarHeight1);
+                            lines.push(pAx);
+                            lines.push(pAy);
+                            lines.push(pBx * dx + x0);
+                            lines.push(pBy * dy + y0);
                         }
-                        if (isOver[2] !== isOver[3]) {
-                            pBx = povar + (lineZValue - povarHeight[2]) / (povarHeight[3] - povarHeight[2]);
+                        if (isOver2 !== isOver3) {
+                            pBx = povar + (lineZValue - povarHeight2) / (povarHeight3 - povarHeight2);
                             pBy = iSubSpectra + 1;
-                            lines.push(pAx * dx + x0, pAy * dy + y0, pBx * dx + x0, pBy * dy + y0);
+                            lines.push(pAx);
+                            lines.push(pAy);
+                            lines.push(pBx * dx + x0);
+                            lines.push(pBy * dy + y0);
                         }
                     }
                 }
             }
         }
-        // console.timeEnd('generateContourLines');
+
         return {
             minX: zData.minX,
             maxX: zData.maxX,
@@ -1558,39 +1780,206 @@ function getConverter() {
             maxY: zData.maxY,
             segments: contourLevels
         };
-        //return contourLevels;
     }
 
+    function fastParseXYData(spectrum, value) {
+        // TODO need to deal with result
+        //  console.log(value);
+        // we check if deltaX is defined otherwise we calculate it
 
-    function addLowRes(spectra, options) {
-        var spectrum;
-        var averageX, averageY;
-        var targetNbPoints = options.lowRes;
-        var highResData;
-        for (var i = 0; i < spectra.length; i++) {
-            spectrum = spectra[i];
-            // we need to find the current higher resolution
-            if (spectrum.data.length > 0) {
-                highResData = spectrum.data[0];
-                for (var j = 1; j < spectrum.data.length; j++) {
-                    if (spectrum.data[j].length > highResData.length) {
-                        highResData = spectrum.data[j];
-                    }
-                }
+        var yFactor = spectrum.yFactor;
+        var deltaX = spectrum.deltaX;
 
-                if (targetNbPoints > (highResData.length / 2)) return;
-                var i, ii;
-                var lowResData = [];
-                var modulo = Math.ceil(highResData.length / (targetNbPoints * 2));
-                for (i = 0, ii = highResData.length; i < ii; i = i + 2) {
-                    if (i % modulo === 0) {
-                        lowResData.push(highResData[i], highResData[i + 1])
-                    }
+
+        spectrum.isXYdata = true;
+        // TODO to be improved using 2 array {x:[], y:[]}
+        var currentData = [];
+        spectrum.data = [currentData];
+
+
+        var currentX = spectrum.firstX;
+        var currentY = spectrum.firstY;
+
+        // we skip the first line
+        //
+        var endLine = false;
+        for (var i = 0; i < value.length; i++) {
+            var ascii = value.charCodeAt(i);
+            if (ascii === 13 || ascii === 10) {
+                endLine = true;
+            } else {
+                if (endLine) break;
+            }
+        }
+
+        // we proceed taking the i after the first line
+        var newLine = true;
+        var isDifference = false;
+        var isLastDifference = false;
+        var lastDifference = 0;
+        var isDuplicate = false;
+        var inComment = false;
+        var currentValue = 0;
+        var isNegative = false;
+        var inValue = false;
+        var skipFirstValue = false;
+        var decimalPosition = 0;
+        var ascii;
+        for (; i <= value.length; i++) {
+            if (i === value.length) ascii = 13;
+            else ascii = value.charCodeAt(i);
+            if (inComment) {
+                // we should ignore the text if we are after $$
+                if (ascii === 13 || ascii === 10) {
+                    newLine = true;
+                    inComment = false;
                 }
-                spectrum.data.push(lowResData);
+            } else {
+                // when is it a new value ?
+                // when it is not a digit, . or comma
+                // it is a number that is either new or we continue
+                if (ascii <= 57 && ascii >= 48) { // a number
+                    inValue = true;
+                    if (decimalPosition > 0) {
+                        currentValue += (ascii - 48) / Math.pow(10, decimalPosition++);
+                    } else {
+                        currentValue *= 10;
+                        currentValue += ascii - 48;
+                    }
+                } else if (ascii === 44 || ascii === 46) { // a "," or "."
+                    inValue = true;
+                    decimalPosition++;
+                } else {
+                    if (inValue) {
+                        // need to process the previous value
+                        if (newLine) {
+                            newLine = false; // we don't check the X value
+                            // console.log("NEW LINE",isDifference, lastDifference);
+                            // if new line and lastDifference, the first value is just a check !
+                            // that we don't check ...
+                            if (isLastDifference) skipFirstValue = true;
+                        } else {
+                            // need to deal with duplicate and differences
+                            if (skipFirstValue) {
+                                skipFirstValue = false;
+                            } else {
+                                if (isDifference) {
+                                    lastDifference = isNegative ? (0 - currentValue) : currentValue;
+                                    isLastDifference = true;
+                                    isDifference = false;
+                                }
+                                var duplicate = isDuplicate ? currentValue - 1 : 1;
+                                for (var j = 0; j < duplicate; j++) {
+                                    if (isLastDifference) {
+                                        currentY += lastDifference;
+                                    } else {
+                                        currentY = isNegative ? (0 - currentValue) : currentValue;
+                                    }
+                                    currentData.push(currentX);
+                                    currentData.push(currentY * yFactor);
+                                    currentX += deltaX;
+                                }
+                            }
+                        }
+                        isNegative = false;
+                        currentValue = 0;
+                        decimalPosition = 0;
+                        inValue = false;
+                        isDuplicate = false;
+                    }
+
+                    // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
+                    if ((ascii < 74) && (ascii > 63)) {
+                        inValue = true;
+                        isLastDifference = false;
+                        currentValue = ascii - 64;
+                    } else
+                    // negative SQZ digits a b c d e f g h i (ascii 97-105)
+                    if ((ascii > 96) && (ascii < 106)) {
+                        inValue = true;
+                        isLastDifference = false;
+                        currentValue = ascii - 96;
+                        isNegative = true;
+                    } else
+                    // DUP digits S T U V W X Y Z s (ascii 83-90, 115)
+                    if (ascii === 115) {
+                        inValue = true;
+                        isDuplicate = true;
+                        currentValue = 9;
+                    } else if ((ascii > 82) && (ascii < 91)) {
+                        inValue = true;
+                        isDuplicate = true;
+                        currentValue = ascii - 82;
+                    } else
+                    // positive DIF digits % J K L M N O P Q R (ascii 37, 74-82)
+                    if ((ascii > 73) && (ascii < 83)) {
+                        inValue = true;
+                        isDifference = true;
+                        currentValue = ascii - 73;
+                    } else
+                    // negative DIF digits j k l m n o p q r (ascii 106-114)
+                    if ((ascii > 105) && (ascii < 115)) {
+                        inValue = true;
+                        isDifference = true;
+                        currentValue = ascii - 105;
+                        isNegative = true;
+                    } else
+                    // $ sign, we need to check the next one
+                    if (ascii === 36 && value.charCodeAt(i + 1) === 36) {
+                        inValue = true;
+                        inComment = true;
+                    } else
+                    // positive DIF digits % J K L M N O P Q R (ascii 37, 74-82)
+                    if (ascii === 37) {
+                        inValue = true;
+                        isDifference = true;
+                        currentValue = 0;
+                        isNegative = false;
+                    } else if (ascii === 45) { // a "-"
+                        // check if after there is a number, decimal or comma
+                        var ascii2 = value.charCodeAt(i + 1);
+                        if ((ascii2 >= 48 && ascii2 <= 57) || ascii2 === 44 || ascii2 === 46) {
+                            inValue = true;
+                            isLastDifference = false;
+                            isNegative = true;
+                        }
+                    } else if (ascii === 13 || ascii === 10) {
+                        newLine = true;
+                        inComment = false;
+                    }
+                    // and now analyse the details ... space or tabulation
+                    // if "+" we just don't care
+                }
             }
         }
     }
+
+    function parsePeakTable(spectrum, value, result) {
+        var removeCommentRegExp = /\$\$.*/;
+        var peakTableSplitRegExp = /[,\t ]+/;
+
+        spectrum.isPeaktable = true;
+        var i, ii, j, jj, values;
+        var currentData = [];
+        spectrum.data = [currentData];
+
+        // counts for around 20% of the time
+        var lines = value.split(/,? *,?[;\r\n]+ */);
+
+        for (i = 1, ii = lines.length; i < ii; i++) {
+            values = lines[i].trim().replace(removeCommentRegExp, '').split(peakTableSplitRegExp);
+            if (values.length % 2 === 0) {
+                for (j = 0, jj = values.length; j < jj; j = j + 2) {
+                    // takes around 40% of the time to add and parse the 2 values nearly exclusively because of parseFloat
+                    currentData.push(parseFloat(values[j]) * spectrum.xFactor);
+                    currentData.push(parseFloat(values[j + 1]) * spectrum.yFactor);
+                }
+            } else {
+                result.logs.push('Format error: ' + values);
+            }
+        }
+    }
+
 
     return convert;
 
@@ -1620,20 +2009,25 @@ function postToWorker(input, options) {
     return new Promise(function (resolve) {
         var stamp = Date.now() + '' + Math.random();
         stamps[stamp] = resolve;
-        worker.postMessage({stamp: stamp, input: input, options: options});
+        worker.postMessage(JSON.stringify({
+            stamp: stamp,
+            input: input,
+            options: options
+        }));
     });
 }
 
 function createWorker() {
     var workerURL = URL.createObjectURL(new Blob([
-        'var getConverter =' + getConverter.toString() + ';var convert = getConverter(); onmessage = function (event) { postMessage({stamp: event.data.stamp, output: convert(event.data.input, event.data.options)}); };'
+        'var getConverter =' + getConverter.toString() + ';var convert = getConverter(); onmessage = function (event) { var data = JSON.parse(event.data); postMessage(JSON.stringify({stamp: data.stamp, output: convert(data.input, data.options)})); };'
     ], {type: 'application/javascript'}));
     worker = new Worker(workerURL);
     URL.revokeObjectURL(workerURL);
     worker.addEventListener('message', function (event) {
-        var stamp = event.data.stamp;
+        var data = JSON.parse(event.data);
+        var stamp = data.stamp;
         if (stamps[stamp]) {
-            stamps[stamp](event.data.output);
+            stamps[stamp](data.output);
         }
     });
 }
@@ -1641,27 +2035,190 @@ function createWorker() {
 module.exports = {
     convert: JcampConverter
 };
-},{}],6:[function(require,module,exports){
-var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
+
+},{"./parseXYData.js":6}],6:[function(require,module,exports){
+'use strict';
+
+
+var xyDataSplitRegExp = /[,\t \+-]*(?=[^\d,\t \.])|[ \t]+(?=[\d+\.-])/;
+var removeCommentRegExp = /\$\$.*/;
+var DEBUG=false;
+
+module.exports=function(spectrum, value, result) {
+    // we check if deltaX is defined otherwise we calculate it
+    if (!spectrum.deltaX) {
+        spectrum.deltaX = (spectrum.lastX - spectrum.firstX) / (spectrum.nbPoints - 1);
+    }
+
+    spectrum.isXYdata=true;
+
+    var currentData = [];
+    var currentPosition=0;
+    spectrum.data = [currentData];
+
+    var currentX = spectrum.firstX;
+    var currentY = spectrum.firstY;
+    var lines = value.split(/[\r\n]+/);
+    var lastDif, values, ascii, expectedY;
+    values = [];
+    for (var i = 1, ii = lines.length; i < ii; i++) {
+        //var previousValues=JSON.parse(JSON.stringify(values));
+        values = lines[i].trim().replace(removeCommentRegExp, '').split(xyDataSplitRegExp);
+        if (values.length > 0) {
+            if (DEBUG) {
+                if (!spectrum.firstPoint) {
+                    spectrum.firstPoint = +values[0];
+                }
+                var expectedCurrentX = (values[0] - spectrum.firstPoint) * spectrum.xFactor + spectrum.firstX;
+                if ((lastDif || lastDif === 0)) {
+                    expectedCurrentX += spectrum.deltaX;
+                }
+                result.logs.push('Checking X value: currentX: ' + currentX + ' - expectedCurrentX: ' + expectedCurrentX);
+            }
+            for (var j = 1, jj = values.length; j < jj; j++) {
+                if (j === 1 && (lastDif || lastDif === 0)) {
+                    lastDif = null; // at the beginning of each line there should be the full value X / Y so the diff is always undefined
+                    // we could check if we have the expected Y value
+                    ascii = values[j].charCodeAt(0);
+
+                    if (false) { // this code is just to check the jcamp DIFDUP and the next line repeat of Y value
+                        // + - . 0 1 2 3 4 5 6 7 8 9
+                        if ((ascii === 43) || (ascii === 45) || (ascii === 46) || ((ascii > 47) && (ascii < 58))) {
+                            expectedY = +values[j];
+                        } else
+                        // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
+                        if ((ascii > 63) && (ascii < 74)) {
+                            expectedY = +(String.fromCharCode(ascii - 16) + values[j].substring(1));
+                        } else
+                        // negative SQZ digits a b c d e f g h i (ascii 97-105)
+                        if ((ascii > 96) && (ascii < 106)) {
+                            expectedY = -(String.fromCharCode(ascii - 48) + values[j].substring(1));
+                        }
+                        if (expectedY !== currentY) {
+                            result.logs.push('Y value check error: Found: ' + expectedY + ' - Current: ' + currentY);
+                            result.logs.push('Previous values: ' + previousValues.length);
+                            result.logs.push(previousValues);
+                        }
+                    }
+                } else {
+                    if (values[j].length > 0) {
+                        ascii = values[j].charCodeAt(0);
+                        // + - . 0 1 2 3 4 5 6 7 8 9
+                        if ((ascii === 43) || (ascii === 45) || (ascii === 46) || ((ascii > 47) && (ascii < 58))) {
+                            lastDif = null;
+                            currentY = +values[j];
+                            // currentData.push(currentX, currentY * spectrum.yFactor);
+                            currentData[currentPosition++]=currentX;
+                            currentData[currentPosition++]=currentY * spectrum.yFactor;
+                            currentX += spectrum.deltaX;
+                        } else
+                        // positive SQZ digits @ A B C D E F G H I (ascii 64-73)
+                        if ((ascii > 63) && (ascii < 74)) {
+                            lastDif = null;
+                            currentY = +(String.fromCharCode(ascii - 16) + values[j].substring(1));
+                            // currentData.push(currentX, currentY * spectrum.yFactor);
+                            currentData[currentPosition++] = currentX;
+                            currentData[currentPosition++] = currentY * spectrum.yFactor;
+                            currentX += spectrum.deltaX;
+                        } else
+                        // negative SQZ digits a b c d e f g h i (ascii 97-105)
+                        if ((ascii > 96) && (ascii < 106)) {
+                            lastDif = null;
+                            // we can multiply the string by 1 because if may not contain decimal (is this correct ????)
+                            currentY = -(String.fromCharCode(ascii - 48) + values[j].substring(1))*1;
+                            //currentData.push(currentX, currentY * spectrum.yFactor);
+                            currentData[currentPosition++]=currentX;
+                            currentData[currentPosition++]=currentY * spectrum.yFactor;
+                            currentX += spectrum.deltaX;
+                        } else
+
+
+
+                        // DUP digits S T U V W X Y Z s (ascii 83-90, 115)
+                        if (((ascii > 82) && (ascii < 91)) || (ascii === 115)) {
+                            var dup = (String.fromCharCode(ascii - 34) + values[j].substring(1)) - 1;
+                            if (ascii === 115) {
+                                dup = ('9' + values[j].substring(1)) - 1;
+                            }
+                            for (var l = 0; l < dup; l++) {
+                                if (lastDif) {
+                                    currentY = currentY + lastDif;
+                                }
+                                // currentData.push(currentX, currentY * spectrum.yFactor);
+                                currentData[currentPosition++]=currentX;
+                                currentData[currentPosition++]=currentY * spectrum.yFactor;
+                                currentX += spectrum.deltaX;
+                            }
+                        } else
+                        // positive DIF digits % J K L M N O P Q R (ascii 37, 74-82)
+                        if (ascii === 37) {
+                            lastDif = +('0' + values[j].substring(1));
+                            currentY += lastDif;
+                            // currentData.push(currentX, currentY * spectrum.yFactor);
+                            currentData[currentPosition++]=currentX;
+                            currentData[currentPosition++]=currentY * spectrum.yFactor;
+                            currentX += spectrum.deltaX;
+                        } else if ((ascii > 73) && (ascii < 83)) {
+                            lastDif = (String.fromCharCode(ascii - 25) + values[j].substring(1))*1;
+                            currentY += lastDif;
+                            // currentData.push(currentX, currentY * spectrum.yFactor);
+                            currentData[currentPosition++]=currentX;
+                            currentData[currentPosition++]=currentY * spectrum.yFactor;
+                            currentX += spectrum.deltaX;
+                        } else
+                        // negative DIF digits j k l m n o p q r (ascii 106-114)
+                        if ((ascii > 105) && (ascii < 115)) {
+                            lastDif = -(String.fromCharCode(ascii - 57) + values[j].substring(1))*1;
+                            currentY += lastDif;
+                            // currentData.push(currentX, currentY * spectrum.yFactor);
+                            currentData[currentPosition++]=currentX;
+                            currentData[currentPosition++]=currentY * spectrum.yFactor;
+                            currentX += spectrum.deltaX;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 },{}],7:[function(require,module,exports){
+var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="function"==typeof require&&require;if(!h&&i)return i(g,!0);if(f)return f(g,!0);throw new Error("Cannot find module '"+g+"'")}var j=c[g]={exports:{}};b[g][0].call(j.exports,function(a){var c=b[g][1][a];return e(c?c:a)},j,j.exports,a,b,c,d)}return c[g].exports}for(var f="function"==typeof require&&require,g=0;g<d.length;g++)e(d[g]);return e}({1:[function(a,b,c){function d(a,b){var c=document,d=a.nodeType||a===window?a:c.createElement(a),f=[];b&&(d.className=b);var g=e(),h=e(),i=function(a,b){d.addEventListener?d.addEventListener(a,b,!1):d.attachEvent("on"+a,b),f.push({event:a,handler:b})},j=function(a,b){d.removeEventListener?d.removeEventListener(a,b):d.detachEvent("on"+a,b);for(var c,e=f.length;e-->0;)if(c=f[e],c.event===a&&c.handler===b){f.splice(e,1);break}},k=function(a){var b=!1,c=function(c){b||(b=!0,setTimeout(function(){b=!1},100),a(c))};i("touchstart",c),i("mousedown",c)},l=function(a){d&&(d.style.display="block",g.fire(a))},m=function(a){d&&(d.style.display="none",h.fire(a))},n=function(){return d.style&&"block"===d.style.display},o=function(a){d&&(d.innerHTML=a)},p=function(a){d&&(o(""),d.appendChild(c.createTextNode(a)))},q=function(){if(d.parentNode){for(var a,b=f.length;b-->0;)a=f[b],j(a.event,a.handler);d.parentNode.removeChild(d),g.removeAllListeners(),h.removeAllListeners()}},r=function(a){var b=a.el||a;d.appendChild(b)};return{el:d,addListener:i,addClickListener:k,onShowEvent:g,onHideEvent:h,show:l,hide:m,isShowing:n,html:o,text:p,remove:q,add:r}}var e=a("./ModalEvent");b.exports=d},{"./ModalEvent":3}],2:[function(a,b,c){function d(a,b,c,f,g){if(void 0!==a){b=b||{};var h,i=e("div","nanoModal nanoModalOverride "+(b.classes||"")),j=e("div","nanoModalContent"),k=e("div","nanoModalButtons");i.add(j),i.add(k),i.el.style.display="none";var l,m=[];b.buttons=b.buttons||[{text:"Close",handler:"hide",primary:!0}];var n=function(){for(var a=m.length;a-->0;){var b=m[a];b.remove()}m=[]},o=function(){i.el.style.marginLeft=-i.el.clientWidth/2+"px"},p=function(){for(var a=document.querySelectorAll(".nanoModal"),b=a.length;b-->0;)if("none"!==a[b].style.display)return!0;return!1},q=function(){i.isShowing()||(d.resizeOverlay(),c.show(c),i.show(l),o())},r=function(){i.isShowing()&&(i.hide(l),p()||c.hide(c),b.autoRemove&&l.remove())},s=function(a){var b={};for(var c in a)a.hasOwnProperty(c)&&(b[c]=a[c]);return b};return l={modal:i,overlay:c,show:function(){return f?f(q,l):q(),l},hide:function(){return g?g(r,l):r(),l},onShow:function(a){return i.onShowEvent.addListener(function(){a(l)}),l},onHide:function(a){return i.onHideEvent.addListener(function(){a(l)}),l},remove:function(){c.onRequestHide.removeListener(h),h=null,n(),i.remove()},setButtons:function(a){var b,c,d,f=a.length,g=function(a,b){var c=s(l);a.addClickListener(function(a){c.event=a||window.event,b.handler(c)})};if(n(),0===f)k.hide();else for(k.show();f-->0;)b=a[f],d="nanoModalBtn",b.primary&&(d+=" nanoModalBtnPrimary"),d+=b.classes?" "+b.classes:"",c=e("button",d),"hide"===b.handler?c.addClickListener(l.hide):b.handler&&g(c,b),c.text(b.text),k.add(c),m.push(c);return o(),l},setContent:function(b){return b.nodeType?(j.html(""),j.add(b)):j.html(b),o(),a=b,l},getContent:function(){return a}},h=c.onRequestHide.addListener(function(){b.overlayClose!==!1&&i.isShowing()&&l.hide()}),l.setContent(a).setButtons(b.buttons),document.body.appendChild(i.el),l}}var e=a("./El"),f=document,g=function(a){var b=f.documentElement,c="scroll"+a,d="offset"+a;return Math.max(f.body[c],b[c],f.body[d],b[d],b["client"+a])};d.resizeOverlay=function(){var a=f.getElementById("nanoModalOverlay");a.style.width=g("Width")+"px",a.style.height=g("Height")+"px"},b.exports=d},{"./El":1}],3:[function(a,b,c){function d(){var a={},b=0,c=function(c){return a[b]=c,b++},d=function(b){b&&delete a[b]},e=function(){a={}},f=function(){for(var c=0,d=b;d>c;++c)a[c]&&a[c].apply(null,arguments)};return{addListener:c,removeListener:d,removeAllListeners:e,fire:f}}b.exports=d},{}],4:[function(a,b,c){var d=a("./ModalEvent"),e=function(){function b(){if(!g.querySelector("#nanoModalOverlay")){var a=e("style"),b=a.el,h=g.querySelectorAll("head")[0].childNodes[0];h.parentNode.insertBefore(b,h);var i=".nanoModal{position:absolute;top:100px;left:50%;display:none;z-index:9999;min-width:300px;padding:15px 20px 10px;-webkit-border-radius:10px;-moz-border-radius:10px;border-radius:10px;background:#fff;background:-moz-linear-gradient(top,#fff 0,#ddd 100%);background:-webkit-gradient(linear,left top,left bottom,color-stop(0%,#fff),color-stop(100%,#ddd));background:-webkit-linear-gradient(top,#fff 0,#ddd 100%);background:-o-linear-gradient(top,#fff 0,#ddd 100%);background:-ms-linear-gradient(top,#fff 0,#ddd 100%);background:linear-gradient(to bottom,#fff 0,#ddd 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#dddddd', GradientType=0)}.nanoModalOverlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:9998;background:#000;display:none;-ms-filter:\"alpha(Opacity=50)\";-moz-opacity:.5;-khtml-opacity:.5;opacity:.5}.nanoModalButtons{border-top:1px solid #ddd;margin-top:15px;text-align:right}.nanoModalBtn{color:#333;background-color:#fff;display:inline-block;padding:6px 12px;margin:8px 4px 0;font-size:14px;text-align:center;white-space:nowrap;vertical-align:middle;cursor:pointer;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;border:1px solid transparent;-webkit-border-radius:4px;-moz-border-radius:4px;border-radius:4px}.nanoModalBtn:active,.nanoModalBtn:focus,.nanoModalBtn:hover{color:#333;background-color:#e6e6e6;border-color:#adadad}.nanoModalBtn.nanoModalBtnPrimary{color:#fff;background-color:#428bca;border-color:#357ebd}.nanoModalBtn.nanoModalBtnPrimary:active,.nanoModalBtn.nanoModalBtnPrimary:focus,.nanoModalBtn.nanoModalBtnPrimary:hover{color:#fff;background-color:#3071a9;border-color:#285e8e}";b.styleSheet?b.styleSheet.cssText=i:a.text(i),c=e("div","nanoModalOverlay nanoModalOverride"),c.el.id="nanoModalOverlay",g.body.appendChild(c.el),c.onRequestHide=d();var j=function(){c.onRequestHide.fire()};c.addClickListener(j),e(g).addListener("keydown",function(a){var b=a.which||a.keyCode;27===b&&j()});var k,l=e(window);l.addListener("resize",function(){k&&clearTimeout(k),k=setTimeout(f.resizeOverlay,100)}),l.addListener("orientationchange",function(){for(var a=0;3>a;++a)setTimeout(f.resizeOverlay,1e3*a+200)})}}var c,e=a("./El"),f=a("./Modal"),g=document;document.body&&b();var h=function(a,d){return b(),f(a,d,c,h.customShow,h.customHide)};return h.resizeOverlay=f.resizeOverlay,h}();nanoModal=e},{"./El":1,"./Modal":2,"./ModalEvent":3}]},{},[1,2,3,4]),"undefined"!=typeof window&&("function"==typeof window.define&&window.define.amd&&window.define(function(){return nanoModal}),window.nanoModal=nanoModal),"undefined"!=typeof module&&(module.exports=nanoModal);
+},{}],8:[function(require,module,exports){
 (function() {
-  var out$ = typeof exports != 'undefined' && exports || this;
+  var out$ = typeof exports != 'undefined' && exports || typeof define != 'undefined' && {} || this;
 
   var doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+
+  function isElement(obj) {
+    return obj instanceof HTMLElement || obj instanceof SVGElement;
+  }
+
+  function requireDomNode(el) {
+    if (!isElement(el)) {
+      throw new Error('an HTMLElement or SVGElement is required; got ' + el);
+    }
+  }
 
   function isExternal(url) {
     return url && url.lastIndexOf('http',0) == 0 && url.lastIndexOf(window.location.host) == -1;
   }
 
   function inlineImages(el, callback) {
-    var images = el.querySelectorAll('image');
-    var left = images.length;
-    if (left == 0) {
-      callback();
-    }
+    requireDomNode(el);
+
+    var images = el.querySelectorAll('image'),
+        left = images.length,
+        checkDone = function() {
+          if (left === 0) {
+            callback();
+          }
+        };
+
+    checkDone();
     for (var i = 0; i < images.length; i++) {
       (function(image) {
-        var href = image.getAttribute('xlink:href');
+        var href = image.getAttributeNS("http://www.w3.org/1999/xlink", "href");
         if (href) {
           if (isExternal(href.value)) {
             console.warn("Cannot render embedded images linking to external hosts: "+href.value);
@@ -1672,23 +2229,24 @@ var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="func
         var ctx = canvas.getContext('2d');
         var img = new Image();
         href = href || image.getAttribute('href');
-        img.src = href;
-        img.onload = function() {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          image.setAttribute('xlink:href', canvas.toDataURL('image/png'));
-          left--;
-          if (left == 0) {
-            callback();
+        if (href) {
+          img.src = href;
+          img.onload = function() {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            image.setAttributeNS("http://www.w3.org/1999/xlink", "href", canvas.toDataURL('image/png'));
+            left--;
+            checkDone();
           }
-        }
-        img.onerror = function() {
-          console.log("Could not load "+href);
-          left--;
-          if (left == 0) {
-            callback();
+          img.onerror = function() {
+            console.log("Could not load "+href);
+            left--;
+            checkDone();
           }
+        } else {
+          left--;
+          checkDone();
         }
       })(images[i]);
     }
@@ -1698,21 +2256,33 @@ var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="func
     var css = "";
     var sheets = document.styleSheets;
     for (var i = 0; i < sheets.length; i++) {
-      if (isExternal(sheets[i].href)) {
-        console.warn("Cannot include styles from other hosts: "+sheets[i].href);
+      try {
+        var rules = sheets[i].cssRules;
+      } catch (e) {
+        console.warn("Stylesheet could not be loaded: "+sheets[i].href);
         continue;
       }
-      var rules = sheets[i].cssRules;
+
       if (rules != null) {
         for (var j = 0; j < rules.length; j++) {
           var rule = rules[j];
           if (typeof(rule.style) != "undefined") {
-            var match = null;
+            var match, selectorText;
+
             try {
-              match = el.querySelector(rule.selectorText);
+              selectorText = rule.selectorText;
             } catch(err) {
-              console.warn('Invalid CSS selector "' + rule.selectorText + '"', err);
+              console.warn('The following CSS rule has an invalid selector: "' + rule + '"', err);
             }
+
+            try {
+              if (selectorText) {
+                match = el.querySelector(selectorText);
+              }
+            } catch(err) {
+              console.warn('Invalid CSS selector "' + selectorText + '"', err);
+            }
+
             if (match) {
               var selector = selectorRemap ? selectorRemap(rule.selectorText) : rule.selectorText;
               css += selector + " { " + rule.style.cssText + " }\n";
@@ -1726,9 +2296,30 @@ var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="func
     return css;
   }
 
+  function getDimension(el, clone, dim) {
+    var v = (el.viewBox && el.viewBox.baseVal && el.viewBox.baseVal[dim]) ||
+      (clone.getAttribute(dim) !== null && !clone.getAttribute(dim).match(/%$/) && parseInt(clone.getAttribute(dim))) ||
+      el.getBoundingClientRect()[dim] ||
+      parseInt(clone.style[dim]) ||
+      parseInt(window.getComputedStyle(el).getPropertyValue(dim));
+    return (typeof v === 'undefined' || v === null || isNaN(parseFloat(v))) ? 0 : v;
+  }
+
+  function reEncode(data) {
+    data = encodeURIComponent(data);
+    data = data.replace(/%([0-9A-F]{2})/g, function(match, p1) {
+      var c = String.fromCharCode('0x'+p1);
+      return c === '%' ? '%25' : c;
+    });
+    return decodeURIComponent(data);
+  }
+
   out$.svgAsDataUri = function(el, options, cb) {
+    requireDomNode(el);
+
     options = options || {};
     options.scale = options.scale || 1;
+    options.responsive = options.responsive || false;
     var xmlns = "http://www.w3.org/2000/xmlns/";
 
     inlineImages(el, function() {
@@ -1736,9 +2327,9 @@ var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="func
       var clone = el.cloneNode(true);
       var width, height;
       if(el.tagName == 'svg') {
-        width = parseInt(clone.getAttribute('width') || clone.style.width || out$.getComputedStyle(el).getPropertyValue('width'));
-        height = parseInt(clone.getAttribute('height') || clone.style.height || out$.getComputedStyle(el).getPropertyValue('height'));
-      } else {
+        width = options.width || getDimension(el, clone, 'width');
+        height = options.height || getDimension(el, clone, 'height');
+      } else if(el.getBBox) {
         var box = el.getBBox();
         width = box.x + box.width;
         height = box.y + box.height;
@@ -1747,14 +2338,40 @@ var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="func
         var svg = document.createElementNS('http://www.w3.org/2000/svg','svg')
         svg.appendChild(clone)
         clone = svg;
+      } else {
+        console.error('Attempted to render non-SVG element', el);
+        return;
       }
 
       clone.setAttribute("version", "1.1");
-      clone.setAttributeNS(xmlns, "xmlns", "http://www.w3.org/2000/svg");
-      clone.setAttributeNS(xmlns, "xmlns:xlink", "http://www.w3.org/1999/xlink");
-      clone.setAttribute("width", width * options.scale);
-      clone.setAttribute("height", height * options.scale);
-      clone.setAttribute("viewBox", "0 0 " + width + " " + height);
+      if (!clone.getAttribute('xmlns')) {
+        clone.setAttributeNS(xmlns, "xmlns", "http://www.w3.org/2000/svg");
+      }
+      if (!clone.getAttribute('xmlns:xlink')) {
+        clone.setAttributeNS(xmlns, "xmlns:xlink", "http://www.w3.org/1999/xlink");
+      }
+
+      if (options.responsive) {
+        clone.removeAttribute('width');
+        clone.removeAttribute('height');
+        clone.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+      } else {
+        clone.setAttribute("width", width * options.scale);
+        clone.setAttribute("height", height * options.scale);
+      }
+
+      clone.setAttribute("viewBox", [
+        options.left || 0,
+        options.top || 0,
+        width,
+        height
+      ].join(" "));
+
+      var fos = clone.querySelectorAll('foreignObject > *');
+      for (var i = 0; i < fos.length; i++) {
+        fos[i].setAttributeNS(xmlns, "xmlns", "http://www.w3.org/1999/xhtml");
+      }
+
       outer.appendChild(clone);
 
       var css = styles(el, options.selectorRemap);
@@ -1766,39 +2383,86 @@ var nanoModal;!function a(b,c,d){function e(g,h){if(!c[g]){if(!b[g]){var i="func
       clone.insertBefore(defs, clone.firstChild);
 
       var svg = doctype + outer.innerHTML;
-      var uri = 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svg)));
+      var uri = 'data:image/svg+xml;base64,' + window.btoa(reEncode(svg));
       if (cb) {
         cb(uri);
       }
     });
   }
 
-  out$.saveSvgAsPng = function(el, name, options) {
-    options = options || {};
+  out$.svgAsPngUri = function(el, options, cb) {
+    requireDomNode(el);
+
     out$.svgAsDataUri(el, options, function(uri) {
       var image = new Image();
-      image.src = uri;
       image.onload = function() {
         var canvas = document.createElement('canvas');
         canvas.width = image.width;
         canvas.height = image.height;
         var context = canvas.getContext('2d');
+        if(options && options.backgroundColor){
+          context.fillStyle = options.backgroundColor;
+          context.fillRect(0, 0, canvas.width, canvas.height);
+        }
         context.drawImage(image, 0, 0);
-
-        var a = document.createElement('a');
-        a.download = name;
-        a.href = canvas.toDataURL('image/png');
-        document.body.appendChild(a);
-        a.addEventListener("click", function(e) {
-          a.parentNode.removeChild(a);
-        });
-        a.click();
+        var a = document.createElement('a'), png;
+        try {
+          png = canvas.toDataURL('image/png');
+        } catch (e) {
+          if ((typeof SecurityError !== 'undefined' && e instanceof SecurityError) || e.name == "SecurityError") {
+            console.error("Rendered SVG images cannot be downloaded in this browser.");
+            return;
+          } else {
+            throw e;
+          }
+        }
+        cb(png);
       }
+      image.onerror = function(error) {
+        console.error('There was an error loading the data URI as an image', error);
+      }
+      image.src = uri;
+    });
+  }
+
+  function download(name, uri) {
+    var a = document.createElement('a');
+    a.download = name;
+    a.href = uri;
+    document.body.appendChild(a);
+    a.addEventListener("click", function(e) {
+      a.parentNode.removeChild(a);
+    });
+    a.click();
+  }
+
+  out$.saveSvg = function(el, name, options) {
+    requireDomNode(el);
+
+    options = options || {};
+    out$.svgAsDataUri(el, options, function(uri) {
+      download(name, uri);
+    });
+  }
+
+  out$.saveSvgAsPng = function(el, name, options) {
+    requireDomNode(el);
+
+    options = options || {};
+    out$.svgAsPngUri(el, options, function(uri) {
+      download(name, uri);
+    });
+  }
+
+  // if define is defined create as an AMD module
+  if (typeof define !== 'undefined') {
+    define(function() {
+      return out$;
     });
   }
 })();
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /*
  Copyright (c) 2012, Vladimir Agafonkin
  Simplify.js is a high-performance polyline simplification library
@@ -1971,7 +2635,7 @@ function simplify(points, tolerance, highestQuality) {
   return points;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 function bin(data, binsize) {
   var out = [];
   var bin_index = 0, 
@@ -2002,7 +2666,7 @@ module.exports = function (spec_line, binsize) {
 	//TODO: upadting data with new size breaks peak picking and integration.
   spec_line.datum(binned_data);
 };
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports = function (){
   function getDataPoint (x_point, pixel_to_i, local_max) {
     var i;
@@ -2137,7 +2801,7 @@ module.exports = function (){
   return _main;
 };
 
-},{"../elem":22}],11:[function(require,module,exports){
+},{"../elem":23}],12:[function(require,module,exports){
 function integrate(data){
   var _cumsum = data.map(function(d) { return d.y; }).cumsum();
   
@@ -2313,7 +2977,7 @@ module.exports = function (){
   return IntegElem;
 };
 
-},{"../elem":22}],12:[function(require,module,exports){
+},{"../elem":23}],13:[function(require,module,exports){
 function calcReductionFactor(spec_container) {
   var seg_len = [];
   var specs = spec_container.spectra();
@@ -2634,7 +3298,7 @@ module.exports = function () {
   return SpecLine;
 };
 
-},{"../elem":22,"./crosshair":10,"./integration-elem":11,"./path-simplify":14}],13:[function(require,module,exports){
+},{"../elem":23,"./crosshair":11,"./integration-elem":12,"./path-simplify":15}],14:[function(require,module,exports){
 module.exports = function (){
   var x, y, dispatcher;
   var svg_elem, _brush;
@@ -2735,7 +3399,7 @@ module.exports = function (){
   return MainBrush;
 };
 
-},{"../elem":22}],14:[function(require,module,exports){
+},{"../elem":23}],15:[function(require,module,exports){
 var simplify = require('../utils/simplify-line');
 module.exports = function () {
   var core = require('../elem');
@@ -2808,7 +3472,7 @@ module.exports = function () {
   return PathElem;
 };
 
-},{"../elem":22,"../utils/simplify-line":50}],15:[function(require,module,exports){
+},{"../elem":23,"../utils/simplify-line":51}],16:[function(require,module,exports){
 var contextMenu = require('d3-context-menu')(d3);
 
 function peakLine(line_x, line_y, label_x){
@@ -3026,7 +3690,7 @@ module.exports = function(){
   return _main;
 };
 
-},{"../elem":22,"d3-context-menu":4}],16:[function(require,module,exports){
+},{"../elem":23,"d3-context-menu":4}],17:[function(require,module,exports){
 module.exports = function(){
   var svg_elem, x, y, dispatcher,brushscale;
   
@@ -3128,7 +3792,7 @@ module.exports = function(){
   return _main;
 };
 
-},{"../elem":22}],17:[function(require,module,exports){
+},{"../elem":23}],18:[function(require,module,exports){
 module.exports = function () {
   var core = require('../elem');
   var source = core.SVGElem().class('main-focus');
@@ -3426,7 +4090,7 @@ module.exports = function () {
   
   return SpecContainer;
 };
-},{"../elem":22,"./line":12,"./main-brush":13,"./peak-picker":15}],18:[function(require,module,exports){
+},{"../elem":23,"./line":13,"./main-brush":14,"./peak-picker":16}],19:[function(require,module,exports){
 module.exports = function () {
   var svg_elem, x, y, dispatcher;
   var core = require('../elem');
@@ -3456,7 +4120,7 @@ module.exports = function () {
 
   return _main;  
 };
-},{"../elem":22}],19:[function(require,module,exports){
+},{"../elem":23}],20:[function(require,module,exports){
 module.exports = function(){
   function registerDispatcher() {
     var suff = ".line."+dispatch_idx;
@@ -3567,7 +4231,7 @@ module.exports = function(){
   return _main;
 };
 
-},{"../elem":22}],20:[function(require,module,exports){
+},{"../elem":23}],21:[function(require,module,exports){
 module.exports = function () {
   var core = require('../elem');
   var source = core.SVGElem().class('main-focus');
@@ -3762,7 +4426,7 @@ module.exports = function () {
   };
   return SpecContainer;  
 };
-},{"../d1/main-brush":13,"../elem":22,"./spec2d":21}],21:[function(require,module,exports){
+},{"../d1/main-brush":14,"../elem":23,"./spec2d":22}],22:[function(require,module,exports){
 module.exports = function () {
   var core = require('../elem');
   var source = core.SVGElem().class('spec-img');
@@ -3887,7 +4551,7 @@ module.exports = function () {
   return _main;
 };
 
-},{"../elem":22,"./crosshair-2d":19}],22:[function(require,module,exports){
+},{"../elem":23,"./crosshair-2d":20}],23:[function(require,module,exports){
 
 function inherit(target, source){
   for (var f in source){
@@ -4032,7 +4696,7 @@ module.exports.Elem = Elem;
 module.exports.ResponsiveElem = ResponsiveElem;
 module.exports.SVGElem = SVGElem;
 
-},{}],23:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 var events = {
   crosshair:true,
   peakpick:false,
@@ -4152,7 +4816,7 @@ events.registerKeyboard = function(app){
   });    
 };
 module.exports = events;
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 require('./utils/array');
 module.exports = {};
 module.exports.App = require('./main_app');
@@ -4166,7 +4830,7 @@ module.exports.version = "0.6.0";
 
 //TODO: respond to resize.
 //TODO: check browser and fallback if not supported.
-},{"./input_elem":25,"./main_app":27,"./pro/plugin-hooks":39,"./pro/process_data":41,"./utils/array":44}],25:[function(require,module,exports){
+},{"./input_elem":26,"./main_app":28,"./pro/plugin-hooks":40,"./pro/process_data":42,"./utils/array":45}],26:[function(require,module,exports){
 var inp = {};
 var fireEvent = require('./utils/event');
 
@@ -4186,6 +4850,9 @@ inp.num = function (label, val, _min, _max, step, unit) {
   
   elem.node().getValue = function(){ 
     return elem.select('input').node().value;
+  };
+  elem.node().setValue = function(new_value){ 
+    elem.select('input').attr("value", new_value) ;
   };
   return function () { return elem.node();  };
 };
@@ -4222,6 +4889,9 @@ inp.checkbox = function (label, val) {
   elem.node().getValue = function(){ 
     return elem.select('input').node().checked;
   };
+  elem.node().setValue = function(new_value){ 
+    return elem.select('input').node().checked = (String(new_value) == "true") ? true : false;
+  };
   return function () { return elem.node();  };
 };
 inp.checkbox_toggle = function (label, val, div_data) {
@@ -4240,6 +4910,11 @@ inp.checkbox_toggle = function (label, val, div_data) {
     .classed('disabled', !elem.select('input').node().checked);
     
   elem.node().getValue = elem.select('.param.checkbox').node().getValue;
+  elem.node().setValue = function(new_value){ 
+    elem.select('.param.checkbox').node().setValue(new_value);
+    elem.select('.div_enable')
+      .classed('disabled', !new_value);
+  };
   
   return function () { return elem.node();  };
 };
@@ -4254,10 +4929,15 @@ inp.select = function (label, options, val) {
     .append('option')
       .text(function(d){return d;});
   
-  select_elem.node().value = val;
+  if(val){
+    select_elem.node().value = val;
+	}
   
   elem.node().getValue = function(){ 
     return select_elem.node().value;
+  };
+  elem.node().setValue = function(new_value){
+    select_elem.node().value = new_value;
   };
   return function () { return elem.node();  };
 };
@@ -4295,7 +4975,7 @@ inp.select_multi = function (label, options) {
         return typeof(e.value) !== 'undefined' ? e.value
           : d3.select(e).select('.checkbox-label').text();
       });
-  };
+  }; //TODO: setValue
   return function () { return elem.node();  };
 };
 
@@ -4335,6 +5015,15 @@ inp.select_toggle = function (label, options, app) {
   
   elem.node().getValue = function(){ 
     return select_elem.value;
+  };
+  elem.node().setValue = function(new_value){ 
+    select_elem.value = new_value;
+    fieldset.select('fieldset').remove();
+    
+    if( Object.keys(options[ new_value ][1]).length > 0 ){
+      fieldset.append("fieldset")  
+        .append(inp.div( options[ select_elem.value ][1], app ));
+    }
   };
   return function(){return elem.node();};
 };
@@ -4477,7 +5166,7 @@ inp.popover = function (title) {
 };
 
 module.exports = inp;
-},{"./d1/threshold":18,"./utils/event":46}],26:[function(require,module,exports){
+},{"./d1/threshold":19,"./utils/event":47}],27:[function(require,module,exports){
 module.exports = function (app) {
   app.append('div').classed('logo', true)
     .text('SpecdrawJS')
@@ -4491,7 +5180,7 @@ module.exports = function (app) {
       }).show();
     });
 };
-},{}],27:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = function(){
   var core = require('./elem');
   var source = core.Elem().class('spec-app');
@@ -4645,7 +5334,7 @@ module.exports = function(){
 
 //TODO: remove Elements
 
-},{"./elem":22,"./events":23,"./logo":26,"./menu/menu":30,"./modals":35,"./pro/plugins":40,"./pro/process_data":41,"./slide":43,"./utils/docready":45,"./utils/get-size":48}],28:[function(require,module,exports){
+},{"./elem":23,"./events":24,"./logo":27,"./menu/menu":31,"./modals":36,"./pro/plugins":41,"./pro/process_data":42,"./slide":44,"./utils/docready":46,"./utils/get-size":49}],29:[function(require,module,exports){
 function find_menu_item (menu, item) {
   for (var i = menu.length - 1; i >= 0; i--) {
     if(menu[i].label === item){
@@ -4667,7 +5356,7 @@ module.exports = function (menu, menu_path) {
   return path;
 };
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var inp = require('../input_elem');
 var fireEvent = require('../utils/event');
 
@@ -4734,7 +5423,7 @@ function main_menu (app) {
 }
 
 module.exports = main_menu;
-},{"../input_elem":25,"../utils/event":46}],30:[function(require,module,exports){
+},{"../input_elem":26,"../utils/event":47}],31:[function(require,module,exports){
 var fullscreen = require('../utils/fullscreen');
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 var events = require('../events');
@@ -4832,7 +5521,7 @@ module.exports = function (app){
   return elem;                  
 };
 
-},{"../../lib/bootstrap-tooltip":1,"../events":23,"../utils/fullscreen":47,"./main_menu":29,"./menu_data":31,"./slides":33,"./spectra":34}],31:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../events":24,"../utils/fullscreen":48,"./main_menu":30,"./menu_data":32,"./slides":34,"./spectra":35}],32:[function(require,module,exports){
 var events = require('../events');
 var append_menu = require('./append-menu');
 var server_menu = require('./serverside-menu');
@@ -4936,7 +5625,7 @@ module.exports = function (app) {
 };
 
 
-},{"../d1/binning":9,"../events":23,"./append-menu":28,"./serverside-menu":32,"save-svg-as-png":7}],32:[function(require,module,exports){
+},{"../d1/binning":10,"../events":24,"./append-menu":29,"./serverside-menu":33,"save-svg-as-png":8}],33:[function(require,module,exports){
 var bootstrap = require('../../lib/bootstrap-tooltip').bootstrap;
 var ajax = require('../pro/ajax');
 
@@ -5004,7 +5693,7 @@ module.exports = function(app) {
 };
 
 
-},{"../../lib/bootstrap-tooltip":1,"../pro/ajax":36}],33:[function(require,module,exports){
+},{"../../lib/bootstrap-tooltip":1,"../pro/ajax":37}],34:[function(require,module,exports){
 var inp = require('../input_elem');
 
 module.exports = function (app) {
@@ -5040,7 +5729,7 @@ module.exports = function (app) {
 };
 
 
-},{"../input_elem":25}],34:[function(require,module,exports){
+},{"../input_elem":26}],35:[function(require,module,exports){
 var inp = require('../input_elem');
 
 function spectra (app) {
@@ -5075,7 +5764,7 @@ function spectra (app) {
 }
 
 module.exports = spectra;
-},{"../input_elem":25,"../pro/open-file":38}],35:[function(require,module,exports){
+},{"../input_elem":26,"../pro/open-file":39}],36:[function(require,module,exports){
 require('nanoModal')
 var nanoModal = window.nanoModal;
 nanoModal.customHide = function(defaultHide, modalAPI) {
@@ -5318,7 +6007,7 @@ function app_modals(app){
 }
 //spec.modals = modals;
 module.exports = app_modals;
-},{"./input_elem":25,"./utils/event":46,"nanoModal":6}],36:[function(require,module,exports){
+},{"./input_elem":26,"./utils/event":47,"nanoModal":7}],37:[function(require,module,exports){
 //TODO:var modals = spec.modals;
 var modals = require('../modals')();
 
@@ -5400,7 +6089,7 @@ var ajaxProgress = function () {
 module.exports.request = request;
 module.exports.getJSON = getJSON;
 
-},{"../modals":35}],37:[function(require,module,exports){
+},{"../modals":36}],38:[function(require,module,exports){
 var converter = require('jcampconverter');
 
 
@@ -5483,7 +6172,7 @@ module.exports = function(json, callback) {
   callback(spec_data);
 };
 
-},{"jcampconverter":5}],38:[function(require,module,exports){
+},{"jcampconverter":5}],39:[function(require,module,exports){
 function modal_input(app, node, callback) {
   var modals =   app.modals();
   var nano = modals.proto(undefined, '',
@@ -5511,7 +6200,7 @@ module.exports = function (app, callback) {
   };
   
 };
-},{"../input_elem":25,"./process_data":41}],39:[function(require,module,exports){
+},{"../input_elem":26,"./process_data":42}],40:[function(require,module,exports){
 function handle_peaks (app, json) {
   var spec = app.currentSlide().spectra().filter(function (s) {
     return s.s_id() === json['s_id'];
@@ -5557,7 +6246,7 @@ function handle_spectrum (app, json, preview){
 
 module.exports.spectrum = handle_spectrum;
 module.exports.spec_feature = handle_spec_feature;
-},{"./process_data":41}],40:[function(require,module,exports){
+},{"./process_data":42}],41:[function(require,module,exports){
 module.exports = function (app) {
   function request (fun, params, s_id, preview) {
     params = params || {};
@@ -5630,7 +6319,7 @@ module.exports = function (app) {
   return request;
 };
 
-},{"./ajax":36,"./plugin-hooks":39}],41:[function(require,module,exports){
+},{"./ajax":37,"./plugin-hooks":40}],42:[function(require,module,exports){
 var get_png_data = function(y, callback){
   var img = document.createElement("img");
   
@@ -5844,7 +6533,7 @@ function get_spectrum (url, render_fun) {
 
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":36,"./jcamp":37,"./worker":42}],42:[function(require,module,exports){
+},{"./ajax":37,"./jcamp":38,"./worker":43}],43:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -5930,7 +6619,7 @@ function maxWorkers(_) {
 
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
-},{}],43:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 module.exports = function(){
   var core = require('./elem');
   var source = core.Elem('g');
@@ -6198,7 +6887,7 @@ module.exports = function(){
   return Slide;
 };
 
-},{"./d1/scale-brush":16,"./d1/spec-container-1d":17,"./d2/spec-container-2d":20,"./elem":22,"./pro/open-file":38,"./utils/guid":49,"bowser":3}],44:[function(require,module,exports){
+},{"./d1/scale-brush":17,"./d1/spec-container-1d":18,"./d2/spec-container-2d":21,"./elem":23,"./pro/open-file":39,"./utils/guid":50,"bowser":3}],45:[function(require,module,exports){
 Array.prototype.subset =function(arr){
   var ret = [];
   for (var i = arr.length - 1; i >= 0; i--){
@@ -6262,7 +6951,7 @@ d3.selection.prototype.size = function() {
   return n;
 };
 require('../../lib/d3-tip.edited.js')(d3);
-},{"../../lib/d3-tip.edited.js":2}],45:[function(require,module,exports){
+},{"../../lib/d3-tip.edited.js":2}],46:[function(require,module,exports){
 "use strict";
 // The public function name defaults to window.docReady
 // but you can modify the last line of this function to pass in a different object or method name
@@ -6332,7 +7021,7 @@ module.exports = function(callback, context) {
     readyEventHandlersInstalled = true;
   }
 };
-},{}],46:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 module.exports = function(element,event){
   var evt;
   if (document.createEventObject){
@@ -6347,7 +7036,7 @@ module.exports = function(element,event){
   }
 };
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 function launchFullScreen(element) {
   if (element.requestFullscreen)
     { element.requestFullscreen(); }
@@ -6384,7 +7073,7 @@ module.exports.launch = launchFullScreen;
 module.exports.toggle = toggleFullScreen;
 module.exports.isFull = isFullScreen;
 
-},{}],48:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 module.exports = function (node) {
   var clientwidth = node.clientWidth,
   clientheight = node.clientHeight;
@@ -6405,7 +7094,7 @@ module.exports = function (node) {
   
   return [width, height];
 };
-},{}],49:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 module.exports = function (){
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(
     /[xy]/g, function(c) {
@@ -6415,7 +7104,7 @@ module.exports = function (){
   );
 };
 
-},{}],50:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 module.exports = function (data, xscale, tolerance) {
   var ppm_range = Math.abs(xscale.domain()[0] - xscale.domain()[1]);
   var pixels = Math.abs(xscale.range()[0] - xscale.range()[1]);
@@ -6426,5 +7115,5 @@ module.exports = function (data, xscale, tolerance) {
   return dataResample;
 };
 
-},{"simplify":8}]},{},[24])(24)
+},{"simplify":9}]},{},[25])(25)
 });

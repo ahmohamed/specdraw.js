@@ -18,6 +18,9 @@ inp.num = function (label, val, _min, _max, step, unit) {
   elem.node().getValue = function(){ 
     return elem.select('input').node().value;
   };
+  elem.node().setValue = function(new_value){ 
+    elem.select('input').attr("value", new_value) ;
+  };
   return function () { return elem.node();  };
 };
 
@@ -53,6 +56,9 @@ inp.checkbox = function (label, val) {
   elem.node().getValue = function(){ 
     return elem.select('input').node().checked;
   };
+  elem.node().setValue = function(new_value){ 
+    return elem.select('input').node().checked = (String(new_value) == "true") ? true : false;
+  };
   return function () { return elem.node();  };
 };
 inp.checkbox_toggle = function (label, val, div_data) {
@@ -71,6 +77,11 @@ inp.checkbox_toggle = function (label, val, div_data) {
     .classed('disabled', !elem.select('input').node().checked);
     
   elem.node().getValue = elem.select('.param.checkbox').node().getValue;
+  elem.node().setValue = function(new_value){ 
+    elem.select('.param.checkbox').node().setValue(new_value);
+    elem.select('.div_enable')
+      .classed('disabled', !new_value);
+  };
   
   return function () { return elem.node();  };
 };
@@ -85,10 +96,15 @@ inp.select = function (label, options, val) {
     .append('option')
       .text(function(d){return d;});
   
-  select_elem.node().value = val;
+  if(val){
+    select_elem.node().value = val;
+	}
   
   elem.node().getValue = function(){ 
     return select_elem.node().value;
+  };
+  elem.node().setValue = function(new_value){
+    select_elem.node().value = new_value;
   };
   return function () { return elem.node();  };
 };
@@ -126,7 +142,7 @@ inp.select_multi = function (label, options) {
         return typeof(e.value) !== 'undefined' ? e.value
           : d3.select(e).select('.checkbox-label').text();
       });
-  };
+  }; //TODO: setValue
   return function () { return elem.node();  };
 };
 
@@ -166,6 +182,15 @@ inp.select_toggle = function (label, options, app) {
   
   elem.node().getValue = function(){ 
     return select_elem.value;
+  };
+  elem.node().setValue = function(new_value){ 
+    select_elem.value = new_value;
+    fieldset.select('fieldset').remove();
+    
+    if( Object.keys(options[ new_value ][1]).length > 0 ){
+      fieldset.append("fieldset")  
+        .append(inp.div( options[ select_elem.value ][1], app ));
+    }
   };
   return function(){return elem.node();};
 };
