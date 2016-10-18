@@ -8,6 +8,10 @@ module.exports = function(){
   var modals, config = 3;
   var slides = core.ElemArray(), current_slide;
   var base_url = '/nmr/';
+  var options = {
+    grid:{x:false, y:false},
+    slideMax:5
+  };
   
   function check_size(divnode) {
     app_width = App.width();
@@ -115,12 +119,23 @@ module.exports = function(){
     return modals;
   };
   App.pluginRequest = require('./pro/plugins')(App);
-  App.appendSlide = function(data){
-    console.log('append_slide start');
-		var s = require('./slide')().datum(data);
+  App.appendSlide = function(data, with_render){
+    console.log('append_slide start', data);
+    console.trace();
+		var s = require('./slide')(App).datum(data);
 		console.log('slide added');
     slides.push(s);
-    render_slide(s);
+    if (arguments.length < 2 || with_render === true){
+      render_slide(s);
+    }else{
+      app_dispatcher.on('slideChange.'+slides.length, function (slide) {
+        if(slide === s){
+          app_dispatcher.on('slideChange.'+slides.length, null);
+          render_slide(s);          
+        }       
+      });
+    }
+    
     return App;
   };
   App.config = function (_) {
@@ -136,22 +151,28 @@ module.exports = function(){
     
     return App;
   };
-  App.options = {
-    grid:{x:false, y:false}
+  App.options = function (option, val) {
+    if (!arguments.length) {return options;}
+    if (arguments.length == 1){
+      return options[option];
+    }
+    options[option] = val;
+    return App;
   };
   App.data = function (url, s_per_slide) {
-    if(typeof s_per_slide === 'undefined'){
-      s_per_slide = 5;
+    if(typeof s_per_slide !== 'undefined'){
+      options.slideMax = 3;
     }
     var callback = function (data) {
-      if(!App.currentSlide() || App.currentSlide().spectra().length  > s_per_slide - 1){
+      if(App.currentSlide().spectra().length > 0){
         App.appendSlide(data);
       }else{
-        App.currentSlide().addSpec(data, config > 1);
+        App.currentSlide().addSpec(data);
       }
     };
     
-    require('./pro/process_data').get_spectrum(url,  callback);
+    require('./pro/ajax').getJSON(url, callback);
+    //require('./pro/process_data').get_spectrum(url,  App.appendSlide);
     return App;
   };
   return App;

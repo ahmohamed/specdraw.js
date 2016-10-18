@@ -246,6 +246,21 @@ module.exports = function () {
   };
   SpecLine.datum = function(_){
     if (!arguments.length) {return data;}
+    
+    if (_.constructor === Array){
+      return SpecLine.numericDatum(_);
+    }
+    
+    s_id = _['s_id'];
+    spec_label = _['label'];
+    SpecLine.numericDatum(_['data']);
+    //require('../pro/process_data').process_annotations(SpecLine.parentApp(), _);
+    return SpecLine;
+  };
+  SpecLine.numericDatum = function (_) {
+    console.log("numericDatum");
+    console.trace()
+    if (!arguments.length) {return data;}
     if(!_[0].x){ //if data is array, not xy format
       if ( data  && data.length === _.length){ // if we are replacing existing data
         // Use the x-coordinates of the old data.
@@ -274,8 +289,8 @@ module.exports = function () {
       {dispatcher.specDataChange(SpecLine);}
 
     render_data();
-    return SpecLine;
-  };
+    return SpecLine;    
+  }
   SpecLine.label = function(_){
     if (!arguments.length) {return spec_label;}
     spec_label = _;
