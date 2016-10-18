@@ -146,7 +146,7 @@ module.exports = function () {
       dispatcher.on("integrate.line."+dispatch_idx, null);
       data = null;
       if(_crosshair){
-        _crosshair.remove();        
+        _crosshair.remove();
       }
     });
     

@@ -94,6 +94,11 @@ module.exports = function (){
             dispatcher.integ_refactor(integ_factor);
            }
          ),
+       },{
+         title: 'Delete integral',
+         action: function () {
+           IntegElem.remove();
+         },
        }]
     ));
   
@@ -127,6 +132,12 @@ module.exports = function (){
           IntegElem.updateData();
         }        
       }
+    });
+    
+    svg_elem.on('remove', function () {
+      dispatcher.on("redraw.integ."+dispatch_idx, null);
+      dispatcher.on("integ_refactor."+dispatch_idx, null);
+      dispatcher.on("specDataChange.integ."+dispatch_idx, null);
     });
   }
   
