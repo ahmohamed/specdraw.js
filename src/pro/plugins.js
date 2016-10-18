@@ -62,7 +62,7 @@ module.exports = function (app) {
     if(typeof hooks[type] === 'function'){
       hooks[type](app, json, preview);
     }else{
-      app.modals.error('Unsupported data-type', 
+      app.modals().error('Unsupported data-type', 
         'Couldn\'t find suitable function to read "'+type+'" data');
     }
     
