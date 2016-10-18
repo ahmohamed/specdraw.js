@@ -315,5 +315,8 @@ module.exports = function () {
     return SpecLine;
   };
   
+  SpecLine.parentSlide = function () {
+    return SpecLine.parent().parent();
+  };
   return SpecLine;
 };

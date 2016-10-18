@@ -97,6 +97,14 @@ module.exports = function(){
     current_slide = s;
     app_dispatcher.slideChange(s);
   };
+  App.allSpectra = function () {
+    var ret = [];
+    for (var i = 0; i < slides.length; i++) {
+      ret = ret.concat(slides[i].spectra());
+    }
+    return ret;
+  };
+  
   App.dispatcher = function () {
     return app_dispatcher;
   };
