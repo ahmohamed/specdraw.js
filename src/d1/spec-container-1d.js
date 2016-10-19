@@ -60,7 +60,6 @@ module.exports = function () {
         specs.push(s);
         render_spec(s);
       }else{
-        console.log("spec found");
         s = s[0];
         s.datum(spec_data);//TODO: setData!!
         update_range();

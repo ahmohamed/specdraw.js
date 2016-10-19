@@ -145,26 +145,31 @@ module.exports = function () {
       return e.s_id() === spec_data["s_id"];
     }  );
     
-    if ( s.length === 0 ){
-      if(specs.length !== 0){ //TODO: Until we support 2D datasets.
-        SpecContainer.parentApp().appendSlide(spec_data);
-        return;
-      }
+    require('../pro/process_data').process_spectrum(spec_data, function (response) {
+      console.log("process_data", response);
+      if ( s.length === 0 ){
+        if(specs.length !== 0){ //TODO: Until we support 2D datasets.
+          SpecContainer.ready(function(){
+            SpecContainer.parentApp().appendSlide(response);
+          });
+          return;
+        }
       
-      s = require('./spec2d')()
-        .datum(spec_data["data"])
-        .s_id(spec_data["s_id"])
-        .label(spec_data["label"])
-        .crosshair(crosshair)
-        .range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
+        s = require('./spec2d')()
+          .datum(response["data"])
+          .s_id(response["s_id"])
+          .label(response["label"])
+          .crosshair(crosshair)
+          .range({x:response["x_domain"], y:response["y_domain"]});
         
-      specs.push(s);
-			render_spec(s);
-    }else{
-      s = s[0];
-      s.datum(spec_data["data"])
-        .range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
-    }
+        specs.push(s);
+  			render_spec(s);
+      }else{
+        s = s[0];
+        s.datum(response["data"])
+          .range({x:response["x_domain"], y:response["y_domain"]});
+      }
+    });
     
     return s;
   };
@@ -185,6 +190,10 @@ module.exports = function () {
   };
   SpecContainer.datum = function(_){
     if (!arguments.length) {return data;}
+    if (_.constructor === Array) {
+      // if data is an Array, take first element.
+      _ = _[0];
+    }
     data = _;
     
     SpecContainer.addSpec(_);

@@ -118,6 +118,9 @@ module.exports = function () {
   _main.lineIdx = function () {
     return line_idx;
   };
+  _main.parentSlide = function () {
+    return _main.parent().parent();
+  };
   
   return _main;
 };
