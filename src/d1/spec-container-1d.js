@@ -38,7 +38,7 @@ module.exports = function () {
     var spec_label = 'spec '+specs.length;
 
     if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
-    if(typeof spec_data['label'] !== 'undefined') {spec_data['label'] = spec_data["label"];}
+    if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
     
     // Find the spectrum with the same s_id.
     // If it is present, overwrite it.
@@ -55,6 +55,7 @@ module.exports = function () {
       if ( s.length === 0 ){
         s = require('./line')()
           .datum(response)
+          .label(spec_label)
   //        .crosshair(true) // TODO: fix crosshair
       
         specs.push(s);

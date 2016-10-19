@@ -154,7 +154,7 @@ module.exports = function(){
   };
   App.options = function (option, val) {
     if (!arguments.length) {return options;}
-    if (arguments.length == 1){
+    if (arguments.length === 1){
       return options[option];
     }
     options[option] = val;
