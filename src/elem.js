@@ -23,12 +23,14 @@ function ElemArray(arr){
 
 function Elem(tag){
   var selection, parentElem, width, height, cls;
+  var ready = false, ready_funs = []
   function _main (container){
     selection = container.append(tag || 'div');
     parentElem = container;
     if(cls){
       selection.classed(cls, true);
     }
+    _main.ready();
     return selection;
   }
   
@@ -92,6 +94,22 @@ function Elem(tag){
     }
     return null;
   };
+  _main.ready = function(fun){
+    if(!arguments.length){
+      ready = true;
+      for (var i = 0; i < ready_funs.length; i++) {
+        ready_funs[i]();
+      }
+      return true;
+    }
+    if (typeof fun === "function"){
+      if(!ready){ ready_funs.push(fun); }
+      else{ fun(); }
+    }else{
+      console.error("Elem.ready argument must be a function.");
+    }
+    return _main;
+  }
   return _main;
 }
 

@@ -1,9 +1,9 @@
-module.exports = function(){
+module.exports = function(App){
   var core = require('./elem');
   var source = core.Elem('g');
   core.inherit(Slide, source);
   
-  var data, slide_selection, svg_selection, svg_width, svg_height;
+  var data, tow_d, slide_selection, svg_selection, svg_width, svg_height;
   var clip_id = require('./utils/guid')();
   var filter_id = require('./utils/guid')();
   var parent_app, spec_container;
@@ -31,6 +31,52 @@ module.exports = function(){
       .on('click', require('./pro/open-file')(app) );
   }
   
+  /** Slide inspect the data and determine the following:
+      * Whether it should be a 1D or 2D slide.
+      * Whether to accept part of all of the data.
+        - if the number of spectra is > App.option.slideMax
+        - Spectra are of different dimensions.
+  */  
+  function check_data(all_data) {
+    console.log('slide check_data', all_data.length);
+    console.trace();
+    
+    function is_towd_data(_datum) {
+      return (_datum["nd"] && _datum["nd"] === 2);
+    }
+    if (all_data.constructor !== Array) {
+      // if data is not an Array, wrap it in an Array.
+      all_data= [all_data];
+    }
+    
+    var new_data = [all_data[0]];
+    two_d = is_towd_data(new_data[0]);
+    
+    // 2D slides accpet only a single spectrum.
+    var slide_max = two_d ? 1 : App.options('slideMax');
+    if (slide_max < 1) { slide_max = 1;} // min 1 spec/slide.
+    
+
+    for (var i = 1; i < slide_max && i < all_data.length; i++) {
+      if (is_towd_data(all_data[i]) !== two_d){
+        break; // if the spec is of a different dimension..
+      }
+      console.log("spec "+i+" added.");
+      new_data.push(all_data[i]);
+    }
+    
+    
+    
+    if (new_data.length < all_data.length){
+      var rem_data = all_data.slice(new_data.length, all_data.length)
+      console.log("remaining data.length", new_data.length, rem_data.length);
+      // Transfer the remaining data to the next slide.
+      App.appendSlide(rem_data, false);
+    }
+    console.log("spec "+new_data);
+    return new_data;
+  }
+
   function Slide(app){
     parent_app = app;
     svg_width = Slide.width();
@@ -40,8 +86,6 @@ module.exports = function(){
       create_empty_slide(app);
       return ;
     }
-		//TODO: check nd (if missing, or not in [1,2])
-    var two_d = (data["nd"] && data["nd"] === 2);
     
     var brush_margin = app.config() > 1 ? 20 : 0;
     var margin = {
@@ -93,7 +137,7 @@ module.exports = function(){
 
     /** PNG images are grey scale. All positive and negative values are represented as unsigned 8-bit int.
         where 127 represent the zero. We want to recolor them as follows:
-         * positive values colored with a red-orange hue.
+        * positive values colored with a red-orange hue.
         * negative values colored with a blue-cyan hue.
         * Zeros colored as white.
       * To do so, first copy Red component to Green and Blue.
@@ -176,18 +220,19 @@ module.exports = function(){
     dispatcher.on("redraw.slide", function (e) {
       if(e.x){
         slide_selection.select(".x.axis").call(xAxis);
-        if(app.options.grid.x){
+        if(app.options('grid').x){
           slide_selection.select(".x.grid").call(xGrid);
         }
       }
       if(e.y){
         slide_selection.select(".y.axis").call(yAxis);
-        if(app.options.grid.y){
+        if(app.options('grid').y){
           slide_selection.select(".y.grid").call(yGrid);
         }
       }
     });
     
+    console.log("slide_init", data);
     spec_container = two_d ? require('./d2/spec-container-2d')() : require('./d1/spec-container-1d')();
     //Spec-Container
     spec_container
@@ -220,10 +265,11 @@ module.exports = function(){
     }    
   };
   Slide.nd = function(){
-    if (!data){ //TODO: empty slide?
+    if (!data){
       return 0;
     }
-    return (data["nd"] && data["nd"] === 2) ? 2 : 1;
+
+    return two_d ? 2 : 1;
   };
   Slide.clipId = function(){
     return clip_id;
@@ -239,7 +285,10 @@ module.exports = function(){
   };
   Slide.datum = function(_){
     if (!arguments.length) {return data;}
-    data = _;
+    if (_ !== undefined){
+      data = check_data(_);
+    }
+    
     return Slide;
   };
   Slide.parent = function () {
@@ -259,6 +308,7 @@ module.exports = function(){
     Slide.datum(_)(parent_app);  // call the slide again with the data.
     if (parent_app.currentSlide() === Slide) { 
 			Slide.show(true);
+      // The new slide has a new nd, update the menu accordingly.
 			parent_app.dispatcher().menuUpdate();
 		}
   };

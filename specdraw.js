@@ -2898,6 +2898,11 @@ module.exports = function (){
             dispatcher.integ_refactor(integ_factor);
            }
          ),
+       },{
+         title: 'Delete integral',
+         action: function () {
+           IntegElem.remove();
+         },
        }]
     ));
   
@@ -2931,6 +2936,12 @@ module.exports = function (){
           IntegElem.updateData();
         }        
       }
+    });
+    
+    svg_elem.on('remove', function () {
+      dispatcher.on("redraw.integ."+dispatch_idx, null);
+      dispatcher.on("integ_refactor."+dispatch_idx, null);
+      dispatcher.on("specDataChange.integ."+dispatch_idx, null);
     });
   }
   
@@ -3126,7 +3137,7 @@ module.exports = function () {
       dispatcher.on("integrate.line."+dispatch_idx, null);
       data = null;
       if(_crosshair){
-        _crosshair.remove();        
+        _crosshair.remove();
       }
     });
     
@@ -3226,6 +3237,21 @@ module.exports = function () {
   };
   SpecLine.datum = function(_){
     if (!arguments.length) {return data;}
+    
+    if (_.constructor === Array){//numeric data array provided.
+      return SpecLine.numericDatum(_);
+    }
+    
+    s_id = _['s_id'];
+    spec_label = _['label'];
+    SpecLine.numericDatum(_['data']);
+    
+    return SpecLine;
+  };
+  SpecLine.numericDatum = function (_) {
+    console.log("numericDatum");
+    console.trace()
+    if (!arguments.length) {return data;}
     if(!_[0].x){ //if data is array, not xy format
       if ( data  && data.length === _.length){ // if we are replacing existing data
         // Use the x-coordinates of the old data.
@@ -3254,8 +3280,8 @@ module.exports = function () {
       {dispatcher.specDataChange(SpecLine);}
 
     render_data();
-    return SpecLine;
-  };
+    return SpecLine;    
+  }
   SpecLine.label = function(_){
     if (!arguments.length) {return spec_label;}
     spec_label = _;
@@ -3295,6 +3321,9 @@ module.exports = function () {
     return SpecLine;
   };
   
+  SpecLine.parentSlide = function () {
+    return SpecLine.parent().parent();
+  };
   return SpecLine;
 };
 
@@ -3825,8 +3854,58 @@ module.exports = function () {
         {zoom:true,  ydomain:new_region}
       );
     });
-
   
+  
+  function addSpec(spec_data) {
+    // TODO: s_id is only present in 'connected' mode.
+    var s_id = null;
+    var spec_label = 'spec '+specs.length;
+
+    if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
+    if(typeof spec_data['label'] !== 'undefined') {spec_data['label'] = spec_data["label"];}
+    
+    // Find the spectrum with the same s_id.
+    // If it is present, overwrite it.
+    // Otherwise, create a new spectrum.
+    var s = specs.filter(function (e) {
+      return e.s_id() === s_id;
+    });
+    
+    if (specs.length === 1) { 
+      x_label = spec_data['x_label']; 
+    }
+    
+    require('../pro/process_data').process_spectrum(spec_data, function (response) {
+      if ( s.length === 0 ){
+        s = require('./line')()
+          .datum(response)
+  //        .crosshair(true) // TODO: fix crosshair
+      
+        specs.push(s);
+        render_spec(s);
+      }else{
+        s = s[0];
+        s.datum(spec_data);//TODO: setData!!
+        update_range();
+      }
+      
+      SpecContainer.ready(function () {
+        SpecContainer.parentApp().dispatcher().slideContentChange();
+        require('../pro/process_data').process_annotation(SpecContainer.parentApp(), spec_data);
+      });        
+    });
+    return s;
+  }
+  function check_data(data) {
+    if (data.constructor !== Array) {
+      // if data is not an Array, wrap it in an Array.
+      data = [data];
+    }
+    for (var i = 0; i < data.length; i++) {
+      addSpec(data[i]);
+    }
+    return data;
+  }
   function SpecContainer(slide) {
     x = SpecContainer.xScale();
     y = SpecContainer.yScale();
@@ -3954,6 +4033,8 @@ module.exports = function () {
     }    
   }
   function update_range() {
+    if(!focus){return;}
+    
     var sel = SpecContainer.spectra(true);
     if (sel.length === 0){// if no spectra are selected.
       sel = specs;        // use all spectra.
@@ -3992,59 +4073,8 @@ module.exports = function () {
       focus.on('_regionchange')(_);
     }
   };
-  SpecContainer.addSpec = function(spec_data, crosshair){
-    if (!arguments.length) {
-      throw new Error("appendSlide: No data provided.");
-    } 
-    if(spec_data['nd'] !== 1 ||
-      (x_label && spec_data['x_label'] !== x_label)
-    ){ // TODO: parentApp undefined until rendering.
-      SpecContainer.parentApp().appendSlide(spec_data);
-      return;
-    }
-    
-    if(typeof crosshair === 'undefined'){
-      crosshair = true;
-    }
-    console.log('x_labels', x_label, spec_data['x_label']);
-    // TODO: s_id is only present in 'connected' mode.
-    var s_id = null;
-    var spec_label = 'spec'+specs.length;
-
-    if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
-    if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
-    
-    // Find the spectrum with the same s_id.
-    // If it is present, overwrite it.
-    // Otherwise, create a new spectrum.
-    var s = specs.filter(function (e) {
-      return e.s_id() === s_id;
-    }  );
-    
-    if ( s.length === 0 ){
-       s = require('./line')()
-        .datum(spec_data["data"])
-        .crosshair(crosshair)
-        .s_id(s_id)
-        .label(spec_label);
-      
-      specs.push(s);
-      render_spec(s);
-    }else{
-      s = s[0];
-      s.datum(spec_data["data"]);//TODO: setData!!
-      update_range();
-    }
-    console.log('specs.length', specs.length);
-    if (specs.length === 1) { 
-      x_label = spec_data['x_label']; 
-      console.log('set x_label to ', x_label, spec_data['x_label']);
-    }
-    if(SpecContainer.parentApp()){
-      SpecContainer.parentApp().dispatcher().slideContentChange();
-    }
-    return s;
-  };
+  SpecContainer.addSpec = addSpec;
+  
   SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
     if(!focus){return;}
     focus.select(".peaks").node().addpeaks(data.subset(idx));      
@@ -4080,17 +4110,17 @@ module.exports = function () {
   };
   SpecContainer.datum = function(_){
     if (!arguments.length) {return data;}
-    data = _;
+    data = check_data(_);
     
     //TODO: Clear all spectra first.
-    SpecContainer.addSpec(_);
+    //SpecContainer.addSpec(_);
     return SpecContainer;
   };
   
   
   return SpecContainer;
 };
-},{"../elem":23,"./line":13,"./main-brush":14,"./peak-picker":16}],19:[function(require,module,exports){
+},{"../elem":23,"../pro/process_data":42,"./line":13,"./main-brush":14,"./peak-picker":16}],19:[function(require,module,exports){
 module.exports = function () {
   var svg_elem, x, y, dispatcher;
   var core = require('../elem');
@@ -4379,26 +4409,31 @@ module.exports = function () {
       return e.s_id() === spec_data["s_id"];
     }  );
     
-    if ( s.length === 0 ){
-      if(specs.length !== 0){ //TODO: Until we support 2D datasets.
-        SpecContainer.parentApp().appendSlide(spec_data);
-        return;
-      }
+    require('../pro/process_data').process_spectrum(spec_data, function (response) {
+      console.log("process_data", response);
+      if ( s.length === 0 ){
+        if(specs.length !== 0){ //TODO: Until we support 2D datasets.
+          SpecContainer.ready(function(){
+            SpecContainer.parentApp().appendSlide(response);
+          });
+          return;
+        }
       
-      s = require('./spec2d')()
-        .datum(spec_data["data"])
-        .s_id(spec_data["s_id"])
-        .label(spec_data["label"])
-        .crosshair(crosshair)
-        .range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
+        s = require('./spec2d')()
+          .datum(response["data"])
+          .s_id(response["s_id"])
+          .label(response["label"])
+          .crosshair(crosshair)
+          .range({x:response["x_domain"], y:response["y_domain"]});
         
-      specs.push(s);
-			render_spec(s);
-    }else{
-      s = s[0];
-      s.datum(spec_data["data"])
-        .range({x:spec_data["x_domain"], y:spec_data["y_domain"]});
-    }
+        specs.push(s);
+  			render_spec(s);
+      }else{
+        s = s[0];
+        s.datum(response["data"])
+          .range({x:response["x_domain"], y:response["y_domain"]});
+      }
+    });
     
     return s;
   };
@@ -4419,6 +4454,10 @@ module.exports = function () {
   };
   SpecContainer.datum = function(_){
     if (!arguments.length) {return data;}
+    if (_.constructor === Array) {
+      // if data is an Array, take first element.
+      _ = _[0];
+    }
     data = _;
     
     SpecContainer.addSpec(_);
@@ -4426,7 +4465,7 @@ module.exports = function () {
   };
   return SpecContainer;  
 };
-},{"../d1/main-brush":14,"../elem":23,"./spec2d":22}],22:[function(require,module,exports){
+},{"../d1/main-brush":14,"../elem":23,"../pro/process_data":42,"./spec2d":22}],22:[function(require,module,exports){
 module.exports = function () {
   var core = require('../elem');
   var source = core.SVGElem().class('spec-img');
@@ -4547,6 +4586,9 @@ module.exports = function () {
   _main.lineIdx = function () {
     return line_idx;
   };
+  _main.parentSlide = function () {
+    return _main.parent().parent();
+  };
   
   return _main;
 };
@@ -4577,12 +4619,14 @@ function ElemArray(arr){
 
 function Elem(tag){
   var selection, parentElem, width, height, cls;
+  var ready = false, ready_funs = []
   function _main (container){
     selection = container.append(tag || 'div');
     parentElem = container;
     if(cls){
       selection.classed(cls, true);
     }
+    _main.ready();
     return selection;
   }
   
@@ -4646,6 +4690,22 @@ function Elem(tag){
     }
     return null;
   };
+  _main.ready = function(fun){
+    if(!arguments.length){
+      ready = true;
+      for (var i = 0; i < ready_funs.length; i++) {
+        ready_funs[i]();
+      }
+      return true;
+    }
+    if (typeof fun === "function"){
+      if(!ready){ ready_funs.push(fun); }
+      else{ fun(); }
+    }else{
+      console.error("Elem.ready argument must be a function.");
+    }
+    return _main;
+  }
   return _main;
 }
 
@@ -5191,6 +5251,10 @@ module.exports = function(){
   var modals, config = 3;
   var slides = core.ElemArray(), current_slide;
   var base_url = '/nmr/';
+  var options = {
+    grid:{x:false, y:false},
+    slideMax:5
+  };
   
   function check_size(divnode) {
     app_width = App.width();
@@ -5278,8 +5342,17 @@ module.exports = function(){
     }
     s.show(true);
     current_slide = s;
+    console.log("slideChange dispatched");
     app_dispatcher.slideChange(s);
   };
+  App.allSpectra = function () {
+    var ret = [];
+    for (var i = 0; i < slides.length; i++) {
+      ret = ret.concat(slides[i].spectra());
+    }
+    return ret;
+  };
+  
   App.dispatcher = function () {
     return app_dispatcher;
   };
@@ -5290,12 +5363,23 @@ module.exports = function(){
     return modals;
   };
   App.pluginRequest = require('./pro/plugins')(App);
-  App.appendSlide = function(data){
-    console.log('append_slide start');
-		var s = require('./slide')().datum(data);
+  App.appendSlide = function(data, with_render){
+    console.log('append_slide start', data);
+    console.trace();
+		var s = require('./slide')(App).datum(data);
 		console.log('slide added');
     slides.push(s);
-    render_slide(s);
+    if (arguments.length < 2 || with_render === true){
+      render_slide(s);
+    }else{
+      app_dispatcher.on('slideChange.'+slides.length, function (slide) {
+        if(slide === s){
+          app_dispatcher.on('slideChange.'+slides.length, null);
+          render_slide(s);          
+        }       
+      });
+    }
+    
     return App;
   };
   App.config = function (_) {
@@ -5311,22 +5395,28 @@ module.exports = function(){
     
     return App;
   };
-  App.options = {
-    grid:{x:false, y:false}
+  App.options = function (option, val) {
+    if (!arguments.length) {return options;}
+    if (arguments.length == 1){
+      return options[option];
+    }
+    options[option] = val;
+    return App;
   };
   App.data = function (url, s_per_slide) {
-    if(typeof s_per_slide === 'undefined'){
-      s_per_slide = 5;
+    if(typeof s_per_slide !== 'undefined'){
+      options.slideMax = 3;
     }
     var callback = function (data) {
-      if(!App.currentSlide() || App.currentSlide().spectra().length  > s_per_slide - 1){
+      if(!App.currentSlide() || App.currentSlide().spectra().length > 0){
+        // if the slide is not empty, create a new slide.
         App.appendSlide(data);
       }else{
-        App.currentSlide().addSpec(data, config > 1);
+        App.currentSlide().addSpec(data);
       }
     };
     
-    require('./pro/process_data').get_spectrum(url,  callback);
+    require('./pro/ajax').getJSON(url, callback);
     return App;
   };
   return App;
@@ -5334,7 +5424,7 @@ module.exports = function(){
 
 //TODO: remove Elements
 
-},{"./elem":23,"./events":24,"./logo":27,"./menu/menu":31,"./modals":36,"./pro/plugins":41,"./pro/process_data":42,"./slide":44,"./utils/docready":46,"./utils/get-size":49}],29:[function(require,module,exports){
+},{"./elem":23,"./events":24,"./logo":27,"./menu/menu":31,"./modals":36,"./pro/ajax":37,"./pro/plugins":41,"./slide":44,"./utils/docready":46,"./utils/get-size":49}],29:[function(require,module,exports){
 function find_menu_item (menu, item) {
   for (var i = menu.length - 1; i >= 0; i--) {
     if(menu[i].label === item){
@@ -6201,52 +6291,73 @@ module.exports = function (app, callback) {
   
 };
 },{"../input_elem":26,"./process_data":42}],40:[function(require,module,exports){
-function handle_peaks (app, json) {
-  var spec = app.currentSlide().spectra().filter(function (s) {
-    return s.s_id() === json['s_id'];
+var annotation = {};
+annotation.peaks = function (app, json, s_id) {
+  var spec = app.allSpectra().filter(function (s) {
+    return s.s_id() === s_id;
   });
   
   if (spec.length === 0){
-    app.modals.error('Incompatible server response', 
-    'Can\'t find spectrum with s_id:' + json['s_id']);
+    app.modals().error('Incompatible server response', 
+    'Can\'t find spectrum with s_id:' + s_id);
+    return;
   }
   spec[0].addPeaks(json['peaks']);
-  app.slideDispatcher().peakpick();
-}
+  spec[0].parentSlide().slideDispatcher().peakpick();
+};
 
-function handle_segs (app, json) {
+annotation.segs = function (app, json, s_id) {
   var spec = app.currentSlide().spectra().filter(function (s) {
-    return s.s_id() === json['s_id'];
+    return s.s_id() === s_id;
   });
   
   if (spec.length === 0){
-    app.modals.error('Incompatible server response', 
-    'Can\'t find spectrum with s_id:' + json['s_id']);
+    app.modals().error('Incompatible server response', 
+    'Can\'t find spectrum with s_id:' + s_id);
+    return;
   }
   
   for (var i = 0; i < json['segs'].length; i++) {
     spec[0].addSegmentl( json['segs'][i] );
   }
-}
+  //TODO: dispatch event.
+};
 
 //TODO:handle_spec_like
 function handle_spec_feature (app, json, preview){
   if (json['peaks'] !== undefined){
-    handle_peaks(app, json, preview);
+    handle_peaks(app, json, json['s_id']);
   }
   if (json['segs'] !== undefined){
-    handle_segs(app, json, preview);
+    handle_segs(app, json, json['s_id']);
   }
 }
 
 function handle_spectrum (app, json, preview){
-  require('./process_data')
-    .process_spectrum(json, app.currentSlide().addSpec);
+  if (json['data'] !== undefined){
+    var slide;
+    if (json['s_id'] !== undefined){
+      spec = app.allSpectra().filter(function (s) {
+        return s.s_id() === json['s_id'];
+      });
+      if (spec.length === 0){
+        console.log("current_slide");
+        slide = app.currentSlide();
+      }else{
+        slide = spec[0].parentSlide()
+      }
+    }
+    slide.addSpec(json)
+    
+  }else{
+    process_annotation(json); // TODO:process_annotation is not defined!!
+  }
 }
 
 module.exports.spectrum = handle_spectrum;
 module.exports.spec_feature = handle_spec_feature;
-},{"./process_data":42}],41:[function(require,module,exports){
+module.exports.annotation = annotation;
+},{}],41:[function(require,module,exports){
 module.exports = function (app) {
   function request (fun, params, s_id, preview) {
     params = params || {};
@@ -6311,7 +6422,7 @@ module.exports = function (app) {
     if(typeof hooks[type] === 'function'){
       hooks[type](app, json, preview);
     }else{
-      app.modals.error('Unsupported data-type', 
+      app.modals().error('Unsupported data-type', 
         'Couldn\'t find suitable function to read "'+type+'" data');
     }
     
@@ -6524,16 +6635,45 @@ function process_spectrum (json, render_fun){
   }  
 }
 
-function get_spectrum (url, render_fun) {
+function get_spectrum (url, callback) {
   var ajax = require('./ajax');
   ajax.getJSON(url, function (response) {
-    process_spectrum(response, render_fun);
+    callback(response);
   });
 }
 
+function process_annotation(app, json) {
+  if (json['annotation'] === undefined){return;}
+  for (var i = 0; i < json['annotation'].length; i++) {
+    e = json['annotation'][i];
+    s_id = json['s_id'];
+    
+    var type = e["data_type"];
+    var annotation = require("./plugin-hooks").annotation;
+    
+    if (type === undefined){
+      for (key in e) {
+        if(typeof annotation[key] !== 'function'){
+          console.error("Can\'t handle annotation of data_type" + key);
+        }else{
+          arg = {};
+          arg[key] = e[key];
+          annotation[key](app, arg, s_id);
+        }
+      }
+    }else if(typeof annotation[type] !== 'function'){
+      console.error("Can\'t handle annotation of data_type" + type);
+    }else{
+      annotation[type](app, e, s_id);
+    }
+  }
+}
+
+
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
-},{"./ajax":37,"./jcamp":38,"./worker":43}],43:[function(require,module,exports){
+module.exports.process_annotation = process_annotation;
+},{"./ajax":37,"./jcamp":38,"./plugin-hooks":40,"./worker":43}],43:[function(require,module,exports){
 var workers_pool = [];
 var MAX_WORKERS = (navigator.hardwareConcurrency || 2) -1;
 
@@ -6620,12 +6760,12 @@ function maxWorkers(_) {
 module.exports.addJob = addJob;
 module.exports.maxWorkers = maxWorkers;
 },{}],44:[function(require,module,exports){
-module.exports = function(){
+module.exports = function(App){
   var core = require('./elem');
   var source = core.Elem('g');
   core.inherit(Slide, source);
   
-  var data, slide_selection, svg_selection, svg_width, svg_height;
+  var data, tow_d, slide_selection, svg_selection, svg_width, svg_height;
   var clip_id = require('./utils/guid')();
   var filter_id = require('./utils/guid')();
   var parent_app, spec_container;
@@ -6653,6 +6793,52 @@ module.exports = function(){
       .on('click', require('./pro/open-file')(app) );
   }
   
+  /** Slide inspect the data and determine the following:
+      * Whether it should be a 1D or 2D slide.
+      * Whether to accept part of all of the data.
+        - if the number of spectra is > App.option.slideMax
+        - Spectra are of different dimensions.
+  */  
+  function check_data(all_data) {
+    console.log('slide check_data', all_data.length);
+    console.trace();
+    
+    function is_towd_data(_datum) {
+      return (_datum["nd"] && _datum["nd"] === 2);
+    }
+    if (all_data.constructor !== Array) {
+      // if data is not an Array, wrap it in an Array.
+      all_data= [all_data];
+    }
+    
+    var new_data = [all_data[0]];
+    two_d = is_towd_data(new_data[0]);
+    
+    // 2D slides accpet only a single spectrum.
+    var slide_max = two_d ? 1 : App.options('slideMax');
+    if (slide_max < 1) { slide_max = 1;} // min 1 spec/slide.
+    
+
+    for (var i = 1; i < slide_max && i < all_data.length; i++) {
+      if (is_towd_data(all_data[i]) !== two_d){
+        break; // if the spec is of a different dimension..
+      }
+      console.log("spec "+i+" added.");
+      new_data.push(all_data[i]);
+    }
+    
+    
+    
+    if (new_data.length < all_data.length){
+      var rem_data = all_data.slice(new_data.length, all_data.length)
+      console.log("remaining data.length", new_data.length, rem_data.length);
+      // Transfer the remaining data to the next slide.
+      App.appendSlide(rem_data, false);
+    }
+    console.log("spec "+new_data);
+    return new_data;
+  }
+
   function Slide(app){
     parent_app = app;
     svg_width = Slide.width();
@@ -6662,8 +6848,6 @@ module.exports = function(){
       create_empty_slide(app);
       return ;
     }
-		//TODO: check nd (if missing, or not in [1,2])
-    var two_d = (data["nd"] && data["nd"] === 2);
     
     var brush_margin = app.config() > 1 ? 20 : 0;
     var margin = {
@@ -6715,7 +6899,7 @@ module.exports = function(){
 
     /** PNG images are grey scale. All positive and negative values are represented as unsigned 8-bit int.
         where 127 represent the zero. We want to recolor them as follows:
-         * positive values colored with a red-orange hue.
+        * positive values colored with a red-orange hue.
         * negative values colored with a blue-cyan hue.
         * Zeros colored as white.
       * To do so, first copy Red component to Green and Blue.
@@ -6798,18 +6982,19 @@ module.exports = function(){
     dispatcher.on("redraw.slide", function (e) {
       if(e.x){
         slide_selection.select(".x.axis").call(xAxis);
-        if(app.options.grid.x){
+        if(app.options('grid').x){
           slide_selection.select(".x.grid").call(xGrid);
         }
       }
       if(e.y){
         slide_selection.select(".y.axis").call(yAxis);
-        if(app.options.grid.y){
+        if(app.options('grid').y){
           slide_selection.select(".y.grid").call(yGrid);
         }
       }
     });
     
+    console.log("slide_init", data);
     spec_container = two_d ? require('./d2/spec-container-2d')() : require('./d1/spec-container-1d')();
     //Spec-Container
     spec_container
@@ -6842,10 +7027,11 @@ module.exports = function(){
     }    
   };
   Slide.nd = function(){
-    if (!data){ //TODO: empty slide?
+    if (!data){
       return 0;
     }
-    return (data["nd"] && data["nd"] === 2) ? 2 : 1;
+
+    return two_d ? 2 : 1;
   };
   Slide.clipId = function(){
     return clip_id;
@@ -6861,7 +7047,10 @@ module.exports = function(){
   };
   Slide.datum = function(_){
     if (!arguments.length) {return data;}
-    data = _;
+    if (_ !== undefined){
+      data = check_data(_);
+    }
+    
     return Slide;
   };
   Slide.parent = function () {
@@ -6881,6 +7070,7 @@ module.exports = function(){
     Slide.datum(_)(parent_app);  // call the slide again with the data.
     if (parent_app.currentSlide() === Slide) { 
 			Slide.show(true);
+      // The new slide has a new nd, update the menu accordingly.
 			parent_app.dispatcher().menuUpdate();
 		}
   };

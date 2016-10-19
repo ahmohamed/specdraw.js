@@ -30,8 +30,58 @@ module.exports = function () {
         {zoom:true,  ydomain:new_region}
       );
     });
-
   
+  
+  function addSpec(spec_data) {
+    // TODO: s_id is only present in 'connected' mode.
+    var s_id = null;
+    var spec_label = 'spec '+specs.length;
+
+    if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
+    if(typeof spec_data['label'] !== 'undefined') {spec_data['label'] = spec_data["label"];}
+    
+    // Find the spectrum with the same s_id.
+    // If it is present, overwrite it.
+    // Otherwise, create a new spectrum.
+    var s = specs.filter(function (e) {
+      return e.s_id() === s_id;
+    });
+    
+    if (specs.length === 1) { 
+      x_label = spec_data['x_label']; 
+    }
+    
+    require('../pro/process_data').process_spectrum(spec_data, function (response) {
+      if ( s.length === 0 ){
+        s = require('./line')()
+          .datum(response)
+  //        .crosshair(true) // TODO: fix crosshair
+      
+        specs.push(s);
+        render_spec(s);
+      }else{
+        s = s[0];
+        s.datum(spec_data);//TODO: setData!!
+        update_range();
+      }
+      
+      SpecContainer.ready(function () {
+        SpecContainer.parentApp().dispatcher().slideContentChange();
+        require('../pro/process_data').process_annotation(SpecContainer.parentApp(), spec_data);
+      });        
+    });
+    return s;
+  }
+  function check_data(data) {
+    if (data.constructor !== Array) {
+      // if data is not an Array, wrap it in an Array.
+      data = [data];
+    }
+    for (var i = 0; i < data.length; i++) {
+      addSpec(data[i]);
+    }
+    return data;
+  }
   function SpecContainer(slide) {
     x = SpecContainer.xScale();
     y = SpecContainer.yScale();
@@ -159,6 +209,8 @@ module.exports = function () {
     }    
   }
   function update_range() {
+    if(!focus){return;}
+    
     var sel = SpecContainer.spectra(true);
     if (sel.length === 0){// if no spectra are selected.
       sel = specs;        // use all spectra.
@@ -197,59 +249,8 @@ module.exports = function () {
       focus.on('_regionchange')(_);
     }
   };
-  SpecContainer.addSpec = function(spec_data, crosshair){
-    if (!arguments.length) {
-      throw new Error("appendSlide: No data provided.");
-    } 
-    if(spec_data['nd'] !== 1 ||
-      (x_label && spec_data['x_label'] !== x_label)
-    ){ // TODO: parentApp undefined until rendering.
-      SpecContainer.parentApp().appendSlide(spec_data);
-      return;
-    }
-    
-    if(typeof crosshair === 'undefined'){
-      crosshair = true;
-    }
-    console.log('x_labels', x_label, spec_data['x_label']);
-    // TODO: s_id is only present in 'connected' mode.
-    var s_id = null;
-    var spec_label = 'spec'+specs.length;
-
-    if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
-    if(typeof spec_data['label'] !== 'undefined') {spec_label = spec_data["label"];}
-    
-    // Find the spectrum with the same s_id.
-    // If it is present, overwrite it.
-    // Otherwise, create a new spectrum.
-    var s = specs.filter(function (e) {
-      return e.s_id() === s_id;
-    }  );
-    
-    if ( s.length === 0 ){
-       s = require('./line')()
-        .datum(spec_data["data"])
-        .crosshair(crosshair)
-        .s_id(s_id)
-        .label(spec_label);
-      
-      specs.push(s);
-      render_spec(s);
-    }else{
-      s = s[0];
-      s.datum(spec_data["data"]);//TODO: setData!!
-      update_range();
-    }
-    console.log('specs.length', specs.length);
-    if (specs.length === 1) { 
-      x_label = spec_data['x_label']; 
-      console.log('set x_label to ', x_label, spec_data['x_label']);
-    }
-    if(SpecContainer.parentApp()){
-      SpecContainer.parentApp().dispatcher().slideContentChange();
-    }
-    return s;
-  };
+  SpecContainer.addSpec = addSpec;
+  
   SpecContainer.addPeaks = function (idx) { //TODO:move peaks to line
     if(!focus){return;}
     focus.select(".peaks").node().addpeaks(data.subset(idx));      
@@ -285,10 +286,10 @@ module.exports = function () {
   };
   SpecContainer.datum = function(_){
     if (!arguments.length) {return data;}
-    data = _;
+    data = check_data(_);
     
     //TODO: Clear all spectra first.
-    SpecContainer.addSpec(_);
+    //SpecContainer.addSpec(_);
     return SpecContainer;
   };
   
