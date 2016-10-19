@@ -247,14 +247,14 @@ module.exports = function () {
   SpecLine.datum = function(_){
     if (!arguments.length) {return data;}
     
-    if (_.constructor === Array){
+    if (_.constructor === Array){//numeric data array provided.
       return SpecLine.numericDatum(_);
     }
     
     s_id = _['s_id'];
     spec_label = _['label'];
     SpecLine.numericDatum(_['data']);
-    //require('../pro/process_data').process_annotations(SpecLine.parentApp(), _);
+    
     return SpecLine;
   };
   SpecLine.numericDatum = function (_) {

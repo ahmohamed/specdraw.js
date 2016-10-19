@@ -202,12 +202,41 @@ function process_spectrum (json, render_fun){
   }  
 }
 
-function get_spectrum (url, render_fun) {
+function get_spectrum (url, callback) {
   var ajax = require('./ajax');
   ajax.getJSON(url, function (response) {
-    process_spectrum(response, render_fun);
+    callback(response);
   });
 }
 
+function process_annotation(app, json) {
+  if (json['annotation'] === undefined){return;}
+  for (var i = 0; i < json['annotation'].length; i++) {
+    e = json['annotation'][i];
+    s_id = json['s_id'];
+    
+    var type = e["data_type"];
+    var annotation = require("./plugin-hooks").annotation;
+    
+    if (type === undefined){
+      for (key in e) {
+        if(typeof annotation[key] !== 'function'){
+          console.error("Can\'t handle annotation of data_type" + key);
+        }else{
+          arg = {};
+          arg[key] = e[key];
+          annotation[key](app, arg, s_id);
+        }
+      }
+    }else if(typeof annotation[type] !== 'function'){
+      console.error("Can\'t handle annotation of data_type" + type);
+    }else{
+      annotation[type](app, e, s_id);
+    }
+  }
+}
+
+
 module.exports.get_spectrum = get_spectrum;
 module.exports.process_spectrum = process_spectrum;
+module.exports.process_annotation = process_annotation;

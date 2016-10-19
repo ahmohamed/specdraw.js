@@ -37,7 +37,7 @@ module.exports = function () {
     var s_id = null;
     var spec_label = 'spec '+specs.length;
 
-    //if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
+    if(typeof spec_data["s_id"] !== 'undefined') {s_id = spec_data["s_id"];}
     if(typeof spec_data['label'] !== 'undefined') {spec_data['label'] = spec_data["label"];}
     
     // Find the spectrum with the same s_id.
@@ -50,25 +50,27 @@ module.exports = function () {
     if (specs.length === 1) { 
       x_label = spec_data['x_label']; 
     }
+    
     require('../pro/process_data').process_spectrum(spec_data, function (response) {
       if ( s.length === 0 ){
         s = require('./line')()
           .datum(response)
   //        .crosshair(true) // TODO: fix crosshair
-  //        .s_id(s_id)
-  //        .label(spec_label);
       
         specs.push(s);
         render_spec(s);
       }else{
+        console.log("spec found");
         s = s[0];
         s.datum(spec_data);//TODO: setData!!
         update_range();
       }
+      
+      SpecContainer.ready(function () {
+        SpecContainer.parentApp().dispatcher().slideContentChange();
+        require('../pro/process_data').process_annotation(SpecContainer.parentApp(), spec_data);
+      });        
     });
-    if(SpecContainer.parentApp()){
-      SpecContainer.parentApp().dispatcher().slideContentChange();
-    }
     return s;
   }
   function check_data(data) {

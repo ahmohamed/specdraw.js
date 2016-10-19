@@ -41,42 +41,23 @@ function handle_spec_feature (app, json, preview){
 }
 
 function handle_spectrum (app, json, preview){
-  function process_annotation(processed_json) {
-    if (json['annotation'] !== undefined){
-      for (var i = 0; i < json['annotation'].length; i++) {
-        e = json['annotation'][i];
-        s_id = json['s_id'];
-        
-        var type = e["data_type"];
-                
-        if (type === undefined){
-          for (key in e) {
-            if(typeof annotation[key] !== 'function'){
-              console.error("Can\'t handle annotation of data_type" + key);
-            }else{
-              arg = {};
-              arg[key] = e[key];
-              annotation[key](app, arg, s_id);
-            }
-          }
-        }else if(typeof annotation[type] !== 'function'){
-          console.error("Can\'t handle annotation of data_type" + type);
-        }else{
-          annotation[type](app, e, s_id);
-        }
+  if (json['data'] !== undefined){
+    var slide;
+    if (json['s_id'] !== undefined){
+      spec = app.allSpectra().filter(function (s) {
+        return s.s_id() === json['s_id'];
+      });
+      if (spec.length === 0){
+        console.log("current_slide");
+        slide = app.currentSlide();
+      }else{
+        slide = spec[0].parentSlide()
       }
     }
-  }
-  if (json['data'] !== undefined){
-    require('./process_data')
-      .process_spectrum(json, function (processed_json){
-        app.currentSlide().addSpec(processed_json);
-        console.log(processed_json);
-        process_annotation(processed_json);
-      }
-    );
+    slide.addSpec(json)
+    
   }else{
-    process_annotation(json);
+    process_annotation(json); // TODO:process_annotation is not defined!!
   }
 }
 

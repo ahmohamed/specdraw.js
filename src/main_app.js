@@ -99,6 +99,7 @@ module.exports = function(){
     }
     s.show(true);
     current_slide = s;
+    console.log("slideChange dispatched");
     app_dispatcher.slideChange(s);
   };
   App.allSpectra = function () {
@@ -164,7 +165,8 @@ module.exports = function(){
       options.slideMax = 3;
     }
     var callback = function (data) {
-      if(App.currentSlide().spectra().length > 0){
+      if(!App.currentSlide() || App.currentSlide().spectra().length > 0){
+        // if the slide is not empty, create a new slide.
         App.appendSlide(data);
       }else{
         App.currentSlide().addSpec(data);
@@ -172,7 +174,6 @@ module.exports = function(){
     };
     
     require('./pro/ajax').getJSON(url, callback);
-    //require('./pro/process_data').get_spectrum(url,  App.appendSlide);
     return App;
   };
   return App;
