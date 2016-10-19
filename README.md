@@ -18,5 +18,14 @@ To see the package in action, visit my [codepen](http://codepen.io/collection/ng
 ### Contribution
 All contributions, suggestions, feature requests are exetremely welcome. Just create an issue or a pull request, or email me @ mohamed [at] kuicr.kyoto-u.ac.jp 
 
+### Package development
+
+ - Install [node.js](https://nodejs.org/en/)
+ - Install Grunt `sudo npm install -g grunt-cli`
+ - Install SpecdrawJS `npm install specdraw.js`
+ - Modify the module you want.
+ - Rebuild SpecdrawJS `Grunt`
+ 
+
 ## Known issues
  - Firefox bug causes 2D spectra to disappear when zoomed. Apparently the filters conflict with transform attributes applied. 
