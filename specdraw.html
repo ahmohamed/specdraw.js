@@ -1,0 +1,33 @@
+<link rel="stylesheet" href="specdraw.min.css" type="text/css" media="screen">
+<script src="nmrpro/d3.v3.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="specdraw.js" type="text/javascript" charset="utf-8"></script>
+
+<script>
+// modify this previous line to pass in your own method name 
+// and object for the method to be attached to
+  (function() {
+    //var importDoc = document.currentScript.ownerDocument; // importee
+    
+    // Define and register <shadow-element>
+    // that uses Shadow DOM and a template.
+    var proto = Object.create(HTMLElement.prototype);
+    
+    proto.createdCallback = function() {
+      var url = this.getAttribute('url');
+      var spec_app = specdraw.App()
+        .data(url);
+      this.app = spec_app;
+    };
+    proto.attachedCallback = function () {
+      var sel = d3.select(this);
+      sel.call(this.app);
+    };
+    proto.attributeChangedCallback = function (attrname, oldval, newval) {
+      
+    };
+    
+    document.registerElement('specdraw-js', {prototype: proto});
+  })();
+</script>
+  
+  

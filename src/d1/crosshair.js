@@ -1,158 +1,133 @@
-spec.d1.crosshair = function(){
-	var svg_elem, x, y, data, dispatcher;
-	
-	function _main(svg) {
-		var getDataPoint = function (e) {
-			var i;
-      if(e.shiftKey){
-        var s_window = [Math.floor(i_scale.invert(e.xcoor-10)),
-          Math.floor(i_scale.invert(e.xcoor+10))];
+module.exports = function (){
+  function getDataPoint (x_point, pixel_to_i, local_max) {
+    var i;
+    if(local_max){
+      var s_window = [ pixel_to_i( x_point-10 ), pixel_to_i( x_point+10 ) ];
 
-        i = s_window[0] + whichMax( data.slice(s_window[0],s_window[1]+1));
-      }else{
-        i = Math.floor(i_scale.invert(e.xcoor));					
+      i = s_window[0] + data.slice(s_window[0],s_window[1]+1).whichMax();
+    }else{
+      i = pixel_to_i( x_point );          
+    }
+    return data[i];
+  }
+  function registerDispatcher() {
+    var suff = ".line."+dispatch_idx;
+    dispatcher.on("regionchange"+suff, null);
+    dispatcher.on("mouseenter"+suff, null);
+    dispatcher.on("mouseleave"+suff, null);
+    dispatcher.on("mousemove"+suff, null);  
+    
+    if( enabled ){
+      dispatcher.on("regionchange"+suff, svg_elem.on("_regionchange"));
+      dispatcher.on("mouseenter"+suff, function(){_main.show(true);});
+      dispatcher.on("mouseleave"+suff, function(){_main.show(false);});
+      if ( shown ){
+        dispatcher.on("mousemove"+suff, svg_elem.on("_mousemove"));  
       }
-			return i;
-		};
-		
-		var tip = d3.tip()
-		  .attr('class', 'crosshair tooltip')
-			.direction('ne')
-		  .offset([0, 0])
-			.bootstrap(true);
-			
-		var i_scale = x.copy();
-		var line_idx = svg.node().line_idx;
-		
-		svg_elem = svg.append("g")
-			.attr("class", "crosshair")
-			.datum(null).call(tip);
+    }
+    dispatcher.on("specDataChange"+suff, function (s) {
+      if(s === _main.parent()){_main.datum(s.datum());}
+    });
+    dispatcher.on("crosshairEnable"+suff, _main.enable);
+  }
+  
+  var x, y, data, dispatcher;
+  var svg_elem, dispatch_idx;
+  var enabled, shown;
+  
+  var tip = d3.tip()
+    .attr('class', 'crosshair tooltip')
+    .direction('ne')
+    .offset([0, 0])
+    .bootstrap(true);
+    
+  var core = require('../elem');
+  var source = core.SVGElem().class('crosshair');
+  core.inherit(_main, source);
+  
+  function _main(spec_line) {
+    x = _main.xScale();
+    y = _main.yScale();
+    dispatcher = _main.dispatcher();
+    dispatch_idx = ++dispatcher.idx;
+    enabled = shown = true;
+        
+    svg_elem = source(spec_line)
+      .datum(null).call(tip); // I am clearing the data bound to the selection, not the Elem.
+    
+    svg_elem.append("circle")
+      .attr("class", "clr"+ spec_line.lineIdx())
+      .attr("r", 4.5)
+      .on("click",function(){
+        spec_line.selected( !spec_line.selected() );
+      })
+      .on("mouseenter",function(){
+        spec_line.parent().highlightSpec(spec_line);
+      })
+      .on("mouseleave",function(){
+        spec_line.parent().highlightSpec();
+      });
 
-		svg_elem.append("circle")
-			.attr("class", "clr"+ line_idx)
-			.attr("r", 4.5)
-			.on("click",function(){
-				svg.toggleClass("selected");
-			})
-			.on("mouseenter",function(){
-				svg.selectP('.main-focus').classed('dimmed', true);
-				svg.classed('highlighted', true);
-			})
-			.on("mouseleave",function(){
-				svg.selectP('.main-focus').classed('dimmed', false);
-				svg.classed('highlighted', false);
-			});
-
-		svg_elem.append("text")
-			.attr("x", 9)
-			.attr("dy", "-1em");
-			
-		svg_elem
-			.on("_regionchange", function(e){
-				if(e.x){					
-					svg_elem.datum(null);
-					svg_elem.attr("transform", "translate(" + (-1000) + "," + (-1000) + ")");
-				}else{
-					var datum = svg_elem.datum();
-					if(datum)
-						svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");					
-				}
-			})
-			.on("_mousemove", function(e){
-        var i = getDataPoint(e);
+    svg_elem
+      .on("_regionchange", function(e){
+        if(e.xdomain){          
+          svg_elem.datum(null);
+          svg_elem.attr("transform", "translate(" + (-10000) + "," + (-10000) + ")");
+          tip.hide();
+        }else{
+          var datum = svg_elem.datum();
+          if(datum){
+            svg_elem.attr("transform", "translate(" + x(datum.x) + "," + y(datum.y) + ")");
+            tip.show(svg_elem.node());
+          }
+        }
+      })
+      .on("_mousemove", function(e){
+        var p = getDataPoint(e.xcoor, spec_line.pixelToi, e.shiftKey);
       
-        if(typeof data[i] === 'undefined'){
-					svg_elem.attr("i_pos", null);
-					svg_elem.datum(null);
-					return;
-				}	
-					
-				tip.text(d3.round(data[i].x,3)).show(svg_elem.node());
-				svg_elem.attr("i_pos", i);			
-				svg_elem.datum(data[i]);				
-				svg_elem.attr("transform", "translate(" + x(data[i].x) + "," + y(data[i].y) + ")");			
-			});
-		
-		
-		svg_elem.node().setData = function(_){data = _;}		
-		svg_elem.node().dataSlice = function (_) {
-			if (!arguments.length) return i_scale.domain();
-			i_scale.domain(_);
-		};
-	
-		svg_elem.node().show = function (_) {
-			if (!arguments.length) return !(svg_elem.style("display")==="none");			
-			svg_elem.style("display", _? null : "none");
-			
-			if(_) { tip.show(svg_elem); }
-			else{tip.hide()}
-			
-			dispatcher.on("mousemove.line."+dispatch_idx, 
-				_? svg_elem.on("_mousemove") : null);
-		};
-	
-		svg_elem.node().enable = function (_) {
-			if (!arguments.length) return params.crosshair;
-			if (_){
-				dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
-				dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});		
-			}
-			else{
-				dispatcher.on("mouseenter.line."+dispatch_idx, null);
-				dispatcher.on("mouseleave.line."+dispatch_idx, null);		
-			}
-			svg_elem.node().show(_);
-		};
-		svg_elem.node().i = function (_) {
-			if (!arguments.length) return svg_elem.attr("i_pos");
-			svg_elem.attr("i_pos", i);
-			svg_elem.datum(data[i]);
-		};
-		svg_elem.node().remove = function () {
-			dispatcher.on("regionchange.line."+dispatch_idx, null);
-			dispatcher.on("mouseenter.line."+dispatch_idx, null);
-			dispatcher.on("mouseleave.line."+dispatch_idx, null);
-			dispatcher.on("mousemove.line."+dispatch_idx, null);	
-			dispatcher.on("crosshairEnable.line."+dispatch_idx, null);
-			data = null;
-			svg_elem.remove();			
-		};
-		
-		// Register event listeners
-		var dispatch_idx = ++dispatcher.idx;
-		dispatcher.on("regionchange.line."+dispatch_idx, svg_elem.on("_regionchange"));
-		dispatcher.on("mouseenter.line."+dispatch_idx, function(){svg_elem.node().show(true)});
-		dispatcher.on("mouseleave.line."+dispatch_idx, function(){svg_elem.node().show(false)});
-		dispatcher.on("mousemove.line."+dispatch_idx, svg_elem.on("_mousemove"));	
-		dispatcher.on("crosshairEnable.line."+dispatch_idx, svg_elem.node().enable);
-
-		
-		return svg_elem;									
-	}
-	
-  _main.dispatcher = function(_){
-    if (!arguments.length) return dispatcher;
-    dispatcher = _;
+        if(typeof p === 'undefined'){
+          svg_elem.datum(null);
+          return;
+        }
+        
+        svg_elem.datum(p)
+          .attr("transform", "translate(" + x(p.x) + "," + y(p.y) + ")");
+        tip.text(d3.round(p.x,3)).show(svg_elem.node());
+      })
+      .on('remove', function () {
+        _main.enabled(false);
+        dispatcher.on("crosshairEnable.line."+dispatch_idx, null);
+        data = null;
+        tip.destroy();
+      });
+    
+    registerDispatcher();
+    return svg_elem;                  
+  }
+  
+  _main.show = function (_) {
+    if (!arguments.length) {return shown;}
+    shown = _;
+    
+    if (!svg_elem){return _main;}
+    svg_elem.style("display", _? null : "none");
+    
+    if(_) { tip.show(svg_elem); }
+    else{tip.hide();}
+    
+    registerDispatcher();
     return _main;
   };
-	
+  _main.enable = function (_) {
+    if (!arguments.length) {return enabled;}
+    enabled = _;
+    
+    return _main.show(_);
+  };
   _main.datum = function(_){
-    if (!arguments.length) return data;
+    if (!arguments.length) {return data;}
     data = _;
     return _main;
   };
-		
-  _main.xScale = function(_){
-    if (!arguments.length) return x;
-    x = _;
-    return _main;
-  };
-
-  _main.yScale = function(_){
-    if (!arguments.length) return y;
-    y = _;
-    return _main;
-  };
-	
-	return _main;
+  return _main;
 };

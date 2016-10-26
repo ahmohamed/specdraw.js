@@ -1,0 +1,28 @@
+{
+    "bitwise": true,
+    "eqeqeq": true,
+    "curly": true,
+    "strict": false,
+    "trailing": true,
+    "white": true,
+    "maxlen": 210,
+    "undef": true,
+    "unused": true,
+    "indent": 4,
+    "sub":true,
+    
+    "eqnull": true,
+    "expr": true,
+    "newcap": false,
+    "loopfunc": true,
+    "bitwise": false,
+    
+    "node":true,
+    "browser": true,
+    "devel":true,
+    
+    "globals": {
+        "d3": false
+    }
+
+}
