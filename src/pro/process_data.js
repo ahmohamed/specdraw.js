@@ -216,22 +216,22 @@ function process_annotation(app, json) {
     s_id = json['s_id'];
     
     var type = e["data_type"];
-    var annotation = require("./plugin-hooks").annotation;
+    var read_annotation = require("./plugin-hooks").get_annotation_reader;
     
     if (type === undefined){
       for (key in e) {
-        if(typeof annotation[key] !== 'function'){
+        if(typeof read_annotation(key) !== 'function'){
           console.error("Can\'t handle annotation of data_type" + key);
         }else{
           arg = {};
           arg[key] = e[key];
-          annotation[key](app, arg, s_id);
+          read_annotation(key)(app, arg, s_id);
         }
       }
-    }else if(typeof annotation[type] !== 'function'){
+    }else if(typeof read_annotation(type) !== 'function'){
       console.error("Can\'t handle annotation of data_type" + type);
     }else{
-      annotation[type](app, e, s_id);
+      read_annotation(type)(app, e, s_id);
     }
   }
 }

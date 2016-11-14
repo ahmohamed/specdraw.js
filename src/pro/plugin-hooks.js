@@ -57,10 +57,34 @@ function handle_spectrum (app, json, preview){
     slide.addSpec(json)
     
   }else{
-    process_annotation(json); // TODO:process_annotation is not defined!!
+    require('./process_data').process_annotation(app, json); // TODO:process_annotation is not defined!!
   }
 }
 
-module.exports.spectrum = handle_spectrum;
-module.exports.spec_feature = handle_spec_feature;
-module.exports.annotation = annotation;
+var readers = {
+  spectrum : handle_spectrum,
+  spec_feature : handle_spec_feature
+};
+
+// module.exports.spectrum = handle_spectrum;
+// module.exports.spec_feature = handle_spec_feature;
+// module.exports.annotation = annotation;
+
+module.exports.get_reader = function (reader_name) {
+  if(readers[reader_name]){
+    return readers[reader_name];
+  }
+  return undefined;
+};
+module.exports.add_reader = function (reader_name, fun) {
+  readers[reader_name] = fun;
+};
+module.exports.get_annotation_reader = function (annotation_name) {
+  if(annotation[annotation_name]){
+    return annotation[annotation_name];
+  }
+  return undefined;
+};
+module.exports.add_annotation_reader = function (annotation_name, fun) {
+  annotation[annotation_name] = fun;
+};

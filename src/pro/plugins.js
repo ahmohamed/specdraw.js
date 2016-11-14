@@ -53,14 +53,14 @@ module.exports = function (app) {
       }
       return;
     }
-    var hooks = require('./plugin-hooks');
+    var get_reader = require('./plugin-hooks').get_reader;
     
     var type = json['data_type'];
     if (type === undefined){ //if no data_type, it is assumed as spectrum
       type = 'spectrum';
     }
-    if(typeof hooks[type] === 'function'){
-      hooks[type](app, json, preview);
+    if(typeof get_reader(type) === 'function'){
+      get_reader(type)(app, json, preview);
     }else{
       app.modals().error('Unsupported data-type', 
         'Couldn\'t find suitable function to read "'+type+'" data');
