@@ -1,6 +1,7 @@
 var events = require('../events');
 var append_menu = require('./append-menu');
 var server_menu = require('./serverside-menu');
+var plugin_menu = require('./plugin-menu').get_menu;
 
 function saveSVG(slide, filename) {
   slide.selectAll('text').attr('font-size', '10px');
@@ -85,6 +86,7 @@ module.exports = function (app) {
   if(app.config() > 3){
     entries = server_menu(app).concat(entries);
   }
+  entries = plugin_menu().concat(entries);
   
   if (app.currentSlide() && app.currentSlide().nd()) {
     var current_nd = app.currentSlide().nd();
