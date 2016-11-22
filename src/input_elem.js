@@ -1,3 +1,9 @@
+function isInt(value) {
+  return !isNaN(value) && 
+         parseInt(Number(value)) == value && 
+         !isNaN(parseInt(value, 10));
+}
+
 var inp = {};
 var fireEvent = require('./utils/event');
 
@@ -250,20 +256,26 @@ inp.threshold = function (label, axis, app) {
 inp.div = function (div_data, app) {
   var div = d3.select(document.createElement('div'));
   for (var key in div_data){
-    var p = div_data[key];
-    if(typeof p === 'function') {continue;} //Exclude Array prototype functions.
-    div.append(parseInputElem.apply(null, p.concat(app)))
-      .node().id = key;
+    if (div_data.hasOwnProperty(key)){
+      var p = div_data[key];
+      div.append(parseInputElem.apply(null, p.concat(app)))
+        .node().id = key;
+    }
   }
   
   return function() {return div.node();};
 };
 
 var parseInputElem = function (label, type, details, app) {
-  var f = [
-    inp.num, inp.checkbox, inp.text, inp.select_toggle,
-    inp.checkbox_toggle, inp.button, inp.threshold
-  ][type];
+  var f
+  if (isInt(type)){
+    f = [
+     inp.num, inp.checkbox, inp.text, inp.select_toggle,
+     inp.checkbox_toggle, inp.button, inp.threshold
+    ][type];
+  } else { // type is a string, indicating the input type.
+    f = inp[type];
+  }
   
   var args = [label].concat(details);
   args = [3,4,6].indexOf(type) !== -1 ? args.concat(app) : args;
