@@ -36,19 +36,24 @@ function app_modals(app){
     app.append(function () {return nano.modal.el;});
   
     var el = d3.select(nano.modal.el);
+    
     el.select(".nanoModalContent").html(content || '');
     el.insert("div", ":first-child")
       .classed('title', true)
       .text( title? title : "Dialogue" );
   
-    el.on("keydown", function() {
-      if (d3.event.keyCode===13) { // Enter
-        d3.select(nano.modal.el).select(".nanoModalBtnPrimary").node().click();
-      }
+    // Disable keyboard shortcuts.
+    el.on('keyup', function () {
       if (d3.event.keyCode===27) { // Escape
-        d3.select(nano.modal.el).select(".cancelBtn").node().click();
+        console.log('esc');
+        nano.hide();
       }
+      d3.event.stopPropagation();
     });
+    el.on('keypress', function () {
+      d3.event.stopPropagation();
+    });
+    
   
     nano.onShow(function () {
       el.style({
@@ -221,10 +226,10 @@ function app_modals(app){
       if(preview === false || 
         d3.event.target === el ||
         form_data['prev_btn'] === true){
-        app.pluginRequest(fun, form_data, form_data['s_id'], preview);
+        app.pluginRequest(fun, form_data, form_data['sid'], preview);
       }else  if(form_data['prev_auto'] === true){
         timer = setTimeout(function () {
-          app.pluginRequest(fun, form_data, form_data['s_id'], true);
+          app.pluginRequest(fun, form_data, form_data['sid'], true);
         }, 300);
       }
     });
