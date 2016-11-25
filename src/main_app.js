@@ -1,3 +1,5 @@
+var fireEvent = require('./utils/event');
+
 module.exports = function(){
   var core = require('./elem');
   var source = core.Elem().class('spec-app');
@@ -80,10 +82,14 @@ module.exports = function(){
     }
     
     require('./logo')(App);
+    
+    // TODO: decide whether this should be before the app is rendered (outside the function).
+    require('./pro/plugin-hooks').init_plugins(App); 
+    fireEvent(selection.node(), 'specdraw:appRendered');
   }
   function render_slide(s) {
     if(! selection){ return; }
-    s.width(app_width).height(app_height)
+    s.width(app_width - 2).height(app_height - 2) // Accoount for border size
       (App);
 
     App.currentSlide(s);
@@ -119,7 +125,8 @@ module.exports = function(){
   App.modals = function () {
     return modals;
   };
-  App.pluginRequest = require('./pro/plugins')(App);
+  App.pluginRequest = require('./pro/plugins')(App).plugins;
+  App.annotationRequest = require('./pro/plugins')(App).annotation;
   App.appendSlide = function(data, with_render){
     console.log('append_slide start', data);
     console.trace();
@@ -129,7 +136,7 @@ module.exports = function(){
     if (arguments.length < 2 || with_render === true){
       render_slide(s);
     }else{
-      app_dispatcher.on('slideChange.'+slides.length, function (slide) {
+      app_dispatcher.on('slideChange.'+slides.length, function (slide) {        
         if(slide === s){
           app_dispatcher.on('slideChange.'+slides.length, null);
           render_slide(s);          
